@@ -4,5 +4,5 @@ python-multipart
 jinja2
 sqlalchemy
 pydantic
-openai
+google-genai
 python-dotenv
