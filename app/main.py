@@ -129,7 +129,7 @@ quality judgement.
 Confidence must be between 0 and 1.
 """
 
-       response = client.models.generate_content(
+response = client.models.generate_content(
         model=model,
         contents=[
             prompt,
