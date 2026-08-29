@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Site Control v1.1</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <div>
+    <div class="eyebrow">AI SITE CONTROL v1.1</div>
+    <h1>🏗️ {{ project.name if project else "Project" }}</h1>
+    <p>{{ project.code if project else "" }} · {{ project.location if project else "" }}</p>
+  </div>
+  <span class="badge">VISION TEST</span>
+</header>
+
+<main>
+<section class="hero">
+  <h2>📷 Chụp → AI kiểm tra → Lưu hồ sơ</h2>
+  <p>AI tự nhận diện công tác, vị trí, tiến độ, chất lượng, lỗi và đề xuất xử lý.</p>
+</section>
+
+<section class="card">
+<h3>➕ Tạo lần kiểm tra</h3>
+<form action="/api/v1/visits" method="post">
+  <div class="grid">
+    <input name="floor" placeholder="Tầng — VD: L03" required>
+    <input name="zone" placeholder="Khu — VD: A" required>
+    <input name="work" placeholder="Công tác — VD: Lát gạch" required>
+  </div>
+  <textarea name="note" placeholder="Ghi chú của kỹ sư..."></textarea>
+  <button>Tạo Site Visit</button>
+</form>
+</section>
+
+<section class="card">
+<h3>📋 Kiểm tra gần đây</h3>
+{% for v in visits %}
+<div class="item">
+  <b>{{ v.floor }} · {{ v.zone }}</b> — {{ v.work }}
+  <small>{{ v.created_at.strftime("%d/%m/%Y %H:%M") }}</small>
+  <p>{{ v.note or "Chưa có ghi chú." }}</p>
+  <form onsubmit="upload(event, {{v.id}})" class="upload">
+    <input id="file-{{v.id}}" type="file" accept="image/*" capture="environment" required>
+    <button type="submit">📷 Chụp & AI phân tích</button>
+  </form>
+</div>
+{% else %}
+<p>Chưa có lần kiểm tra.</p>
+{% endfor %}
+</section>
+
+<section class="card">
+<h3>🤖 Kết quả AI Vision</h3>
+<div id="aiResult" class="result muted">Chụp một ảnh để bắt đầu.</div>
+</section>
+
+<section class="card">
+<h3>📷 Ảnh hiện trường đã lưu</h3>
+<div class="photos">
+{% for p in photos %}
+<figure>
+  <img src="{{p.path}}" alt="Ảnh công trường">
+  <figcaption>
+    <b>{{p.ai_status}}</b>
+    {% if p.ai_work %} · {{p.ai_work}}{% endif %}
+    {% if p.ai_progress %} · {{p.ai_progress}}%{% endif %}
+  </figcaption>
+</figure>
+{% else %}<p>Chưa có ảnh.</p>{% endfor %}
+</div>
+</section>
+
+<section class="card">
+<h3>📄 Daily Report</h3>
+<button type="button" onclick="daily()">Tạo dữ liệu Daily Report</button>
+<pre id="report"></pre>
+</section>
+</main>
+
+<script>
+function renderAI(j){
+  const issues = (j.issues||[]).map(x => `<li>${escapeHtml(x)}</li>`).join("");
+  document.getElementById("aiResult").innerHTML = `
+    <div class="ai-grid">
+      <div><span>CÔNG TÁC</span><b>${escapeHtml(j.work||"—")}</b></div>
+      <div><span>VỊ TRÍ</span><b>${escapeHtml(j.location||"—")}</b></div>
+      <div><span>TIẾN ĐỘ</span><b>${Number(j.progress_percent||0)}%</b></div>
+      <div><span>CHẤT LƯỢNG</span><b>${escapeHtml(j.quality_status||"—")}</b></div>
+      <div><span>AN TOÀN</span><b>${escapeHtml(j.safety_status||"—")}</b></div>
+      <div><span>CONFIDENCE</span><b>${Math.round(Number(j.confidence||0)*100)}%</b></div>
+    </div>
+    <p><strong>Mô tả:</strong> ${escapeHtml(j.description||"—")}</p>
+    <p><strong>Lỗi:</strong></p><ul>${issues || "<li>Không ghi nhận lỗi rõ ràng từ ảnh.</li>"}</ul>
+    <p><strong>Đề xuất:</strong> ${escapeHtml(j.recommended_action||"—")}</p>
+    <p><a href="${j.path}" target="_blank">Mở ảnh đã lưu</a> · Hồ sơ đã lưu với Photo ID ${j.photo_id}</p>`;
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
+}
+async function upload(e,id){
+  e.preventDefault();
+  const input=document.getElementById("file-"+id);
+  const box=document.getElementById("aiResult");
+  if(!input.files.length) return;
+  box.className="result"; box.textContent="⏳ Đang tải ảnh và cho AI Vision phân tích...";
+  const fd=new FormData(); fd.append("file",input.files[0]);
+  try{
+    const r=await fetch(`/api/v1/visits/${id}/photos`,{method:"POST",body:fd});
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.detail || "Không thể phân tích ảnh");
+    renderAI(j);
+  }catch(err){
+    box.innerHTML="<b>❌ Lỗi:</b> "+escapeHtml(err.message);
+  }
+}
+async function daily(){
+  const r=await fetch("/api/v1/reports/daily");
+  document.getElementById("report").textContent=JSON.stringify(await r.json(),null,2);
+}
+</script>
+</body>
+</html>
