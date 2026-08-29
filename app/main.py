@@ -158,12 +158,15 @@ def home(request: Request):
     visits = db.query(SiteVisit).order_by(SiteVisit.created_at.desc()).limit(20).all()
     photos = db.query(Photo).order_by(Photo.created_at.desc()).limit(12).all()
     db.close()
-    return templates.TemplateResponse("index.html", {
-        "request": request,
+    return templates.TemplateResponse(
+    request=request,
+    name="index.html",
+    context={
         "project": project,
         "visits": visits,
-        "photos": photos
-    })
+        "photos": photos,
+    },
+)
 
 @app.post("/api/v1/visits")
 def create_visit(
