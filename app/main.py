@@ -129,7 +129,7 @@ quality judgement.
 Confidence must be between 0 and 1.
 """
 
-response = client.models.generate_content(
+    response = client.models.generate_content(
         model=model,
         contents=[
             prompt,
@@ -190,11 +190,10 @@ response = client.models.generate_content(
         )
     )
 
-raw = response.text
-parsed = json.loads(raw)
+    raw = response.text
+    parsed = json.loads(raw)
 
-return parsed, raw
-
+    return parsed, raw
 @app.on_event("startup")
 def seed():
     db = SessionLocal()
