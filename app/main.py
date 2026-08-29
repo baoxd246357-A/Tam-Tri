@@ -9,8 +9,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import create_engine, Column, Integer, String, Text, Float, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker
-from openai import OpenAI
-
+from google import genai
+from google.genai import types
 BASE = Path(__file__).resolve().parent.parent
 load_dotenv(BASE / ".env")
 
@@ -71,14 +71,13 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOADS)), name="uploads")
 templates = Jinja2Templates(directory=str(BASE / "app/templates"))
 
 def get_client():
-    key = os.getenv("OPENAI_API_KEY")
+    key = os.getenv("GEMINI_API_KEY")
     if not key:
         raise HTTPException(
             status_code=503,
-            detail="OPENAI_API_KEY chưa được cấu hình trong file .env"
+            detail="GEMINI_API_KEY chưa được cấu hình trên Render"
         )
-    return OpenAI(api_key=key)
-
+    return genai.Client(api_key=key)
 def clean_json_text(text: str):
     text = text.strip()
     if text.startswith("```"):
@@ -88,9 +87,15 @@ def clean_json_text(text: str):
 
 def analyze_site_photo(image_path: Path, mime_type: str, context: dict):
     client = get_client()
-    model = os.getenv("OPENAI_MODEL", "gpt-5.6-luna")
-    encoded = base64.b64encode(image_path.read_bytes()).decode("utf-8")
 
+    model = os.getenv("GEMINI_MODEL", "gemini-3.7-flash")
+
+    image_bytes = image_path.read_bytes()
+
+    image_part = types.Part.from_bytes(
+        data=image_bytes,
+        mime_type=mime_type
+    )
     prompt = f"""
 You are an expert construction site inspection assistant.
 Analyze ONLY what is reasonably visible in the supplied photo. Do not invent
@@ -124,23 +129,70 @@ quality judgement.
 Confidence must be between 0 and 1.
 """
 
-    response = client.responses.create(
+       response = client.models.generate_content(
         model=model,
-        input=[{
-            "role": "user",
-            "content": [
-                {"type": "input_text", "text": prompt},
-                {
-                    "type": "input_image",
-                    "image_url": f"data:{mime_type};base64,{encoded}",
-                    "detail": "high",
+        contents=[
+            prompt,
+            image_part,
+        ],
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema={
+                "type": "OBJECT",
+                "properties": {
+                    "work": {
+                        "type": "STRING"
+                    },
+                    "location": {
+                        "type": "STRING"
+                    },
+                    "progress_percent": {
+                        "type": "NUMBER"
+                    },
+                    "quality_status": {
+                        "type": "STRING"
+                    },
+                    "issues": {
+                        "type": "ARRAY",
+                        "items": {
+                            "type": "STRING"
+                        }
+                    },
+                    "recommended_action": {
+                        "type": "STRING"
+                    },
+                    "safety_status": {
+                        "type": "STRING"
+                    },
+                    "safety_observation": {
+                        "type": "STRING"
+                    },
+                    "description": {
+                        "type": "STRING"
+                    },
+                    "confidence": {
+                        "type": "NUMBER"
+                    }
                 },
-            ],
-        }],
+                "required": [
+                    "work",
+                    "location",
+                    "progress_percent",
+                    "quality_status",
+                    "issues",
+                    "recommended_action",
+                    "safety_status",
+                    "safety_observation",
+                    "description",
+                    "confidence"
+                ]
+            }
+        )
     )
 
-    raw = response.output_text
-    parsed = json.loads(clean_json_text(raw))
+    raw = response.text
+    parsed = json.loads(raw)
+
     return parsed, raw
 
 @app.on_event("startup")
