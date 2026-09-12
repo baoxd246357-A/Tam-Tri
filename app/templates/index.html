@@ -188,7 +188,10 @@ $("recordBtn").addEventListener("click", async ()=>{
   try{
     const stream=await navigator.mediaDevices.getUserMedia({audio:true});
     chunks=[];
-    recorder=new MediaRecorder(stream);
+    // Prefer a widely supported mobile format; Chrome Android normally uses WebM/Opus.
+    const mimeCandidates=["audio/webm;codecs=opus","audio/webm","audio/mp4"];
+    const mimeType=mimeCandidates.find(t=>MediaRecorder.isTypeSupported?.(t)) || "";
+    recorder=mimeType ? new MediaRecorder(stream,{mimeType}) : new MediaRecorder(stream);
     recorder.ondataavailable=e=>{if(e.data.size) chunks.push(e.data)};
     recorder.onstop=async()=>{
       stream.getTracks().forEach(t=>t.stop());
@@ -203,7 +206,7 @@ $("recordBtn").addEventListener("click", async ()=>{
 });
 
 async function uploadVoice(blob){
-  const ext=blob.type.includes("mp4")?".mp4":".webm";
+  const ext=blob.type.includes("mp4")?".mp4":blob.type.includes("ogg")?".ogg": ".webm";
   const fd=new FormData();
   fd.append("file",blob,"tvgs_voice"+ext);
   $("voiceResult").className="voice-result loading";
