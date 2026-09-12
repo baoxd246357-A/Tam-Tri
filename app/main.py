@@ -331,16 +331,24 @@ async def upload_voice(visit_id: int, file: UploadFile = File(...)):
         db.close()
         raise HTTPException(404, "Site visit không tồn tại")
 
+    # Android Chrome commonly sends: audio/webm;codecs=opus
+    # Gemini only needs the base MIME type. Normalize codec parameters before validation.
+    raw_content_type = (file.content_type or "audio/webm").strip().lower()
+    content_type = raw_content_type.split(";", 1)[0].strip()
     allowed = {
         "audio/webm", "audio/mp4", "audio/mpeg", "audio/wav",
         "audio/ogg", "audio/x-m4a", "audio/aac"
     }
-    content_type = file.content_type or "audio/webm"
     if content_type not in allowed:
         db.close()
-        raise HTTPException(400, f"Định dạng audio chưa hỗ trợ: {content_type}")
+        raise HTTPException(400, f"Định dạng audio chưa hỗ trợ: {raw_content_type}")
 
-    ext = mimetypes.guess_extension(content_type) or ".webm"
+    ext_map = {
+        "audio/webm": ".webm", "audio/mp4": ".mp4", "audio/mpeg": ".mp3",
+        "audio/wav": ".wav", "audio/ogg": ".ogg", "audio/x-m4a": ".m4a",
+        "audio/aac": ".aac"
+    }
+    ext = ext_map.get(content_type, ".webm")
     filename = datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f") + ext
     path = EVIDENCE / filename
     with open(path, "wb") as f:
