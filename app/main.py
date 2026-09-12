@@ -1,4 +1,4 @@
-import os, json, base64, shutil, re
+import os, json, shutil, re, mimetypes
 from datetime import datetime
 from pathlib import Path
 
@@ -11,12 +11,15 @@ from sqlalchemy import create_engine, Column, Integer, String, Text, Float, Date
 from sqlalchemy.orm import declarative_base, sessionmaker
 from google import genai
 from google.genai import types
+
 BASE = Path(__file__).resolve().parent.parent
 load_dotenv(BASE / ".env")
 
 DATA = BASE / "data"
 UPLOADS = DATA / "uploads"
+EVIDENCE = DATA / "evidence"
 UPLOADS.mkdir(parents=True, exist_ok=True)
+EVIDENCE.mkdir(parents=True, exist_ok=True)
 
 engine = create_engine(
     f"sqlite:///{DATA / 'site_control.db'}",
@@ -25,6 +28,7 @@ engine = create_engine(
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
+
 class Project(Base):
     __tablename__ = "projects"
     id = Column(Integer, primary_key=True)
@@ -32,6 +36,7 @@ class Project(Base):
     name = Column(String(255), nullable=False)
     location = Column(String(255))
     status = Column(String(50), default="ACTIVE")
+
 
 class SiteVisit(Base):
     __tablename__ = "site_visits"
@@ -42,6 +47,7 @@ class SiteVisit(Base):
     work = Column(String(255))
     note = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
+
 
 class Photo(Base):
     __tablename__ = "photos"
@@ -63,52 +69,62 @@ class Photo(Base):
     ai_status = Column(String(50), default="PENDING")
     created_at = Column(DateTime, default=datetime.utcnow)
 
+
+class VoiceEvidence(Base):
+    __tablename__ = "voice_evidence"
+    id = Column(Integer, primary_key=True)
+    visit_id = Column(Integer)
+    filename = Column(String(255))
+    path = Column(String(500))
+    mime_type = Column(String(100))
+    transcript = Column(Text)
+    ai_status = Column(String(50), default="UPLOADED")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 Base.metadata.create_all(engine)
 
-app = FastAPI(title="AI Site Control v1.1")
+app = FastAPI(title="AI TVGS Tâm Trí Pilot V0.1")
 app.mount("/static", StaticFiles(directory=str(BASE / "app/static")), name="static")
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS)), name="uploads")
+app.mount("/evidence", StaticFiles(directory=str(EVIDENCE)), name="evidence")
 templates = Jinja2Templates(directory=str(BASE / "app/templates"))
+
 
 def get_client():
     key = os.getenv("GEMINI_API_KEY")
     if not key:
-        raise HTTPException(
-            status_code=503,
-            detail="GEMINI_API_KEY chưa được cấu hình trên Render"
-        )
+        raise HTTPException(status_code=503, detail="GEMINI_API_KEY chưa được cấu hình trên Render")
     return genai.Client(api_key=key)
+
+
 def clean_json_text(text: str):
-    text = text.strip()
+    text = (text or "").strip()
     if text.startswith("```"):
         text = re.sub(r"^```(?:json)?\s*", "", text)
         text = re.sub(r"\s*```$", "", text)
     return text
 
+
 def analyze_site_photo(image_path: Path, mime_type: str, context: dict):
     client = get_client()
-
     model = os.getenv("GEMINI_MODEL", "gemini-3.7-flash")
-
     image_bytes = image_path.read_bytes()
+    image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
 
-    image_part = types.Part.from_bytes(
-        data=image_bytes,
-        mime_type=mime_type
-    )
     prompt = f"""
-You are an expert construction site inspection assistant.
+You are an expert construction site inspection assistant for AI TVGS Tâm Trí.
 Analyze ONLY what is reasonably visible in the supplied photo. Do not invent
 measurements, drawing references, exact locations, or compliance conclusions.
 
 Project context:
 - Project: {context.get("project_name")}
 - Floor entered by inspector: {context.get("floor")}
-- Zone entered by inspector: {context.get("zone")}
+- Zone/room entered by inspector: {context.get("zone")}
 - Work entered by inspector: {context.get("work")}
 - Inspector note: {context.get("note")}
 
-Return ONLY valid JSON with this exact structure:
+Return ONLY valid JSON:
 {{
   "work": "construction work visible",
   "location": "best visible/entered location; say 'not visible' if unknown",
@@ -123,77 +139,86 @@ Return ONLY valid JSON with this exact structure:
 }}
 
 For progress_percent, estimate only when visual evidence supports an estimate;
-otherwise use 0 and explain uncertainty in the description.
-For quality_status, use NOT_DETERMINED when the photo cannot support a reliable
-quality judgement.
+otherwise use 0 and explain uncertainty.
+Use NOT_DETERMINED when a photo cannot support a reliable quality judgement.
+Do not treat an AI visual estimate as an acceptance/measurement result.
 Confidence must be between 0 and 1.
 """
-
     response = client.models.generate_content(
         model=model,
-        contents=[
-            prompt,
-            image_part,
-        ],
+        contents=[prompt, image_part],
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema={
                 "type": "OBJECT",
                 "properties": {
-                    "work": {
-                        "type": "STRING"
-                    },
-                    "location": {
-                        "type": "STRING"
-                    },
-                    "progress_percent": {
-                        "type": "NUMBER"
-                    },
-                    "quality_status": {
-                        "type": "STRING"
-                    },
-                    "issues": {
-                        "type": "ARRAY",
-                        "items": {
-                            "type": "STRING"
-                        }
-                    },
-                    "recommended_action": {
-                        "type": "STRING"
-                    },
-                    "safety_status": {
-                        "type": "STRING"
-                    },
-                    "safety_observation": {
-                        "type": "STRING"
-                    },
-                    "description": {
-                        "type": "STRING"
-                    },
-                    "confidence": {
-                        "type": "NUMBER"
-                    }
+                    "work": {"type": "STRING"},
+                    "location": {"type": "STRING"},
+                    "progress_percent": {"type": "NUMBER"},
+                    "quality_status": {"type": "STRING"},
+                    "issues": {"type": "ARRAY", "items": {"type": "STRING"}},
+                    "recommended_action": {"type": "STRING"},
+                    "safety_status": {"type": "STRING"},
+                    "safety_observation": {"type": "STRING"},
+                    "description": {"type": "STRING"},
+                    "confidence": {"type": "NUMBER"},
                 },
                 "required": [
-                    "work",
-                    "location",
-                    "progress_percent",
-                    "quality_status",
-                    "issues",
-                    "recommended_action",
-                    "safety_status",
-                    "safety_observation",
-                    "description",
-                    "confidence"
-                ]
-            }
-        )
+                    "work", "location", "progress_percent", "quality_status",
+                    "issues", "recommended_action", "safety_status",
+                    "safety_observation", "description", "confidence"
+                ],
+            },
+        ),
     )
-
     raw = response.text
-    parsed = json.loads(raw)
+    return json.loads(clean_json_text(raw)), raw
 
-    return parsed, raw
+
+def transcribe_voice(audio_path: Path, mime_type: str, context: dict):
+    client = get_client()
+    model = os.getenv("GEMINI_MODEL", "gemini-3.7-flash")
+    audio_part = types.Part.from_bytes(data=audio_path.read_bytes(), mime_type=mime_type)
+    prompt = f"""
+You are an assistant for a construction site supervisor.
+Transcribe the Vietnamese speech accurately. Then extract useful site information.
+Do not invent information.
+
+Context:
+Project: {context.get("project_name")}
+Floor: {context.get("floor")}
+Zone/room: {context.get("zone")}
+Work: {context.get("work")}
+
+Return ONLY JSON:
+{{
+  "transcript": "exact or best-effort Vietnamese transcript",
+  "summary": "short structured summary",
+  "issues": ["..."],
+  "recommended_action": "..."
+}}
+"""
+    response = client.models.generate_content(
+        model=model,
+        contents=[prompt, audio_part],
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema={
+                "type": "OBJECT",
+                "properties": {
+                    "transcript": {"type": "STRING"},
+                    "summary": {"type": "STRING"},
+                    "issues": {"type": "ARRAY", "items": {"type": "STRING"}},
+                    "recommended_action": {"type": "STRING"},
+                },
+                "required": ["transcript", "summary", "issues", "recommended_action"],
+            },
+        ),
+    )
+    raw = response.text
+    return json.loads(clean_json_text(raw))
+
+
 @app.on_event("startup")
 def seed():
     db = SessionLocal()
@@ -201,6 +226,7 @@ def seed():
         db.add(Project(code="PRJ-001", name="Bệnh viện Tâm Trí", location="TP.HCM"))
         db.commit()
     db.close()
+
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
@@ -210,14 +236,11 @@ def home(request: Request):
     photos = db.query(Photo).order_by(Photo.created_at.desc()).limit(12).all()
     db.close()
     return templates.TemplateResponse(
-    request=request,
-    name="index.html",
-    context={
-        "project": project,
-        "visits": visits,
-        "photos": photos,
-    },
-)
+        request=request,
+        name="index.html",
+        context={"project": project, "visits": visits, "photos": photos},
+    )
+
 
 @app.post("/api/v1/visits")
 def create_visit(
@@ -232,7 +255,8 @@ def create_visit(
     db.commit()
     db.refresh(visit)
     db.close()
-    return RedirectResponse("/", status_code=303)
+    return JSONResponse({"visit_id": visit.id, "floor": floor, "zone": zone, "work": work})
+
 
 @app.post("/api/v1/visits/{visit_id}/photos")
 async def upload_photo(visit_id: int, file: UploadFile = File(...)):
@@ -252,7 +276,6 @@ async def upload_photo(visit_id: int, file: UploadFile = File(...)):
     stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f")
     filename = f"{stamp}_{safe}"
     path = UPLOADS / filename
-
     with open(path, "wb") as f:
         shutil.copyfileobj(file.file, f)
 
@@ -298,6 +321,67 @@ async def upload_photo(visit_id: int, file: UploadFile = File(...)):
     db.close()
     return JSONResponse(result)
 
+
+@app.post("/api/v1/visits/{visit_id}/voice")
+async def upload_voice(visit_id: int, file: UploadFile = File(...)):
+    db = SessionLocal()
+    visit = db.get(SiteVisit, visit_id)
+    project = db.get(Project, visit.project_id) if visit else None
+    if not visit:
+        db.close()
+        raise HTTPException(404, "Site visit không tồn tại")
+
+    allowed = {
+        "audio/webm", "audio/mp4", "audio/mpeg", "audio/wav",
+        "audio/ogg", "audio/x-m4a", "audio/aac"
+    }
+    content_type = file.content_type or "audio/webm"
+    if content_type not in allowed:
+        db.close()
+        raise HTTPException(400, f"Định dạng audio chưa hỗ trợ: {content_type}")
+
+    ext = mimetypes.guess_extension(content_type) or ".webm"
+    filename = datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f") + ext
+    path = EVIDENCE / filename
+    with open(path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    voice = VoiceEvidence(
+        visit_id=visit_id,
+        filename=filename,
+        path=f"/evidence/{filename}",
+        mime_type=content_type,
+        ai_status="UPLOADED",
+    )
+    db.add(voice)
+    db.commit()
+    db.refresh(voice)
+
+    context = {
+        "project_name": project.name if project else "",
+        "floor": visit.floor,
+        "zone": visit.zone,
+        "work": visit.work,
+    }
+    try:
+        result = transcribe_voice(path, content_type, context)
+        voice.transcript = result.get("transcript", "")
+        voice.ai_status = "ANALYZED"
+    except Exception as e:
+        voice.transcript = f"AI voice analysis failed: {str(e)}"
+        voice.ai_status = "ERROR"
+
+    db.commit()
+    result = {
+        "voice_id": voice.id,
+        "path": voice.path,
+        "status": voice.ai_status,
+        "transcript": voice.transcript or "",
+    }
+    db.close()
+    return JSONResponse(result)
+
+
 @app.post("/api/v1/photos/{photo_id}/analyze")
 def reanalyze_photo(photo_id: int):
     db = SessionLocal()
@@ -337,6 +421,7 @@ def reanalyze_photo(photo_id: int):
     db.close()
     return JSONResponse(result)
 
+
 @app.get("/api/v1/photos/{photo_id}")
 def get_photo(photo_id: int):
     db = SessionLocal()
@@ -347,6 +432,7 @@ def get_photo(photo_id: int):
     result = photo_to_dict(photo)
     db.close()
     return result
+
 
 def photo_to_dict(p):
     try:
@@ -369,33 +455,52 @@ def photo_to_dict(p):
         "confidence": p.ai_confidence,
     }
 
-@app.post("/api/v1/reports/daily")
+
+@app.get("/api/v1/reports/daily")
 def daily_report():
     db = SessionLocal()
     visits = db.query(SiteVisit).all()
     photos = db.query(Photo).all()
-    db.close()
-    return {
+    voices = db.query(VoiceEvidence).all()
+    result = {
         "report_type": "DAILY",
         "date": datetime.now().strftime("%Y-%m-%d"),
         "visit_count": len(visits),
         "photo_count": len(photos),
+        "voice_count": len(voices),
         "analyzed_photo_count": sum(1 for p in photos if p.ai_status == "ANALYZED"),
+        "quality": {
+            "OK": sum(1 for p in photos if p.ai_quality_status == "OK"),
+            "ATTENTION": sum(1 for p in photos if p.ai_quality_status == "ATTENTION"),
+            "DEFECT": sum(1 for p in photos if p.ai_quality_status == "DEFECT"),
+            "PENDING": sum(1 for p in photos if p.ai_quality_status == "NOT_DETERMINED"),
+        },
         "visits": [
             {
-                "floor": v.floor, "zone": v.zone, "work": v.work,
+                "visit_id": v.id,
+                "floor": v.floor,
+                "zone": v.zone,
+                "work": v.work,
                 "note": v.note,
-                "photos": [photo_to_dict(p) for p in photos if p.visit_id == v.id]
+                "photos": [photo_to_dict(p) for p in photos if p.visit_id == v.id],
+                "voices": [
+                    {"voice_id": x.id, "transcript": x.transcript, "status": x.ai_status}
+                    for x in voices if x.visit_id == v.id
+                ],
             }
             for v in visits
-        ]
+        ],
     }
+    db.close()
+    return result
+
 
 @app.get("/health")
 def health():
     return {
         "status": "ok",
-        "version": "1.1",
-        "vision": bool(os.getenv("OPENAI_API_KEY")),
-        "model": os.getenv("OPENAI_MODEL", "gpt-5.6-luna")
+        "version": "0.1-pilot",
+        "vision_provider": "gemini",
+        "ai_configured": bool(os.getenv("GEMINI_API_KEY")),
+        "model": os.getenv("GEMINI_MODEL", "gemini-3.7-flash"),
     }
