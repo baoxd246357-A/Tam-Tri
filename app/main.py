@@ -1,4 +1,4 @@
-import os, json, shutil, re, mimetypes
+import os, json, shutil, re, mimetypes, time
 from datetime import datetime
 from pathlib import Path
 
@@ -104,7 +104,36 @@ def clean_json_text(text: str):
         text = re.sub(r"^```(?:json)?\s*", "", text)
         text = re.sub(r"\s*```$", "", text)
     return text
+def is_retryable_ai_error(exc: Exception) -> bool:
+    text = str(exc).upper()
+    retry_markers = (
+        "429",
+        "500",
+        "502",
+        "503",
+        "504",
+        "UNAVAILABLE",
+        "RESOURCE_EXHAUSTED",
+        "TOO MANY REQUESTS",
+        "RATE LIMIT",
+        "HIGH DEMAND",
+        "TIMEOUT",
+        "TIMED OUT",
+    )
+    return any(marker in text for marker in retry_markers)
 
+
+def generate_with_retry(generate_call, max_attempts: int = 4):
+    delays = [2, 4, 8]
+
+    for attempt in range(max_attempts):
+        try:
+            return generate_call()
+        except Exception as exc:
+            if attempt >= max_attempts - 1 or not is_retryable_ai_error(exc):
+                raise
+
+            time.sleep(delays[attempt])
 
 def analyze_site_photo(image_path: Path, mime_type: str, context: dict):
     client = get_client()
@@ -144,7 +173,8 @@ Use NOT_DETERMINED when a photo cannot support a reliable quality judgement.
 Do not treat an AI visual estimate as an acceptance/measurement result.
 Confidence must be between 0 and 1.
 """
-    response = client.models.generate_content(
+    response = generate_with_retry(
+    lambda: client.models.generate_content(
         model=model,
         contents=[prompt, image_part],
         config=types.GenerateContentConfig(
@@ -170,7 +200,8 @@ Confidence must be between 0 and 1.
                 ],
             },
         ),
-    )
+    )    
+)
     raw = response.text
     return json.loads(clean_json_text(raw)), raw
 
@@ -198,7 +229,8 @@ Return ONLY JSON:
   "recommended_action": "..."
 }}
 """
-    response = client.models.generate_content(
+    response = generate_with_retry(
+    lambda: client.models.generate_content(
         model=model,
         contents=[prompt, audio_part],
         config=types.GenerateContentConfig(
@@ -375,9 +407,16 @@ async def upload_voice(visit_id: int, file: UploadFile = File(...)):
         result = transcribe_voice(path, content_type, context)
         voice.transcript = result.get("transcript", "")
         voice.ai_status = "ANALYZED"
-    except Exception as e:
-        voice.transcript = f"AI voice analysis failed: {str(e)}"
-        voice.ai_status = "ERROR"
+       except Exception as e:
+        if is_retryable_ai_error(e):
+            voice.ai_status = "FAILED_RETRYABLE"
+            voice.transcript = (
+                "AI voice analysis temporarily unavailable after retry. "
+                f"Error: {str(e)}"
+            )
+        else:
+            voice.ai_status = "ERROR"
+            voice.transcript = f"AI voice analysis failed: {str(e)}"
 
     db.commit()
     result = {
@@ -388,7 +427,60 @@ async def upload_voice(visit_id: int, file: UploadFile = File(...)):
     }
     db.close()
     return JSONResponse(result)
+@app.post("/api/v1/voices/{voice_id}/analyze")
+def reanalyze_voice(voice_id: int):
+    db = SessionLocal()
 
+    voice = db.get(VoiceEvidence, voice_id)
+    if not voice:
+        db.close()
+        raise HTTPException(404, "Bản ghi giọng nói không tồn tại")
+
+    visit = db.get(SiteVisit, voice.visit_id)
+    project = db.get(Project, visit.project_id) if visit else None
+
+    path = BASE / voice.path.lstrip("/")
+    if not path.exists():
+        db.close()
+        raise HTTPException(404, "File ghi âm không còn tồn tại")
+
+    context = {
+        "project_name": project.name if project else "",
+        "floor": visit.floor if visit else "",
+        "zone": visit.zone if visit else "",
+        "work": visit.work if visit else "",
+    }
+
+    try:
+        result = transcribe_voice(path, voice.mime_type, context)
+        voice.transcript = result.get("transcript", "")
+        voice.ai_status = "ANALYZED"
+
+    except Exception as e:
+        if is_retryable_ai_error(e):
+            voice.ai_status = "FAILED_RETRYABLE"
+            voice.transcript = (
+                "AI voice analysis temporarily unavailable after retry. "
+                f"Error: {str(e)}"
+            )
+        else:
+            voice.ai_status = "ERROR"
+            voice.transcript = f"AI voice analysis failed: {str(e)}"
+
+    db.commit()
+
+    result = {
+        "voice_id": voice.id,
+        "path": voice.path,
+        "status": voice.ai_status,
+        "transcript": voice.transcript or "",
+    }
+
+    db.close()
+    return JSONResponse(result)
+
+
+@app.post("/api/v1/photos/{photo_id}/analyze")
 
 @app.post("/api/v1/photos/{photo_id}/analyze")
 def reanalyze_photo(photo_id: int):
@@ -477,6 +569,13 @@ def daily_report():
         "photo_count": len(photos),
         "voice_count": len(voices),
         "analyzed_photo_count": sum(1 for p in photos if p.ai_status == "ANALYZED"),
+        "analyzed_voice_count": sum(
+    1 for x in voices if x.ai_status == "ANALYZED"
+),
+"failed_voice_count": sum(
+    1 for x in voices
+    if x.ai_status in ("FAILED_RETRYABLE", "ERROR")
+),
         "quality": {
             "OK": sum(1 for p in photos if p.ai_quality_status == "OK"),
             "ATTENTION": sum(1 for p in photos if p.ai_quality_status == "ATTENTION"),
