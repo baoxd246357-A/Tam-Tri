@@ -1,123 +1,249 @@
 <!doctype html>
 <html lang="vi">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Site Control v1.1</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>AI TVGS Tâm Trí Pilot</title>
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<header>
+<header class="topbar">
   <div>
-    <div class="eyebrow">AI SITE CONTROL v1.1</div>
+    <div class="eyebrow">AI TVGS TÂM TRÍ · PILOT V0.1</div>
     <h1>🏗️ {{ project.name if project else "Project" }}</h1>
     <p>{{ project.code if project else "" }} · {{ project.location if project else "" }}</p>
   </div>
-  <span class="badge">VISION TEST</span>
+  <span class="badge">SMARTPHONE</span>
 </header>
 
 <main>
 <section class="hero">
-  <h2>📷 Chụp → AI kiểm tra → Lưu hồ sơ</h2>
-  <p>AI tự nhận diện công tác, vị trí, tiến độ, chất lượng, lỗi và đề xuất xử lý.</p>
+  <h2>📱 Kiểm tra hiện trường</h2>
+  <p>Chụp ảnh + ghi nhận bằng giọng nói → AI phân tích → lưu bằng chứng.</p>
 </section>
 
-<section class="card">
-<h3>➕ Tạo lần kiểm tra</h3>
-<form action="/api/v1/visits" method="post">
-  <div class="grid">
-    <input name="floor" placeholder="Tầng — VD: L03" required>
-    <input name="zone" placeholder="Khu — VD: A" required>
-    <input name="work" placeholder="Công tác — VD: Lát gạch" required>
-  </div>
-  <textarea name="note" placeholder="Ghi chú của kỹ sư..."></textarea>
-  <button>Tạo Site Visit</button>
-</form>
-</section>
-
-<section class="card">
-<h3>📋 Kiểm tra gần đây</h3>
-{% for v in visits %}
-<div class="item">
-  <b>{{ v.floor }} · {{ v.zone }}</b> — {{ v.work }}
-  <small>{{ v.created_at.strftime("%d/%m/%Y %H:%M") }}</small>
-  <p>{{ v.note or "Chưa có ghi chú." }}</p>
-  <form onsubmit="upload(event, {{v.id}})" class="upload">
-    <input id="file-{{v.id}}" type="file" accept="image/*" capture="environment" required>
-    <button type="submit">📷 Chụp & AI phân tích</button>
+<section class="card sticky-card">
+  <div class="section-title"><span>📍</span><h3>Tạo lần kiểm tra</h3></div>
+  <form id="visitForm">
+    <div class="grid">
+      <input id="floor" name="floor" placeholder="Tầng · VD: L03" required>
+      <input id="zone" name="zone" placeholder="Khu / Phòng · VD: P302" required>
+      <input id="work" name="work" placeholder="Công tác · VD: Trần thạch cao" required>
+    </div>
+    <textarea id="note" name="note" placeholder="Ghi chú TVGS (nếu có)..."></textarea>
+    <button class="primary full" type="submit">🚀 BẮT ĐẦU KIỂM TRA</button>
   </form>
-</div>
-{% else %}
-<p>Chưa có lần kiểm tra.</p>
-{% endfor %}
+  <div id="visitState" class="state muted">Chưa tạo lần kiểm tra.</div>
+</section>
+
+<section class="card field-card">
+  <div class="section-title"><span>📷</span><h3>Thu thập bằng chứng</h3></div>
+  <div class="capture-grid">
+    <label class="capture primary-capture">
+      <span>📷</span><b>CHỤP ẢNH</b><small>Camera điện thoại</small>
+      <input id="photoInput" type="file" accept="image/*" capture="environment" disabled>
+    </label>
+    <button id="recordBtn" class="capture voice-capture" type="button" disabled>
+      <span>🎤</span><b>GHI NHẬN</b><small id="recordHint">Giọng nói TVGS</small>
+    </button>
+  </div>
+  <div id="captureStatus" class="state muted">Tạo Site Visit trước khi thu thập bằng chứng.</div>
 </section>
 
 <section class="card">
-<h3>🤖 Kết quả AI Vision</h3>
-<div id="aiResult" class="result muted">Chụp một ảnh để bắt đầu.</div>
+  <div class="section-title"><span>🤖</span><h3>AI TVGS</h3></div>
+  <div id="aiResult" class="result muted">Chụp một ảnh để bắt đầu.</div>
 </section>
 
 <section class="card">
-<h3>📷 Ảnh hiện trường đã lưu</h3>
-<div class="photos">
-{% for p in photos %}
-<figure>
-  <img src="{{p.path}}" alt="Ảnh công trường">
-  <figcaption>
-    <b>{{p.ai_status}}</b>
-    {% if p.ai_work %} · {{p.ai_work}}{% endif %}
-    {% if p.ai_progress %} · {{p.ai_progress}}%{% endif %}
-  </figcaption>
-</figure>
-{% else %}<p>Chưa có ảnh.</p>{% endfor %}
-</div>
+  <div class="section-title"><span>🎤</span><h3>Ghi nhận bằng giọng nói</h3></div>
+  <div id="voiceResult" class="voice-result muted">Chưa có ghi nhận.</div>
 </section>
 
 <section class="card">
-<h3>📄 Daily Report</h3>
-<button type="button" onclick="daily()">Tạo dữ liệu Daily Report</button>
-<pre id="report"></pre>
+  <div class="section-title"><span>📋</span><h3>Kiểm tra gần đây</h3></div>
+  {% for v in visits %}
+  <div class="item">
+    <b>{{ v.floor }} · {{ v.zone }}</b> — {{ v.work }}
+    <small>{{ v.created_at.strftime("%d/%m/%Y %H:%M") }}</small>
+    <p>{{ v.note or "Không có ghi chú." }}</p>
+  </div>
+  {% else %}
+  <p class="muted">Chưa có lần kiểm tra.</p>
+  {% endfor %}
+</section>
+
+<section class="card">
+  <div class="section-title"><span>📷</span><h3>Ảnh hiện trường</h3></div>
+  <div class="photos">
+  {% for p in photos %}
+    <figure>
+      <img src="{{p.path}}" alt="Ảnh công trường">
+      <figcaption><b>{{p.ai_status}}</b>{% if p.ai_work %} · {{p.ai_work}}{% endif %}</figcaption>
+    </figure>
+  {% else %}<p class="muted">Chưa có ảnh.</p>{% endfor %}
+  </div>
+</section>
+
+<section class="card report-card">
+  <div class="section-title"><span>📄</span><h3>Daily TVGS Report</h3></div>
+  <button class="primary full" type="button" onclick="daily()">📊 TỔNG HỢP DAILY REPORT</button>
+  <div id="report" class="report muted">Chưa tổng hợp báo cáo.</div>
 </section>
 </main>
 
 <script>
+let currentVisitId = null;
+let recorder = null;
+let chunks = [];
+
+const $ = id => document.getElementById(id);
+
+function escapeHtml(s){
+  return String(s ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
+}
+
+function setState(el, text, type="muted"){
+  el.className = "state " + type;
+  el.textContent = text;
+}
+
+function qualityClass(status){
+  const s=(status||"").toUpperCase();
+  if(s==="OK") return "ok";
+  if(s==="DEFECT") return "fail";
+  if(s==="ATTENTION") return "warn";
+  return "pending";
+}
+
 function renderAI(j){
-  const issues = (j.issues||[]).map(x => `<li>${escapeHtml(x)}</li>`).join("");
-  document.getElementById("aiResult").innerHTML = `
+  const issues=(j.issues||[]).map(x=>`<li>${escapeHtml(x)}</li>`).join("");
+  const q=qualityClass(j.quality_status);
+  const s=qualityClass(j.safety_status);
+  $("aiResult").className="result";
+  $("aiResult").innerHTML=`
+    <div class="status-banner ${q}">
+      <span>CHẤT LƯỢNG</span><strong>${escapeHtml(j.quality_status||"PENDING")}</strong>
+    </div>
     <div class="ai-grid">
       <div><span>CÔNG TÁC</span><b>${escapeHtml(j.work||"—")}</b></div>
       <div><span>VỊ TRÍ</span><b>${escapeHtml(j.location||"—")}</b></div>
       <div><span>TIẾN ĐỘ</span><b>${Number(j.progress_percent||0)}%</b></div>
-      <div><span>CHẤT LƯỢNG</span><b>${escapeHtml(j.quality_status||"—")}</b></div>
-      <div><span>AN TOÀN</span><b>${escapeHtml(j.safety_status||"—")}</b></div>
+      <div><span>HSE</span><b class="${s}">${escapeHtml(j.safety_status||"—")}</b></div>
       <div><span>CONFIDENCE</span><b>${Math.round(Number(j.confidence||0)*100)}%</b></div>
     </div>
-    <p><strong>Mô tả:</strong> ${escapeHtml(j.description||"—")}</p>
-    <p><strong>Lỗi:</strong></p><ul>${issues || "<li>Không ghi nhận lỗi rõ ràng từ ảnh.</li>"}</ul>
-    <p><strong>Đề xuất:</strong> ${escapeHtml(j.recommended_action||"—")}</p>
-    <p><a href="${j.path}" target="_blank">Mở ảnh đã lưu</a> · Hồ sơ đã lưu với Photo ID ${j.photo_id}</p>`;
+    <p><strong>Quan sát:</strong> ${escapeHtml(j.description||"—")}</p>
+    <p><strong>Vấn đề:</strong></p>
+    <ul>${issues || "<li>Chưa ghi nhận lỗi rõ ràng từ ảnh.</li>"}</ul>
+    <p><strong>Hành động đề xuất:</strong> ${escapeHtml(j.recommended_action||"—")}</p>
+    <a class="evidence-link" href="${j.path}" target="_blank">🔎 Mở ảnh bằng chứng · Photo #${j.photo_id}</a>
+  `;
 }
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
-}
-async function upload(e,id){
+
+$("visitForm").addEventListener("submit", async e=>{
   e.preventDefault();
-  const input=document.getElementById("file-"+id);
-  const box=document.getElementById("aiResult");
-  if(!input.files.length) return;
-  box.className="result"; box.textContent="⏳ Đang tải ảnh và cho AI Vision phân tích...";
-  const fd=new FormData(); fd.append("file",input.files[0]);
+  const fd=new FormData(e.target);
+  setState($("visitState"),"⏳ Đang tạo Site Visit...","loading");
   try{
-    const r=await fetch(`/api/v1/visits/${id}/photos`,{method:"POST",body:fd});
+    const r=await fetch("/api/v1/visits",{method:"POST",body:fd});
     const j=await r.json();
-    if(!r.ok) throw new Error(j.detail || "Không thể phân tích ảnh");
+    if(!r.ok) throw new Error(j.detail||"Không tạo được Site Visit");
+    currentVisitId=j.visit_id;
+    $("photoInput").disabled=false;
+    $("recordBtn").disabled=false;
+    setState($("visitState"),`✅ Đang kiểm tra #${currentVisitId} · ${j.floor} · ${j.zone} · ${j.work}`,"ok");
+    setState($("captureStatus"),"Sẵn sàng. Chụp ảnh hoặc bấm GHI NHẬN.","ok");
+  }catch(err){ setState($("visitState"),"❌ "+err.message,"error"); }
+});
+
+$("photoInput").addEventListener("change", async ()=>{
+  if(!currentVisitId || !$("photoInput").files.length) return;
+  const file=$("photoInput").files[0];
+  $("aiResult").className="result loading";
+  $("aiResult").textContent="⏳ Đang tải ảnh và cho AI Vision phân tích...";
+  setState($("captureStatus"),"⏳ AI đang phân tích ảnh...","loading");
+  const fd=new FormData(); fd.append("file",file);
+  try{
+    const r=await fetch(`/api/v1/visits/${currentVisitId}/photos`,{method:"POST",body:fd});
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.detail||"Không thể phân tích ảnh");
     renderAI(j);
+    setState($("captureStatus"),"✅ Đã lưu ảnh và kết quả AI.","ok");
   }catch(err){
-    box.innerHTML="<b>❌ Lỗi:</b> "+escapeHtml(err.message);
+    $("aiResult").innerHTML="<b>❌ Lỗi:</b> "+escapeHtml(err.message);
+    setState($("captureStatus"),"❌ "+err.message,"error");
+  }finally{ $("photoInput").value=""; }
+});
+
+$("recordBtn").addEventListener("click", async ()=>{
+  if(!currentVisitId) return;
+  if(recorder && recorder.state==="recording"){
+    recorder.stop();
+    return;
+  }
+  if(!navigator.mediaDevices?.getUserMedia){
+    setState($("voiceResult"),"Trình duyệt không hỗ trợ ghi âm.","error"); return;
+  }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    chunks=[];
+    recorder=new MediaRecorder(stream);
+    recorder.ondataavailable=e=>{if(e.data.size) chunks.push(e.data)};
+    recorder.onstop=async()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      const blob=new Blob(chunks,{type:recorder.mimeType||"audio/webm"});
+      await uploadVoice(blob);
+    };
+    recorder.start();
+    $("recordBtn").classList.add("recording");
+    $("recordBtn").querySelector("small").textContent="Đang ghi... bấm để dừng";
+    setState($("captureStatus"),"🎤 Đang ghi giọng nói...","loading");
+  }catch(err){ setState($("voiceResult"),"❌ Không truy cập được microphone: "+err.message,"error"); }
+});
+
+async function uploadVoice(blob){
+  const ext=blob.type.includes("mp4")?".mp4":".webm";
+  const fd=new FormData();
+  fd.append("file",blob,"tvgs_voice"+ext);
+  $("voiceResult").className="voice-result loading";
+  $("voiceResult").textContent="⏳ Đang xử lý ghi âm...";
+  try{
+    const r=await fetch(`/api/v1/visits/${currentVisitId}/voice`,{method:"POST",body:fd});
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.detail||"Không xử lý được voice");
+    $("voiceResult").className="voice-result";
+    $("voiceResult").innerHTML=`<strong>Transcript:</strong><p>${escapeHtml(j.transcript||"Không nhận được nội dung.")}</p><a class="evidence-link" href="${j.path}" target="_blank">🎧 Mở file ghi âm</a>`;
+    setState($("captureStatus"),"✅ Đã lưu ghi nhận bằng giọng nói.","ok");
+  }catch(err){
+    $("voiceResult").innerHTML="<b>❌ Lỗi:</b> "+escapeHtml(err.message);
+    setState($("captureStatus"),"❌ "+err.message,"error");
+  }finally{
+    $("recordBtn").classList.remove("recording");
+    $("recordBtn").querySelector("small").textContent="Giọng nói TVGS";
   }
 }
+
 async function daily(){
-  const r=await fetch("/api/v1/reports/daily");
-  document.getElementById("report").textContent=JSON.stringify(await r.json(),null,2);
+  $("report").className="report loading";
+  $("report").textContent="⏳ Đang tổng hợp...";
+  try{
+    const r=await fetch("/api/v1/reports/daily");
+    const j=await r.json();
+    $("report").className="report";
+    $("report").innerHTML=`
+      <div class="report-stats">
+        <div><b>${j.visit_count}</b><span>Lần kiểm tra</span></div>
+        <div><b>${j.photo_count}</b><span>Ảnh</span></div>
+        <div><b>${j.voice_count}</b><span>Voice</span></div>
+        <div><b>${j.analyzed_photo_count}</b><span>Ảnh AI</span></div>
+      </div>
+      <p><strong>Chất lượng:</strong>
+        OK ${j.quality.OK} · Attention ${j.quality.ATTENTION} · Defect ${j.quality.DEFECT} · Pending ${j.quality.PENDING}
+      </p>
+      <details><summary>Xem dữ liệu bằng chứng</summary><pre>${escapeHtml(JSON.stringify(j,null,2))}</pre></details>
+    `;
+  }catch(err){ $("report").textContent="❌ "+err.message; }
 }
 </script>
 </body>
