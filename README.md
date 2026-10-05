@@ -56,3 +56,18 @@ Open from a phone on the same Wi-Fi:
 ## Important
 
 This is a field-trial prototype, not a production safety/quality certification system. AI observations must be reviewed by the site engineer/inspector before contractual decisions are made.
+
+## Kata — Triển khai bản vẽ kết cấu (`/kata`)
+
+Module tham khảo quy trình KataPro: nhập cấu kiện → tự động bố trí thép → bản vẽ → thống kê thép.
+
+- **Dầm** nhiều nhịp: thép dưới (1) theo nhịp, thép trên chạy suốt (2), thép mũ gối (3), đai (4) dày L/4 hai đầu nhịp.
+- **Cột**: thép dọc có đoạn nối chồng 40d, đai gia cường max(b, h, H/6, 500) ở chân/đỉnh, đai móc khi cạnh > 3 thanh.
+- Bản vẽ mặt đứng + mặt cắt (SVG trên web), **xuất DXF** mở bằng AutoCAD/ZWCAD (layer BETONG, THEP, THEP_DAI, KICH_THUOC…).
+- **Bảng thống kê thép** (số hiệu, hình dạng, Ø, chiều dài, số lượng, khối lượng), tổng hợp theo Ø và nhóm D≤10 / 10<D≤18 / D>18, bê tông m³, cốp pha m² — **xuất CSV** mở bằng Excel.
+
+Quy ước cấu tạo được đơn giản hoá (xem đầu file `app/kata/members.py`); kỹ sư cần kiểm tra lại theo TCVN 5574:2018 và hồ sơ thiết kế.
+
+API: `POST /api/v1/kata/calc`, `/api/v1/kata/export.dxf`, `/api/v1/kata/export.csv` — body `{"project": "...", "members": [{"type": "beam", ...}, {"type": "column", ...}]}`.
+
+Test: `pip install pytest && pytest`

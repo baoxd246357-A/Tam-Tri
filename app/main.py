@@ -12,6 +12,8 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from google import genai
 from google.genai import types
 
+from app.kata import router as kata_router
+
 BASE = Path(__file__).resolve().parent.parent
 load_dotenv(BASE / ".env")
 
@@ -89,6 +91,8 @@ app.mount("/static", StaticFiles(directory=str(BASE / "app/static")), name="stat
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS)), name="uploads")
 app.mount("/evidence", StaticFiles(directory=str(EVIDENCE)), name="evidence")
 templates = Jinja2Templates(directory=str(BASE / "app/templates"))
+app.state.templates = templates
+app.include_router(kata_router)
 
 
 def get_client():
@@ -247,6 +251,7 @@ Return ONLY JSON:
             },
         ),
     )
+)
     raw = response.text
     return json.loads(clean_json_text(raw))
 
@@ -407,7 +412,7 @@ async def upload_voice(visit_id: int, file: UploadFile = File(...)):
         result = transcribe_voice(path, content_type, context)
         voice.transcript = result.get("transcript", "")
         voice.ai_status = "ANALYZED"
-       except Exception as e:
+    except Exception as e:
         if is_retryable_ai_error(e):
             voice.ai_status = "FAILED_RETRYABLE"
             voice.transcript = (

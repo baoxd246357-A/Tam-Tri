@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>Kata — Triển khai kết cấu</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="eyebrow">AI TVGS TÂM TRÍ · KATA</div>
+    <h1>📐 Triển khai bản vẽ kết cấu</h1>
+    <p>Nhập dầm / cột → bản vẽ bố trí thép, mặt cắt → bảng thống kê thép → xuất DXF (AutoCAD) &amp; CSV (Excel).</p>
+  </div>
+  <a class="badge" href="/">← HIỆN TRƯỜNG</a>
+</header>
+
+<main class="kata-main">
+<section class="card">
+  <div class="section-title"><span>🏗️</span><h3>Công trình</h3></div>
+  <input id="project" value="Bệnh viện Tâm Trí" placeholder="Tên công trình">
+</section>
+
+<section class="card">
+  <div class="tabs">
+    <button type="button" class="tab active" data-tab="beam">Dầm</button>
+    <button type="button" class="tab" data-tab="column">Cột</button>
+  </div>
+
+  <form id="beamForm" class="kata-form" data-type="beam">
+    <div class="fields">
+      <label>Tên dầm<input name="name" value="D1"></label>
+      <label>Số lượng CK<input name="count" type="number" value="1" min="1"></label>
+      <label>b (mm)<input name="b" type="number" value="220"></label>
+      <label>h (mm)<input name="h" type="number" value="400"></label>
+      <label>Lớp BT bảo vệ<input name="cover" type="number" value="25"></label>
+      <label class="wide">Nhịp thông thuỷ (mm, cách nhau dấu phẩy)<input name="spans" value="4500, 3600"></label>
+      <label class="wide">Bề rộng gối/cột (mm, 1 giá trị hoặc theo từng gối)<input name="supports" value="220"></label>
+    </div>
+    <h4>Cốt thép</h4>
+    <div class="fields">
+      <label>(1) Dưới: số thanh<input name="bottom_n" type="number" value="2" min="1"></label>
+      <label>Ø<select name="bottom_d" data-d="18"></select></label>
+      <label>(2) Trên: số thanh<input name="top_n" type="number" value="2" min="1"></label>
+      <label>Ø<select name="top_d" data-d="16"></select></label>
+      <label>(3) Mũ gối: số thanh (0 = không)<input name="add_n" type="number" value="2" min="0"></label>
+      <label>Ø<select name="add_d" data-d="16"></select></label>
+      <label>(4) Đai Ø<select name="sd" data-d="8"></select></label>
+      <label>Bước đai gối s1<input name="s1" type="number" value="100"></label>
+      <label>Bước đai nhịp s2<input name="s2" type="number" value="200"></label>
+    </div>
+    <button class="primary full" type="submit">➕ THÊM DẦM</button>
+  </form>
+
+  <form id="columnForm" class="kata-form" data-type="column" hidden>
+    <div class="fields">
+      <label>Tên cột<input name="name" value="C1"></label>
+      <label>Số lượng CK<input name="count" type="number" value="1" min="1"></label>
+      <label>b (mm)<input name="b" type="number" value="300"></label>
+      <label>h (mm)<input name="h" type="number" value="300"></label>
+      <label>Chiều cao tầng (mm)<input name="height" type="number" value="3300"></label>
+      <label>Lớp BT bảo vệ<input name="cover" type="number" value="25"></label>
+    </div>
+    <h4>Cốt thép</h4>
+    <div class="fields">
+      <label>Thanh cạnh b (kể góc)<input name="nx" type="number" value="3" min="2"></label>
+      <label>Thanh cạnh h (kể góc)<input name="ny" type="number" value="3" min="2"></label>
+      <label>Ø dọc<select name="d" data-d="18"></select></label>
+      <label>Đai Ø<select name="sd" data-d="8"></select></label>
+      <label>Bước đai s1<input name="s1" type="number" value="100"></label>
+      <label>Bước đai s2<input name="s2" type="number" value="200"></label>
+    </div>
+    <button class="primary full" type="submit">➕ THÊM CỘT</button>
+  </form>
+  <div id="formState" class="state muted">Thêm cấu kiện để tạo bản vẽ.</div>
+</section>
+
+<section class="card">
+  <div class="section-title"><span>📋</span><h3>Danh sách cấu kiện</h3></div>
+  <div id="memberList" class="muted">Chưa có cấu kiện.</div>
+  <div class="export-row">
+    <button type="button" id="dxfBtn" disabled>⬇️ Xuất DXF (AutoCAD)</button>
+    <button type="button" id="csvBtn" disabled>⬇️ Xuất CSV (Excel)</button>
+  </div>
+</section>
+
+<section class="card" id="summaryCard" hidden>
+  <div class="section-title"><span>📊</span><h3>Tổng hợp khối lượng</h3></div>
+  <div id="summary"></div>
+</section>
+
+<div id="drawings"></div>
+</main>
+
+<script>
+const DIAMETERS = {{ diameters | list | tojson }};
+const STORE_KEY = "kata.members.v1";
+let members = [];
+try { members = JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); } catch (e) { members = []; }
+
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(members)); } catch (e) {}
+}
+
+document.querySelectorAll("select[data-d]").forEach(sel => {
+  sel.innerHTML = DIAMETERS.map(d => `<option value="${d}">Ø${d}</option>`).join("");
+  sel.value = sel.dataset.d;
+});
+
+document.querySelectorAll(".tab").forEach(tab => tab.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t === tab));
+  document.querySelectorAll(".kata-form").forEach(f => f.hidden = f.dataset.type !== tab.dataset.tab);
+}));
+
+const nums = s => s.split(/[,;\s]+/).filter(Boolean).map(Number);
+
+function readForm(form) {
+  const v = Object.fromEntries(new FormData(form));
+  const n = k => Number(v[k]);
+  const stirrup = {d: n("sd"), s1: n("s1"), s2: n("s2")};
+  if (form.dataset.type === "beam") {
+    return {
+      type: "beam", name: v.name, count: n("count"), b: n("b"), h: n("h"), cover: n("cover"),
+      spans: nums(v.spans), supports: nums(v.supports),
+      bottom: {n: n("bottom_n"), d: n("bottom_d")},
+      top: {n: n("top_n"), d: n("top_d")},
+      top_add: n("add_n") > 0 ? {n: n("add_n"), d: n("add_d")} : null,
+      stirrup,
+    };
+  }
+  return {
+    type: "column", name: v.name, count: n("count"), b: n("b"), h: n("h"), height: n("height"),
+    cover: n("cover"), nx: n("nx"), ny: n("ny"), d: n("d"), stirrup,
+  };
+}
+
+const state = document.getElementById("formState");
+function setState(msg, cls) { state.className = "state " + cls; state.textContent = msg; }
+
+function errorText(data) {
+  if (Array.isArray(data.detail)) {
+    return data.detail.map(e => `${e.loc.slice(2).join(".") || "dữ liệu"}: ${e.msg}`).join("; ");
+  }
+  return data.detail || "Lỗi không xác định";
+}
+
+async function post(path, body) {
+  const res = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+  if (!res.ok) throw new Error(errorText(await res.json().catch(() => ({}))));
+  return res;
+}
+
+const payload = list => ({project: document.getElementById("project").value || "Công trình", members: list});
+
+document.querySelectorAll(".kata-form").forEach(form => form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const m = readForm(form);
+  try {
+    await post("/api/v1/kata/calc", payload([m]));  // kiểm tra dữ liệu trước khi thêm
+    const i = members.findIndex(x => x.name === m.name && x.type === m.type);
+    if (i >= 0) members[i] = m; else members.push(m);
+    save();
+    setState(`Đã ${i >= 0 ? "cập nhật" : "thêm"} ${m.type === "beam" ? "dầm" : "cột"} ${m.name}.`, "ok");
+    render();
+  } catch (err) { setState("❌ " + err.message, "error"); }
+}));
+
+function fmt(x, digits = 2) { return Number(x).toLocaleString("vi-VN", {maximumFractionDigits: digits}); }
+
+function renderList() {
+  const box = document.getElementById("memberList");
+  document.getElementById("dxfBtn").disabled = document.getElementById("csvBtn").disabled = !members.length;
+  if (!members.length) { box.className = "muted"; box.textContent = "Chưa có cấu kiện."; return; }
+  box.className = "";
+  box.innerHTML = members.map((m, i) => `
+    <div class="member-row">
+      <div><b>${m.type === "beam" ? "Dầm" : "Cột"} ${escapeHtml(m.name)}</b>
+        <small>${m.b}×${m.h} · SL ${m.count}${m.type === "beam" ? " · nhịp " + m.spans.join("/") : " · H=" + m.height}</small></div>
+      <div class="row-actions">
+        <button type="button" data-edit="${i}">Sửa</button>
+        <button type="button" data-del="${i}" class="danger">Xoá</button>
+      </div>
+    </div>`).join("");
+}
+
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+document.getElementById("memberList").addEventListener("click", e => {
+  const del = e.target.dataset.del, edit = e.target.dataset.edit;
+  if (del !== undefined) { members.splice(Number(del), 1); save(); render(); }
+  if (edit !== undefined) fillForm(members[Number(edit)]);
+});
+
+function fillForm(m) {
+  document.querySelector(`.tab[data-tab="${m.type}"]`).click();
+  const f = document.getElementById(m.type + "Form");
+  const set = (k, v) => { if (f.elements[k]) f.elements[k].value = v; };
+  ["name", "count", "b", "h", "cover", "height", "nx", "ny", "d"].forEach(k => m[k] !== undefined && set(k, m[k]));
+  set("sd", m.stirrup.d); set("s1", m.stirrup.s1); set("s2", m.stirrup.s2);
+  if (m.type === "beam") {
+    set("spans", m.spans.join(", ")); set("supports", m.supports.join(", "));
+    set("bottom_n", m.bottom.n); set("bottom_d", m.bottom.d);
+    set("top_n", m.top.n); set("top_d", m.top.d);
+    set("add_n", m.top_add ? m.top_add.n : 0); if (m.top_add) set("add_d", m.top_add.d);
+  }
+  f.scrollIntoView({behavior: "smooth"});
+}
+
+async function render() {
+  renderList();
+  const out = document.getElementById("drawings");
+  const card = document.getElementById("summaryCard");
+  if (!members.length) { out.innerHTML = ""; card.hidden = true; return; }
+  try {
+    const data = await (await post("/api/v1/kata/calc", payload(members))).json();
+    card.hidden = false;
+    const s = data.summary;
+    document.getElementById("summary").innerHTML = `
+      <div class="report-stats">
+        <div><b>${fmt(s.steel_total_kg, 1)}</b><span>Thép (kg)</span></div>
+        <div><b>${fmt(s.concrete_m3, 3)}</b><span>Bê tông (m³)</span></div>
+        <div><b>${fmt(s.formwork_m2, 1)}</b><span>Cốp pha (m²)</span></div>
+        <div><b>${members.length}</b><span>Loại cấu kiện</span></div>
+      </div>
+      <table class="kata-table"><thead><tr><th>Nhóm thép</th><th>kg</th></tr></thead><tbody>
+        ${Object.entries(s.steel_by_diameter_kg).map(([k, v]) => `<tr><td>${k}</td><td>${fmt(v)}</td></tr>`).join("")}
+        ${Object.entries(s.steel_by_group_kg).map(([k, v]) => `<tr class="sub"><td>Thép ${escapeHtml(k)}</td><td>${fmt(v)}</td></tr>`).join("")}
+      </tbody></table>`;
+    out.innerHTML = data.members.map(m => `
+      <section class="card">
+        <div class="section-title"><span>${m.type === "beam" ? "➖" : "▮"}</span>
+          <h3>${m.type === "beam" ? "Dầm" : "Cột"} ${escapeHtml(m.name)} · ${fmt(m.steel_kg, 1)} kg thép</h3></div>
+        <div class="drawing">${m.svg}</div>
+        <div class="table-wrap"><table class="kata-table">
+          <thead><tr><th>SH</th><th>Hình dạng</th><th>Ø</th><th>Dài 1 thanh (mm)</th><th>SL/CK</th><th>Tổng SL</th><th>Tổng dài (m)</th><th>KL (kg)</th><th>Ghi chú</th></tr></thead>
+          <tbody>${m.schedule.map(r => `<tr><td>${r.mark}</td><td>${r.shape}</td><td>${r.d}</td><td>${fmt(r.length, 0)}</td>
+            <td>${r.n_per_member}</td><td>${r.n_total}</td><td>${fmt(r.total_length_m)}</td><td>${fmt(r.weight_kg)}</td><td>${escapeHtml(r.note)}</td></tr>`).join("")}</tbody>
+        </table></div>
+      </section>`).join("");
+  } catch (err) { setState("❌ " + err.message, "error"); }
+}
+
+async function download(path, filename) {
+  try {
+    const blob = await (await post(path, payload(members))).blob();
+    const a = Object.assign(document.createElement("a"), {href: URL.createObjectURL(blob), download: filename});
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (err) { setState("❌ " + err.message, "error"); }
+}
+document.getElementById("dxfBtn").onclick = () => download("/api/v1/kata/export.dxf", "kata_ban_ve.dxf");
+document.getElementById("csvBtn").onclick = () => download("/api/v1/kata/export.csv", "kata_thong_ke_thep.csv");
+
+render();
+</script>
+</body>
+</html>
