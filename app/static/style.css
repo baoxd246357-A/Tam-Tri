@@ -8,7 +8,7 @@ h3{margin:0;font-size:19px}
 p{line-height:1.5}
 .eyebrow{font-size:11px;letter-spacing:1.4px;opacity:.75;font-weight:700}
 .topbar p{margin:5px 0 0;opacity:.9}
-.badge{background:#fff;color:#111827;padding:7px 10px;border-radius:999px;font-size:10px;font-weight:800;white-space:nowrap}
+.badge{text-decoration:none;background:#fff;color:#111827;padding:7px 10px;border-radius:999px;font-size:10px;font-weight:800;white-space:nowrap}
 main{max-width:900px;margin:auto;padding:14px 16px 80px}
 .hero{padding:10px 2px 8px}
 .hero p{color:#59636f;margin-top:0}

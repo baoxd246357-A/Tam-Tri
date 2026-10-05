@@ -56,3 +56,36 @@ Open from a phone on the same Wi-Fi:
 ## Important
 
 This is a field-trial prototype, not a production safety/quality certification system. AI observations must be reviewed by the site engineer/inspector before contractual decisions are made.
+
+## Module BOQ — `/boq`
+
+Quy trình lập BOQ rút gọn: **Bản vẽ → Shopdrawing → 3D → Thống kê → Bóc khối lượng → Excel**.
+Mở `http://localhost:8000/boq` (hoặc nút **📐 BOQ** ở trang hiện trường).
+
+| Bước | Làm gì | Ghi chú |
+|---|---|---|
+| 1. Bản vẽ | Nhập cấu kiện bằng 1 trong 3 cách: **DXF** (CAD), **mẫu Excel**, hoặc **ảnh/PDF + AI đọc** | Kết quả luôn qua bảng *Kiểm tra trước khi thêm* để kỹ sư duyệt |
+| 2. Shopdrawing | Sửa/thêm cấu kiện theo tham số; xem bản vẽ chi tiết (mặt cắt, mặt đứng, kích thước mm) | SVG, mở tab mới để in |
+| 3. 3D | Mô hình khối 3D, lọc theo tầng, chạm để xem mã cấu kiện | three.js được đóng gói sẵn trong `app/static/vendor` (chạy được không cần CDN) |
+| 4. Thống kê | Số lượng theo loại, bê tông/thép/xây theo tầng | |
+| 5. Bóc KL | Bảng tổng hợp BOQ + diễn giải từng cấu kiện; nhập đơn giá → thành tiền | |
+| 6. Excel | 3 sheet: `TongHop_BOQ`, `ChiTiet`, `ThongKe_CauKien` | Khối lượng là **công thức sống** (`=6*0.3*0.3*3.6`, `=SUMIF(...)`) để kiểm tra/sửa trực tiếp |
+
+**Loại cấu kiện hỗ trợ:** Móng đơn, Cột, Dầm, Sàn, Tường xây, Nền/Lát, Khác (nhập khối lượng trực tiếp).
+Mỗi cấu kiện có `Số lượng` và `Bước X/Y` — một dòng "C1 × 6, bước 6 m" thay cho 6 dòng.
+
+**Quy ước tính (mặc định, sửa được theo tham số):**
+- Đơn vị mét. Cột: nhập chiều cao thông thủy tới đáy dầm/sàn. Dầm: bê tông = b×(h − dày sàn)×L (phần giao với sàn tính vào sàn).
+- Ván khuôn dầm = (b + 2(h − t))×L; cột = 2(b+h)×H; móng = 2(L+B)×H; sàn = L×B.
+- Móng: đào đất (L+2a)(B+2a)×sâu, bê tông lót (L+0.2)(B+0.2)×dày.
+- Tường: xây = (L×H − lỗ cửa)×dày; trát/sơn = (L×H − lỗ cửa)×số mặt.
+- **Cốt thép là ước tính theo hàm lượng kg/m3** — thay bằng bảng thống kê thép shopdrawing khi có.
+- Cột "Mã hiệu" trong Excel để trống cho người lập điền mã định mức.
+
+**DXF:** polyline kín, tên layer chứa `COT/COL`, `DAM/BEAM`, `SAN/SLAB`, `TUONG/WALL`, `MONG/FOOT`, `NEN/FLOOR`
+(không phân biệt dấu, ví dụ `KC-DẦM`). Hình bao chữ nhật → kích thước; chiều cao lấy theo ô nhập.
+Cấu kiện giống nhau được gộp số lượng; dầm/sàn tự đặt cao độ ngang đỉnh cột.
+
+**AI đọc bản vẽ** dùng `GEMINI_API_KEY` sẵn có. AI chỉ đề xuất — luôn kiểm tra kích thước trước khi thêm.
+
+Chạy test: `pip install pytest httpx && python -m pytest -q tests`

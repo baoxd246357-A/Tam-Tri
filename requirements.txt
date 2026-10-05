@@ -6,3 +6,5 @@ sqlalchemy
 pydantic
 google-genai
 python-dotenv
+openpyxl
+ezdxf

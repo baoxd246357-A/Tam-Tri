@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>BOQ Tâm Trí</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/boq.css">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="eyebrow">AI TVGS TÂM TRÍ · BOQ</div>
+    <h1>📐 Lập BOQ đơn giản</h1>
+    <p>Bản vẽ → Shopdrawing → 3D → Thống kê → Bóc khối lượng → Excel</p>
+  </div>
+  <a class="badge" href="/">🏗️ HIỆN TRƯỜNG</a>
+</header>
+
+<main class="wide">
+<section class="card">
+  <div class="section-title"><span>📁</span><h3>Dự án</h3></div>
+  <div class="row">
+    <select id="projectSelect"></select>
+    <button type="button" class="ghost" onclick="toggle('newProject')">＋ Dự án mới</button>
+  </div>
+  <form id="newProject" class="hidden grid" style="margin-top:9px">
+    <input name="name" placeholder="Tên công trình" required>
+    <input name="code" placeholder="Mã · VD: PRJ-002">
+    <input name="location" placeholder="Địa điểm">
+    <button class="primary" type="submit">Tạo dự án</button>
+  </form>
+</section>
+
+<nav class="steps" id="steps">
+  <button data-step="1" class="active"><b>1</b>Bản vẽ</button>
+  <button data-step="2"><b>2</b>Shopdrawing</button>
+  <button data-step="3"><b>3</b>3D</button>
+  <button data-step="4"><b>4</b>Thống kê</button>
+  <button data-step="5"><b>5</b>Bóc KL</button>
+  <button data-step="6"><b>6</b>Excel</button>
+</nav>
+
+<!-- STEP 1 · BẢN VẼ -->
+<section class="step" data-step="1">
+  <div class="card">
+    <div class="section-title"><span>🗂️</span><h3>Chọn cách đưa bản vẽ vào</h3></div>
+    <p class="muted small">Ba cách — chọn cách nhanh nhất với hồ sơ đang có. Kết quả luôn hiện ở bảng
+      <b>Kiểm tra trước khi thêm</b> để kỹ sư duyệt.</p>
+    <div class="cols3">
+      <div class="sub">
+        <h4>A · File CAD (DXF)</h4>
+        <p class="small muted">Polyline kín trên layer có tên chứa COT / DAM / SAN / TUONG / MONG / NEN
+          (hoặc COL, BEAM, SLAB, WALL…) được nhận thành cấu kiện. Cấu kiện giống nhau tự gộp số lượng.</p>
+        <form id="dxfForm">
+          <input type="file" name="file" accept=".dxf" required>
+          <div class="grid2">
+            <label>Đơn vị<select name="unit"><option>mm</option><option>cm</option><option>m</option></select></label>
+            <label>Tầng<input name="floor" placeholder="L01"></label>
+            <label>Cao độ Z (m)<input name="z" value="0"></label>
+            <label>Cao cột (m)<input name="H_cot" value="3.6"></label>
+            <label>Cao dầm (m)<input name="h_dam" value="0.5"></label>
+            <label>Dày sàn (m)<input name="t_san" value="0.12"></label>
+            <label>Cao tường (m)<input name="H_tuong" value="3.2"></label>
+            <label>Cao móng (m)<input name="H_mong" value="0.5"></label>
+          </div>
+          <button class="primary full" type="submit">Đọc DXF</button>
+        </form>
+      </div>
+      <div class="sub">
+        <h4>B · Mẫu Excel</h4>
+        <p class="small muted">Tải mẫu, điền mỗi dòng một nhóm cấu kiện (loại, mã, số lượng, kích thước),
+          rồi nhập lại. Phù hợp khi đọc bản vẽ PDF bằng mắt.</p>
+        <a class="button ghost full" href="/api/v1/boq/template.xlsx">⬇️ Tải file mẫu</a>
+        <form id="excelForm">
+          <input type="file" name="file" accept=".xlsx" required>
+          <button class="primary full" type="submit">Nhập từ Excel</button>
+        </form>
+      </div>
+      <div class="sub">
+        <h4>C · Ảnh / PDF bản vẽ + AI</h4>
+        <p class="small muted">Tải bản vẽ lên để lưu hồ sơ. Bấm <b>AI đọc</b> để AI đề xuất danh sách
+          cấu kiện (cần GEMINI_API_KEY). Luôn kiểm tra lại kích thước.</p>
+        <form id="drawingForm">
+          <input name="title" placeholder="Tên bản vẽ · VD: KC-03 Mặt bằng dầm sàn L01">
+          <input type="file" name="file" accept="image/*,application/pdf" required>
+          <button class="primary full" type="submit">Tải bản vẽ lên</button>
+        </form>
+        <div id="drawings" class="drawings"></div>
+      </div>
+    </div>
+    <div id="step1State" class="state muted">Chưa đọc bản vẽ.</div>
+  </div>
+
+  <div class="card hidden" id="candidateCard">
+    <div class="section-title"><span>✅</span><h3>Kiểm tra trước khi thêm</h3></div>
+    <div id="candidateNotes" class="small muted"></div>
+    <div class="table-wrap"><table id="candidateTable"></table></div>
+    <div class="row">
+      <button class="primary" type="button" onclick="acceptCandidates()">Thêm cấu kiện đã chọn</button>
+      <button class="ghost" type="button" onclick="clearCandidates()">Bỏ</button>
+    </div>
+  </div>
+</section>
+
+<!-- STEP 2 · SHOPDRAWING -->
+<section class="step hidden" data-step="2">
+  <div class="split">
+    <div class="card">
+      <div class="section-title"><span>✏️</span><h3 id="elFormTitle">Thêm cấu kiện</h3></div>
+      <form id="elForm">
+        <input type="hidden" name="eid">
+        <div class="grid2">
+          <label>Loại<select name="type" id="elType"></select></label>
+          <label>Mã CK<input name="code" placeholder="C1"></label>
+          <label>Tầng<input name="floor" placeholder="L01"></label>
+          <label>Số lượng<input name="n" value="1" inputmode="numeric"></label>
+          <label>Mác BT / VL<input name="grade" placeholder="B22.5"></label>
+        </div>
+        <div id="khacFields" class="grid2 hidden">
+          <label>Tên công việc<input name="item_name" placeholder="Cửa đi D1"></label>
+          <label>Đơn vị<input name="unit" placeholder="bộ"></label>
+        </div>
+        <h4>Kích thước</h4>
+        <div id="paramFields" class="grid2"></div>
+        <details>
+          <summary>Vị trí trên mô hình 3D</summary>
+          <p class="small muted">Cột/móng: X,Y = tâm. Dầm/tường: X,Y = điểm đầu trục. Sàn/nền: X,Y = góc trái dưới.
+            Số lượng &gt; 1 sẽ rải theo bước X/Y.</p>
+          <div class="grid2">
+            <label>X (m)<input name="x" value="0"></label>
+            <label>Y (m)<input name="y" value="0"></label>
+            <label>Z cao độ đáy (m)<input name="z" value="0"></label>
+            <label>Bước X (m)<input name="dx" value="0"></label>
+            <label>Bước Y (m)<input name="dy" value="0"></label>
+          </div>
+        </details>
+        <div class="row">
+          <button class="primary" type="submit" id="elSubmit">Lưu cấu kiện</button>
+          <button class="ghost" type="button" onclick="resetElForm()">Mới</button>
+        </div>
+        <div id="elState" class="state muted hidden"></div>
+      </form>
+    </div>
+    <div class="card">
+      <div class="section-title"><span>📄</span><h3>Shopdrawing chi tiết</h3></div>
+      <div id="shopView" class="shop muted">Chọn một cấu kiện trong danh sách để xem bản vẽ chi tiết.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title"><span>🧱</span><h3>Danh sách cấu kiện</h3></div>
+    <div class="row"><input id="elFilter" placeholder="Lọc theo mã / tầng / loại…"></div>
+    <div class="table-wrap"><table id="elTable"></table></div>
+  </div>
+</section>
+
+<!-- STEP 3 · 3D -->
+<section class="step hidden" data-step="3">
+  <div class="card">
+    <div class="section-title"><span>🧊</span><h3>Mô hình 3D</h3></div>
+    <div class="row">
+      <select id="floorFilter"><option value="">Tất cả tầng</option></select>
+      <button class="ghost" type="button" onclick="fitView()">Vừa khung</button>
+      <span id="pick" class="small muted">Kéo để xoay · cuộn để phóng · chạm cấu kiện để xem mã.</span>
+    </div>
+    <div id="viewer" class="viewer"></div>
+    <div id="legend" class="legend"></div>
+  </div>
+</section>
+
+<!-- STEP 4 · THỐNG KÊ -->
+<section class="step hidden" data-step="4">
+  <div class="card">
+    <div class="section-title"><span>📊</span><h3>Thống kê cấu kiện</h3></div>
+    <div id="statTotals" class="report-stats"></div>
+    <div class="cols2">
+      <div><h4>Theo loại</h4><div class="table-wrap"><table id="statType"></table></div></div>
+      <div><h4>Theo tầng</h4><div class="table-wrap"><table id="statFloor"></table></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- STEP 5 · BÓC KHỐI LƯỢNG -->
+<section class="step hidden" data-step="5">
+  <div class="card">
+    <div class="section-title"><span>🧮</span><h3>Bảng tổng hợp khối lượng</h3></div>
+    <p class="small muted">Nhập đơn giá (tuỳ chọn) để có thành tiền. Cốt thép là ước tính theo hàm lượng kg/m3.</p>
+    <div class="table-wrap"><table id="boqTable"></table></div>
+    <button class="primary" type="button" onclick="savePrices()">💾 Lưu đơn giá</button>
+    <span id="priceState" class="small muted"></span>
+  </div>
+  <div class="card">
+    <details>
+      <summary>Diễn giải chi tiết từng cấu kiện</summary>
+      <div class="table-wrap"><table id="lineTable"></table></div>
+    </details>
+  </div>
+</section>
+
+<!-- STEP 6 · EXCEL -->
+<section class="step hidden" data-step="6">
+  <div class="card">
+    <div class="section-title"><span>📗</span><h3>Xuất Excel</h3></div>
+    <p>File gồm 3 sheet, công thức được giữ nguyên để kiểm tra:</p>
+    <ul>
+      <li><b>TongHop_BOQ</b> — STT, Mã hiệu (điền định mức), Nội dung, Đơn vị, Khối lượng
+        (=SUMIF liên kết sheet chi tiết), Đơn giá, Thành tiền.</li>
+      <li><b>ChiTiet</b> — diễn giải từng cấu kiện, khối lượng là công thức <code>=SL*kích thước</code>.</li>
+      <li><b>ThongKe_CauKien</b> — danh sách cấu kiện, kích thước, bê tông, tổng hợp theo tầng.</li>
+    </ul>
+    <a id="exportLink" class="button primary full" href="#">⬇️ TẢI FILE BOQ EXCEL</a>
+  </div>
+</section>
+</main>
+
+<script src="/static/vendor/three/three.min.js"></script>
+<script src="/static/vendor/three/OrbitControls.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const API = "/api/v1/boq";
+let CAT = null, PROJECT = null, CANDIDATES = [], STEP = 1;
+
+function esc(s){return String(s ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));}
+function num(v,d=3){return Number(v||0).toLocaleString("vi-VN",{maximumFractionDigits:d});}
+function toggle(id){$(id).classList.toggle("hidden");}
+function setState(el,text,type="muted"){el.classList.remove("hidden");el.className="state "+type;el.textContent=text;}
+
+async function api(path,opts={}){
+  const r=await fetch(API+path,opts);
+  const ct=r.headers.get("content-type")||"";
+  const j=ct.includes("json")?await r.json():await r.text();
+  if(!r.ok) throw new Error((j&&j.detail)||r.statusText);
+  return j;
+}
+const jsonOpts=(method,body)=>({method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+
+/* ---------- projects ---------- */
+async function loadProjects(selectId){
+  const list=await api("/projects");
+  if(!list.length){
+    await api("/projects",jsonOpts("POST",{name:"Công trình mẫu",code:"BOQ-001",location:""}));
+    return loadProjects();
+  }
+  const saved=selectId||Number(localGet("boqProject"))||list[0].id;
+  $("projectSelect").innerHTML=list.map(p=>`<option value="${p.id}">${esc(p.code?p.code+" · ":"")}${esc(p.name)}</option>`).join("");
+  $("projectSelect").value=list.some(p=>p.id===saved)?saved:list[0].id;
+  await openProject(Number($("projectSelect").value));
+}
+function localGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function localSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+
+async function openProject(id){
+  PROJECT=await api("/projects/"+id);
+  localSet("boqProject",id);
+  $("exportLink").href=`${API}/projects/${id}/export.xlsx`;
+  renderDrawings(); renderElements(); refreshStep();
+}
+$("projectSelect").addEventListener("change",e=>openProject(Number(e.target.value)));
+$("newProject").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const fd=Object.fromEntries(new FormData(e.target));
+  const p=await api("/projects",jsonOpts("POST",fd));
+  e.target.reset(); toggle("newProject"); loadProjects(p.id);
+});
+
+/* ---------- steps ---------- */
+document.querySelectorAll("#steps button").forEach(b=>b.addEventListener("click",()=>goStep(Number(b.dataset.step))));
+function goStep(n){
+  STEP=n;
+  document.querySelectorAll("#steps button").forEach(b=>b.classList.toggle("active",Number(b.dataset.step)===n));
+  document.querySelectorAll("section.step").forEach(s=>s.classList.toggle("hidden",Number(s.dataset.step)!==n));
+  refreshStep();
+}
+function refreshStep(){
+  if(!PROJECT) return;
+  if(STEP===3) load3D();
+  if(STEP===4) loadStats();
+  if(STEP===5) loadTakeoff();
+}
+
+/* ---------- step 1 ---------- */
+function renderDrawings(){
+  $("drawings").innerHTML=(PROJECT.drawings||[]).map(d=>`
+    <div class="drawing">
+      ${d.mime_type.startsWith("image/")?`<img src="${d.path}" alt="">`:`<div class="pdf">PDF</div>`}
+      <div><a href="${d.path}" target="_blank">${esc(d.title)}</a>
+      <button class="ghost small-btn" type="button" onclick="aiExtract(${d.id})">🤖 AI đọc</button></div>
+    </div>`).join("");
+}
+$("drawingForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  setState($("step1State"),"⏳ Đang tải bản vẽ…","loading");
+  try{
+    await api(`/projects/${PROJECT.id}/drawings`,{method:"POST",body:new FormData(e.target)});
+    e.target.reset(); await openProject(PROJECT.id);
+    setState($("step1State"),"✅ Đã lưu bản vẽ. Bấm 🤖 AI đọc để đề xuất cấu kiện.","ok");
+  }catch(err){setState($("step1State"),"❌ "+err.message,"error");}
+});
+async function aiExtract(id){
+  setState($("step1State"),"⏳ AI đang đọc bản vẽ… (có thể mất 20–60 giây)","loading");
+  const fd=new FormData(); fd.append("floor",$("dxfForm").floor.value||"");
+  try{
+    const j=await api(`/drawings/${id}/ai-extract`,{method:"POST",body:fd});
+    showCandidates(j.elements,[...(j.errors||[]),j.notes].filter(Boolean));
+    setState($("step1State"),`✅ AI đề xuất ${j.elements.length} nhóm cấu kiện. Kiểm tra kích thước trước khi thêm.`,"ok");
+  }catch(err){setState($("step1State"),"❌ "+err.message,"error");}
+}
+$("dxfForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  setState($("step1State"),"⏳ Đang đọc DXF…","loading");
+  try{
+    const j=await api(`/projects/${PROJECT.id}/import/dxf`,{method:"POST",body:new FormData(e.target)});
+    const skipped=Object.entries(j.skipped_layers||{}).map(([l,c])=>`Bỏ qua layer "${l}" (${c} đối tượng) — tên layer không khớp loại cấu kiện.`);
+    showCandidates(j.elements,skipped);
+    setState($("step1State"),`✅ Nhận ${j.elements.length} nhóm cấu kiện từ DXF.`,"ok");
+  }catch(err){setState($("step1State"),"❌ "+err.message,"error");}
+});
+$("excelForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  setState($("step1State"),"⏳ Đang đọc Excel…","loading");
+  try{
+    const j=await api(`/projects/${PROJECT.id}/import/excel`,{method:"POST",body:new FormData(e.target)});
+    showCandidates(j.elements,j.errors);
+    setState($("step1State"),`✅ Đọc được ${j.elements.length} dòng.`,j.errors.length?"loading":"ok");
+  }catch(err){setState($("step1State"),"❌ "+err.message,"error");}
+});
+
+function dimsText(el){
+  const spec=CAT.element_types[el.type].params;
+  return spec.filter(p=>!["ham_luong","goc"].includes(p.key)).map(p=>`${p.key}=${el.params[p.key]}`).join(" · ");
+}
+function showCandidates(list,notes){
+  CANDIDATES=list.map(c=>({...c,_on:true}));
+  $("candidateCard").classList.remove("hidden");
+  $("candidateNotes").innerHTML=(notes||[]).map(n=>`<div>⚠️ ${esc(n)}</div>`).join("");
+  $("candidateTable").innerHTML=`<tr><th></th><th>Loại</th><th>Mã</th><th>Tầng</th><th>SL</th><th>Kích thước (m)</th><th>Nguồn</th></tr>`+
+    CANDIDATES.map((c,i)=>`<tr><td><input type="checkbox" checked onchange="CANDIDATES[${i}]._on=this.checked"></td>
+      <td>${esc(CAT.element_types[c.type].label)}</td><td>${esc(c.code)}</td><td>${esc(c.floor)}</td><td>${c.n}</td>
+      <td>${esc(dimsText(c))}</td><td class="small">${esc(c.source||"")}${c.evidence?"<br><i>"+esc(c.evidence)+"</i>":""}</td></tr>`).join("");
+}
+function clearCandidates(){CANDIDATES=[];$("candidateCard").classList.add("hidden");}
+async function acceptCandidates(){
+  const chosen=CANDIDATES.filter(c=>c._on).map(({_on,...c})=>c);
+  if(!chosen.length) return;
+  try{
+    const j=await api(`/projects/${PROJECT.id}/elements`,jsonOpts("POST",{elements:chosen}));
+    clearCandidates(); await openProject(PROJECT.id);
+    setState($("step1State"),`✅ Đã thêm ${j.added} nhóm cấu kiện. Chuyển sang bước 2 để xem shopdrawing.`,"ok");
+  }catch(err){setState($("step1State"),"❌ "+err.message,"error");}
+}
+
+/* ---------- step 2 ---------- */
+function buildTypeSelect(){
+  $("elType").innerHTML=Object.entries(CAT.element_types).map(([k,v])=>`<option value="${k}">${esc(v.label)}</option>`).join("");
+  $("elType").addEventListener("change",()=>renderParamFields());
+  renderParamFields();
+}
+function renderParamFields(values){
+  const t=$("elType").value;
+  $("khacFields").classList.toggle("hidden",t!=="KHAC");
+  $("paramFields").innerHTML=CAT.element_types[t].params.map(p=>
+    `<label>${esc(p.label)}<input name="p_${p.key}" value="${values&&values[p.key]!=null?values[p.key]:p.default}" inputmode="decimal"></label>`).join("");
+}
+function resetElForm(){
+  $("elForm").reset(); $("elForm").eid.value="";
+  $("elFormTitle").textContent="Thêm cấu kiện"; renderParamFields();
+  $("elState").classList.add("hidden");
+}
+function readElForm(){
+  const f=$("elForm"), fd=Object.fromEntries(new FormData(f));
+  const params={};
+  for(const [k,v] of Object.entries(fd)) if(k.startsWith("p_")) params[k.slice(2)]=v;
+  return {type:fd.type,code:fd.code,floor:fd.floor,n:fd.n,grade:fd.grade,x:fd.x,y:fd.y,z:fd.z,dx:fd.dx,dy:fd.dy,
+          item_name:fd.item_name,unit:fd.unit,params};
+}
+$("elForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const body=readElForm(), id=$("elForm").eid.value;
+  try{
+    if(id) await api(`/elements/${id}`,jsonOpts("PUT",body));
+    else await api(`/projects/${PROJECT.id}/elements`,jsonOpts("POST",{elements:[body]}));
+    await openProject(PROJECT.id);
+    const saved=id?Number(id):PROJECT.elements[PROJECT.elements.length-1].id;
+    showShop(saved);
+    if(!id) resetElForm();
+    setState($("elState"),"✅ Đã lưu.","ok");
+  }catch(err){setState($("elState"),"❌ "+err.message,"error");}
+});
+function editElement(id){
+  const el=PROJECT.elements.find(e=>e.id===id); if(!el) return;
+  const f=$("elForm");
+  f.type.value=el.type; renderParamFields(el.params);
+  f.eid.value=el.id;
+  for(const k of ["code","floor","n","grade","x","y","z","dx","dy","item_name","unit"]) f[k].value=el[k]??"";
+  $("elFormTitle").textContent="Sửa "+el.code;
+  showShop(id); f.scrollIntoView({behavior:"smooth"});
+}
+async function deleteElement(id){
+  const el=PROJECT.elements.find(e=>e.id===id);
+  if(!confirm(`Xoá cấu kiện ${el?el.code:id}?`)) return;
+  await api(`/elements/${id}`,{method:"DELETE"});
+  await openProject(PROJECT.id);
+  $("shopView").innerHTML="Chọn một cấu kiện trong danh sách để xem bản vẽ chi tiết.";
+}
+function showShop(id){
+  $("shopView").className="shop";
+  $("shopView").innerHTML=`<img src="${API}/elements/${id}/shop.svg?t=${Date.now()}" alt="Shopdrawing">
+    <a class="evidence-link" href="${API}/elements/${id}/shop.svg" target="_blank">🔎 Mở SVG để in</a>`;
+}
+function renderElements(){
+  const q=($("elFilter").value||"").toLowerCase();
+  const rows=PROJECT.elements.filter(e=>!q||[e.code,e.floor,e.type,CAT.element_types[e.type].label].join(" ").toLowerCase().includes(q));
+  $("elTable").innerHTML=`<tr><th>Mã</th><th>Loại</th><th>Tầng</th><th>SL</th><th>Kích thước (m)</th><th>Mác</th><th></th></tr>`+
+    (rows.length?rows.map(e=>`<tr onclick="showShop(${e.id})" class="clickable">
+      <td><b>${esc(e.code)}</b></td><td>${esc(CAT.element_types[e.type].label)}</td><td>${esc(e.floor)}</td><td>${e.n}</td>
+      <td class="small">${e.type==="KHAC"?esc(e.item_name+" · "+e.params.khoi_luong+" "+e.unit):esc(dimsText(e))}</td><td>${esc(e.grade)}</td>
+      <td class="nowrap"><button class="ghost small-btn" type="button" onclick="event.stopPropagation();editElement(${e.id})">Sửa</button>
+      <button class="ghost small-btn danger" type="button" onclick="event.stopPropagation();deleteElement(${e.id})">Xoá</button></td></tr>`).join("")
+    :`<tr><td colspan="7" class="muted">Chưa có cấu kiện. Nhập ở bước 1 hoặc form bên trên.</td></tr>`);
+}
+$("elFilter").addEventListener("input",renderElements);
+
+/* ---------- step 3 · 3D ---------- */
+let R=null;
+function init3D(){
+  if(R||typeof THREE==="undefined") return;
+  const box=$("viewer");
+  const renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(window.devicePixelRatio);
+  box.appendChild(renderer.domElement);
+  const scene=new THREE.Scene(); scene.background=new THREE.Color(0xf3f5f7);
+  const camera=new THREE.PerspectiveCamera(45,1,0.1,5000);
+  camera.up.set(0,0,1);
+  const controls=new THREE.OrbitControls(camera,renderer.domElement);
+  scene.add(new THREE.AmbientLight(0xffffff,0.65));
+  const sun=new THREE.DirectionalLight(0xffffff,0.6); sun.position.set(50,-80,120); scene.add(sun);
+  const group=new THREE.Group(); scene.add(group);
+  R={renderer,scene,camera,controls,group,meshes:[]};
+  const resize=()=>{const w=box.clientWidth,h=box.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();};
+  window.addEventListener("resize",resize); resize();
+  const ray=new THREE.Raycaster(), mouse=new THREE.Vector2();
+  renderer.domElement.addEventListener("click",ev=>{
+    const r=renderer.domElement.getBoundingClientRect();
+    mouse.set(((ev.clientX-r.left)/r.width)*2-1,-((ev.clientY-r.top)/r.height)*2+1);
+    ray.setFromCamera(mouse,camera);
+    const hit=ray.intersectObjects(R.meshes)[0];
+    if(hit){const b=hit.object.userData;$("pick").textContent=`${b.label} · ${CAT.element_types[b.type].label}${b.floor?" · Tầng "+b.floor:""} · ${b.s.map(v=>v.toFixed(2)).join("×")} m`;}
+  });
+  (function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera);})();
+}
+let MODEL=null;
+async function load3D(){
+  init3D();
+  if(!R){$("viewer").innerHTML="<p class='muted'>Không tải được thư viện 3D.</p>";return;}
+  MODEL=await api(`/projects/${PROJECT.id}/model3d`);
+  const floors=[...new Set(MODEL.boxes.map(b=>b.floor))];
+  const cur=$("floorFilter").value;
+  $("floorFilter").innerHTML=`<option value="">Tất cả tầng</option>`+floors.map(f=>`<option ${f===cur?"selected":""}>${esc(f)}</option>`).join("");
+  draw3D(); fitView();
+  const used=[...new Set(MODEL.boxes.map(b=>b.type))];
+  $("legend").innerHTML=used.map(t=>`<span><i style="background:${CAT.element_types[t].color}"></i>${esc(CAT.element_types[t].label)}</span>`).join("")
+    + (MODEL.boxes.length?"":"<span class='muted'>Chưa có cấu kiện có hình học.</span>");
+}
+function draw3D(){
+  const f=$("floorFilter").value;
+  R.group.clear(); R.meshes=[];
+  for(const b of MODEL.boxes){
+    if(f&&b.floor!==f) continue;
+    const geo=new THREE.BoxGeometry(...b.s);
+    const mat=new THREE.MeshLambertMaterial({color:b.color,transparent:b.type==="SAN"||b.type==="NEN",opacity:b.type==="SAN"?0.75:b.type==="NEN"?0.6:1});
+    const m=new THREE.Mesh(geo,mat);
+    m.position.set(...b.c); m.rotation.z=b.rot*Math.PI/180; m.userData=b;
+    const edges=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0x37474f}));
+    m.add(edges); R.group.add(m); R.meshes.push(m);
+  }
+}
+function fitView(){
+  if(!R) return;
+  const bb=new THREE.Box3().setFromObject(R.group);
+  if(bb.isEmpty()){R.camera.position.set(10,-10,10);R.controls.target.set(0,0,0);return;}
+  const c=bb.getCenter(new THREE.Vector3()), size=bb.getSize(new THREE.Vector3()).length()||10;
+  R.controls.target.copy(c);
+  R.camera.position.set(c.x+size*0.8,c.y-size*0.9,c.z+size*0.7);
+  R.camera.near=size/1000; R.camera.far=size*20; R.camera.updateProjectionMatrix();
+}
+$("floorFilter").addEventListener("change",()=>{draw3D();fitView();});
+
+/* ---------- step 4 ---------- */
+async function loadStats(){
+  const s=await api(`/projects/${PROJECT.id}/stats`), t=s.totals;
+  $("statTotals").innerHTML=`
+    <div><b>${t.elements}</b><span>Cấu kiện</span></div>
+    <div><b>${num(t.concrete,2)}</b><span>Bê tông m3</span></div>
+    <div><b>${num(t.rebar,2)}</b><span>Thép tấn (ƯT)</span></div>
+    <div><b>${num(t.formwork,1)}</b><span>Ván khuôn m2</span></div>`;
+  $("statType").innerHTML=`<tr><th>Loại</th><th>Nhóm</th><th>Số lượng</th></tr>`+
+    s.by_type.map(r=>`<tr><td>${esc(r.label)}</td><td>${r.groups}</td><td>${r.count}</td></tr>`).join("");
+  $("statFloor").innerHTML=`<tr><th>Tầng</th><th>SL CK</th><th>BT m3</th><th>Thép tấn</th><th>Xây m3</th></tr>`+
+    s.by_floor.map(r=>`<tr><td>${esc(r.floor)}</td><td>${r.count}</td><td>${num(r.concrete)}</td><td>${num(r.rebar)}</td><td>${num(r.masonry)}</td></tr>`).join("");
+}
+
+/* ---------- step 5 ---------- */
+async function loadTakeoff(){
+  const j=await api(`/projects/${PROJECT.id}/takeoff`);
+  let total=0, group=null, stt=0;
+  const rows=j.summary.map(it=>{
+    total+=it.amount;
+    const g=it.group!==group?`<tr class="group"><td colspan="7">${esc(group=it.group)}</td></tr>`:"";
+    return g+`<tr><td>${++stt}</td><td>${esc(it.name)}</td><td>${esc(it.unit)}</td><td class="num">${num(it.qty)}</td>
+      <td><input class="price" data-item="${esc(it.item)}" data-qty="${it.qty}" value="${it.price||""}" inputmode="numeric" placeholder="0"></td>
+      <td class="num amount">${num(it.amount,0)}</td><td class="small muted">${it.lines} dòng</td></tr>`;
+  }).join("");
+  $("boqTable").innerHTML=`<tr><th>STT</th><th>Nội dung công việc</th><th>ĐV</th><th>Khối lượng</th><th>Đơn giá</th><th>Thành tiền</th><th></th></tr>`+
+    (rows||`<tr><td colspan="7" class="muted">Chưa có khối lượng.</td></tr>`)+
+    `<tr class="total"><td></td><td>TỔNG CỘNG</td><td></td><td></td><td></td><td class="num" id="boqTotal">${num(total,0)}</td><td></td></tr>`;
+  document.querySelectorAll("#boqTable .price").forEach(inp=>inp.addEventListener("input",recalc));
+  $("lineTable").innerHTML=`<tr><th>Công việc</th><th>CK</th><th>Tầng</th><th>Diễn giải</th><th>ĐV</th><th>KL</th></tr>`+
+    j.lines.map(l=>`<tr><td>${esc(l.name)}</td><td>${esc(l.element)}</td><td>${esc(l.floor)}</td>
+      <td class="small">${l.n} × ${esc(l.note)}</td><td>${esc(l.unit)}</td><td class="num">${num(l.qty)}</td></tr>`).join("");
+}
+function recalc(){
+  let total=0;
+  document.querySelectorAll("#boqTable .price").forEach(inp=>{
+    const a=Math.round(Number(inp.dataset.qty)*Number(inp.value||0));
+    inp.closest("tr").querySelector(".amount").textContent=num(a,0); total+=a;
+  });
+  $("boqTotal").textContent=num(total,0);
+}
+async function savePrices(){
+  const prices={};
+  document.querySelectorAll("#boqTable .price").forEach(inp=>prices[inp.dataset.item]=Number(inp.value||0));
+  await api(`/projects/${PROJECT.id}/prices`,jsonOpts("PUT",{prices}));
+  $("priceState").textContent=" ✅ Đã lưu — đơn giá sẽ có trong file Excel.";
+}
+
+/* ---------- boot ---------- */
+(async()=>{
+  CAT=await api("/catalog");
+  buildTypeSelect();
+  await loadProjects();
+})();
+</script>
+</body>
+</html>

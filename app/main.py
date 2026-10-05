@@ -15,7 +15,7 @@ from google.genai import types
 BASE = Path(__file__).resolve().parent.parent
 load_dotenv(BASE / ".env")
 
-DATA = BASE / "data"
+DATA = Path(os.getenv("APP_DATA_DIR") or BASE / "data")
 UPLOADS = DATA / "uploads"
 EVIDENCE = DATA / "evidence"
 UPLOADS.mkdir(parents=True, exist_ok=True)
@@ -89,6 +89,16 @@ app.mount("/static", StaticFiles(directory=str(BASE / "app/static")), name="stat
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS)), name="uploads")
 app.mount("/evidence", StaticFiles(directory=str(EVIDENCE)), name="evidence")
 templates = Jinja2Templates(directory=str(BASE / "app/templates"))
+
+from app.boq_api import DRAWINGS, router as boq_router  # noqa: E402
+
+app.include_router(boq_router)
+app.mount("/drawings", StaticFiles(directory=str(DRAWINGS)), name="drawings")
+
+
+@app.get("/boq", response_class=HTMLResponse)
+def boq_page(request: Request):
+    return templates.TemplateResponse(request=request, name="boq.html", context={})
 
 
 def get_client():
@@ -247,6 +257,7 @@ Return ONLY JSON:
             },
         ),
     )
+)
     raw = response.text
     return json.loads(clean_json_text(raw))
 
@@ -407,7 +418,7 @@ async def upload_voice(visit_id: int, file: UploadFile = File(...)):
         result = transcribe_voice(path, content_type, context)
         voice.transcript = result.get("transcript", "")
         voice.ai_status = "ANALYZED"
-       except Exception as e:
+    except Exception as e:
         if is_retryable_ai_error(e):
             voice.ai_status = "FAILED_RETRYABLE"
             voice.transcript = (
@@ -479,8 +490,6 @@ def reanalyze_voice(voice_id: int):
     db.close()
     return JSONResponse(result)
 
-
-@app.post("/api/v1/photos/{photo_id}/analyze")
 
 @app.post("/api/v1/photos/{photo_id}/analyze")
 def reanalyze_photo(photo_id: int):
