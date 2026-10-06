@@ -8,7 +8,7 @@ Quy ước cấu tạo (đơn giản hoá, kỹ sư cần kiểm tra lại theo 
 - Thép dài hơn cây thép tiêu chuẩn 11,7 m được nối chồng LAP·d.
 """
 import math
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -123,9 +123,6 @@ class ColumnInput(BaseModel):
         if self.d not in DIAMETERS:
             raise ValueError(f"Đường kính thép {self.d} không có trong {DIAMETERS}")
         return self
-
-
-Member = Union[BeamInput, ColumnInput]
 
 
 def _row(mark, name, shape, d, length, n_per, count, note=""):
@@ -386,66 +383,10 @@ def column_drawing(m: ColumnInput):
     return g
 
 
-# --------------------------------------------------------------------------- tổng hợp
-
-def quantities(m: Member):
-    if isinstance(m, BeamInput):
-        length = sum(m.spans)
-        concrete = m.b * m.h * length / 1e9
-        formwork = (m.b + 2 * m.h) * length / 1e6
-    else:
-        concrete = m.b * m.h * m.height / 1e9
-        formwork = 2 * (m.b + m.h) * m.height / 1e6
-    return {"concrete_m3": round(concrete * m.count, 3), "formwork_m2": round(formwork * m.count, 2)}
+def beam_quantities(m: BeamInput):
+    length = sum(m.spans)
+    return m.b * m.h * length / 1e9, (m.b + 2 * m.h) * length / 1e6
 
 
-def process(m: Member):
-    if isinstance(m, BeamInput):
-        rows, g = beam_schedule(m), beam_drawing(m)
-    else:
-        rows, g = column_schedule(m), column_drawing(m)
-    return {
-        "name": m.name,
-        "type": m.type,
-        "count": m.count,
-        "schedule": rows,
-        "steel_kg": round(sum(r["weight_kg"] for r in rows), 2),
-        **quantities(m),
-    }, g
-
-
-def summarize(results):
-    groups = {"D≤10": 0.0, "10<D≤18": 0.0, "D>18": 0.0}
-    by_d = {}
-    for res in results:
-        for r in res["schedule"]:
-            d, w = r["d"], r["weight_kg"]
-            key = "D≤10" if d <= 10 else "10<D≤18" if d <= 18 else "D>18"
-            groups[key] += w
-            by_d[d] = by_d.get(d, 0) + w
-    return {
-        "steel_by_group_kg": {k: round(v, 2) for k, v in groups.items()},
-        "steel_by_diameter_kg": {f"Ø{d}": round(by_d[d], 2) for d in sorted(by_d)},
-        "steel_total_kg": round(sum(groups.values()), 2),
-        "concrete_m3": round(sum(r["concrete_m3"] for r in results), 3),
-        "formwork_m2": round(sum(r["formwork_m2"] for r in results), 2),
-    }
-
-
-def build(members):
-    results, drawings = [], []
-    for m in members:
-        res, g = process(m)
-        results.append(res)
-        drawings.append(g)
-    return results, drawings, summarize(results)
-
-
-def combined_drawing(drawings, gap=1500):
-    """Xếp các bản vẽ cấu kiện từ trên xuống để xuất một file DXF."""
-    out, y = Drawing(), 0
-    for g in drawings:
-        x0, y0, x1, y1 = g.bbox()
-        out.merge(g, dx=-x0, dy=y - y1)
-        y -= (y1 - y0) + gap
-    return out
+def column_quantities(m: ColumnInput):
+    return m.b * m.h * m.height / 1e9, 2 * (m.b + m.h) * m.height / 1e6

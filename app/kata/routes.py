@@ -1,21 +1,20 @@
 import csv
 import io
-from typing import Annotated, List
+from typing import List
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel, Field
 
-from .members import DIAMETERS, BeamInput, ColumnInput, build, combined_drawing
+from .members import DIAMETERS
+from .project import Member, build, combined_drawing
 
 router = APIRouter()
-
-MemberField = Annotated[BeamInput | ColumnInput, Field(discriminator="type")]
 
 
 class KataRequest(BaseModel):
     project: str = "Công trình"
-    members: List[MemberField] = Field(min_length=1, max_length=200)
+    members: List[Member] = Field(min_length=1, max_length=200)
 
 
 @router.get("/kata", response_class=HTMLResponse)
@@ -60,7 +59,8 @@ def kata_csv(req: KataRequest):
         w.writerow([f"Thép {k}", "", "", "", "", "", "", "", "", v])
     w.writerow(["Tổng thép (kg)", "", "", "", "", "", "", "", "", summary["steel_total_kg"]])
     w.writerow(["Bê tông (m³)", "", "", "", "", "", "", "", "", summary["concrete_m3"]])
+    w.writerow(["Bê tông lót (m³)", "", "", "", "", "", "", "", "", summary["lean_concrete_m3"]])
     w.writerow(["Cốp pha (m²)", "", "", "", "", "", "", "", "", summary["formwork_m2"]])
     # BOM UTF-8 để Excel hiển thị đúng tiếng Việt
-    return Response("﻿" + buf.getvalue(), media_type="text/csv; charset=utf-8",
+    return Response("\ufeff" + buf.getvalue(), media_type="text/csv; charset=utf-8",
                     headers={"Content-Disposition": 'attachment; filename="kata_thong_ke_thep.csv"'})

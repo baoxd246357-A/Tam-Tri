@@ -103,7 +103,7 @@ def test_csv_export():
     r = client.post("/api/v1/kata/export.csv", json=PAYLOAD)
     assert r.status_code == 200
     body = r.content.decode("utf-8")
-    assert body.startswith("﻿") and "Tổng thép (kg)" in body
+    assert body.startswith("\ufeff") and "Tổng thép (kg)" in body
 
 
 def test_kata_page():
@@ -114,3 +114,69 @@ def test_kata_page():
 def test_beam_default_supports_expand_to_all_spans():
     m = BeamInput(spans=[4000, 3000, 5000])
     assert m.supports == [220, 220, 220, 220]
+
+
+# --------------------------------------------------------------------------- sàn, móng
+
+from app.kata.slab_footing import (  # noqa: E402
+    FootingInput, Mesh, SlabInput, bar_count, footing_schedule, slab_schedule,
+)
+
+
+def test_bar_count_keeps_spacing_within_limit():
+    assert bar_count(3000, 200) == 16  # (3000 - 100) / 200 = 14.5 -> 15 khoảng
+    assert bar_count(1800, 150, 50) == 13  # 11.3 -> 12 khoảng
+
+
+def test_slab_schedule():
+    m = SlabInput(lx=3600, ly=4200, t=100, cover=15, bw=220,
+                  bottom_x=Mesh(d=8, s=200), bottom_y=Mesh(d=8, s=200), top=Mesh(d=8, s=200))
+    rows = {r["mark"]: r for r in slab_schedule(m)}
+    # Neo vào dầm max(10d, bw/2) = 110
+    assert rows["1"]["length"] == 3600 + 2 * 110
+    assert rows["1"]["n_per_member"] == bar_count(4200, 200)
+    assert rows["2"]["length"] == 4200 + 2 * 110
+    # Thép mũ: L_ngắn/4 + (bw - cover) + 2 chân (t - 2cover)
+    assert rows["3.1"]["length"] == 900 + 205 + 2 * 70
+    assert rows["3.1"]["n_per_member"] == 2 * bar_count(3600, 200)
+    assert rows["4.1"]["d"] == 6
+
+
+def test_footing_schedule():
+    m = FootingInput(a=2000, b=1600, h=500, cover=50, mesh_x=Mesh(d=12, s=150), mesh_y=Mesh(d=12, s=150),
+                     neck=600, nx=3, ny=3, d=18)
+    rows = {r["mark"]: r for r in footing_schedule(m)}
+    assert rows["1"]["length"] == 2000 - 100 + 2 * 15 * 12
+    assert rows["1"]["n_per_member"] == bar_count(1600, 150, 50)
+    assert rows["2"]["length"] == 1600 - 100 + 2 * 15 * 12
+    assert rows["3"]["n_per_member"] == 8
+    assert rows["3"]["length"] == (500 - 50 - 24) + 600 + 40 * 18 + 15 * 18
+
+
+def test_footing_hook_limited_by_height():
+    m = FootingInput(h=300, cover=50, mesh_x=Mesh(d=20, s=150))
+    rows = {r["mark"]: r for r in footing_schedule(m)}
+    assert rows["1"]["length"] == 1800 - 100 + 2 * 200
+
+
+def test_footing_rejects_neck_larger_than_base():
+    with pytest.raises(ValueError):
+        FootingInput(a=600, b=600, col_b=600, col_h=300)
+
+
+def test_api_all_member_types_and_lean_concrete():
+    payload = {"members": [
+        {"type": "beam", "spans": [4000]},
+        {"type": "column"},
+        {"type": "slab", "count": 4},
+        {"type": "footing", "count": 2},
+    ]}
+    data = client.post("/api/v1/kata/calc", json=payload).json()
+    assert [m["type"] for m in data["members"]] == ["beam", "column", "slab", "footing"]
+    footing = data["members"][3]
+    assert footing["lean_concrete_m3"] == pytest.approx(2000 * 2000 * 100 / 1e9 * 2, abs=1e-3)
+    assert data["summary"]["lean_concrete_m3"] == footing["lean_concrete_m3"]
+    slab = data["members"][2]
+    assert slab["concrete_m3"] == pytest.approx(3.6 * 4.2 * 0.1 * 4, abs=1e-3)
+    assert all(m["svg"].startswith("<svg") for m in data["members"])
+    assert client.post("/api/v1/kata/export.dxf", json=payload).status_code == 200
