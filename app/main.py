@@ -12,7 +12,8 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from google import genai
 from google.genai import types
 
-from app.kata import router as kata_router
+from app.branding import APP_NAME, APP_SLUG
+from app.structural import router as structural_router
 
 BASE = Path(__file__).resolve().parent.parent
 load_dotenv(BASE / ".env")
@@ -86,13 +87,14 @@ class VoiceEvidence(Base):
 
 Base.metadata.create_all(engine)
 
-app = FastAPI(title="AI TVGS Tâm Trí Pilot V0.1")
+app = FastAPI(title=f"{APP_NAME} — AI TVGS Pilot V0.1")
 app.mount("/static", StaticFiles(directory=str(BASE / "app/static")), name="static")
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS)), name="uploads")
 app.mount("/evidence", StaticFiles(directory=str(EVIDENCE)), name="evidence")
 templates = Jinja2Templates(directory=str(BASE / "app/templates"))
+templates.env.globals.update(app_name=APP_NAME, app_slug=APP_SLUG)
 app.state.templates = templates
-app.include_router(kata_router)
+app.include_router(structural_router)
 
 
 def get_client():
@@ -146,7 +148,7 @@ def analyze_site_photo(image_path: Path, mime_type: str, context: dict):
     image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
 
     prompt = f"""
-You are an expert construction site inspection assistant for AI TVGS Tâm Trí.
+You are an expert construction site inspection assistant for {APP_NAME} AI TVGS.
 Analyze ONLY what is reasonably visible in the supplied photo. Do not invent
 measurements, drawing references, exact locations, or compliance conclusions.
 

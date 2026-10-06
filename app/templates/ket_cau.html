@@ -4,20 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<title>Kata — Triển khai kết cấu</title>
+<title>{{ app_name }} — Triển khai kết cấu</title>
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 <header class="topbar">
   <div>
-    <div class="eyebrow">AI TVGS TÂM TRÍ · KATA</div>
+    <div class="eyebrow">{{ app_name | upper }} · KẾT CẤU</div>
     <h1>📐 Triển khai bản vẽ kết cấu</h1>
     <p>Nhập dầm / cột / sàn / móng → bản vẽ bố trí thép, mặt cắt → bảng thống kê thép → xuất DXF (AutoCAD) &amp; CSV (Excel).</p>
   </div>
   <a class="badge" href="/">← HIỆN TRƯỜNG</a>
 </header>
 
-<main class="kata-main">
+<main class="struct-main">
 <section class="card">
   <div class="section-title"><span>🏗️</span><h3>Công trình</h3></div>
   <input id="project" value="Bệnh viện Tâm Trí" placeholder="Tên công trình">
@@ -31,7 +31,7 @@
     <button type="button" class="tab" data-tab="footing">Móng</button>
   </div>
 
-  <form id="beamForm" class="kata-form" data-type="beam">
+  <form id="beamForm" class="struct-form" data-type="beam">
     <div class="fields">
       <label>Tên dầm<input name="name" value="D1"></label>
       <label>Số lượng CK<input name="count" type="number" value="1" min="1"></label>
@@ -56,7 +56,7 @@
     <button class="primary full" type="submit">➕ THÊM DẦM</button>
   </form>
 
-  <form id="columnForm" class="kata-form" data-type="column" hidden>
+  <form id="columnForm" class="struct-form" data-type="column" hidden>
     <div class="fields">
       <label>Tên cột<input name="name" value="C1"></label>
       <label>Số lượng CK<input name="count" type="number" value="1" min="1"></label>
@@ -77,7 +77,7 @@
     <button class="primary full" type="submit">➕ THÊM CỘT</button>
   </form>
 
-  <form id="slabForm" class="kata-form" data-type="slab" hidden>
+  <form id="slabForm" class="struct-form" data-type="slab" hidden>
     <div class="fields">
       <label>Tên ô sàn<input name="name" value="S1"></label>
       <label>Số lượng ô<input name="count" type="number" value="1" min="1"></label>
@@ -101,7 +101,7 @@
     <button class="primary full" type="submit">➕ THÊM SÀN</button>
   </form>
 
-  <form id="footingForm" class="kata-form" data-type="footing" hidden>
+  <form id="footingForm" class="struct-form" data-type="footing" hidden>
     <div class="fields">
       <label>Tên móng<input name="name" value="M1"></label>
       <label>Số lượng CK<input name="count" type="number" value="1" min="1"></label>
@@ -152,7 +152,7 @@
 
 <script>
 const DIAMETERS = {{ diameters | list | tojson }};
-const STORE_KEY = "kata.members.v1";
+const STORE_KEY = "{{ app_slug }}.structural.members.v1";
 let members = [];
 try { members = JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); } catch (e) { members = []; }
 
@@ -167,7 +167,7 @@ document.querySelectorAll("select[data-d]").forEach(sel => {
 
 document.querySelectorAll(".tab").forEach(tab => tab.addEventListener("click", () => {
   document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t === tab));
-  document.querySelectorAll(".kata-form").forEach(f => f.hidden = f.dataset.type !== tab.dataset.tab);
+  document.querySelectorAll(".struct-form").forEach(f => f.hidden = f.dataset.type !== tab.dataset.tab);
 }));
 
 const TYPE_NAMES = {beam: "Dầm", column: "Cột", slab: "Sàn", footing: "Móng"};
@@ -235,11 +235,11 @@ async function post(path, body) {
 
 const payload = list => ({project: document.getElementById("project").value || "Công trình", members: list});
 
-document.querySelectorAll(".kata-form").forEach(form => form.addEventListener("submit", async e => {
+document.querySelectorAll(".struct-form").forEach(form => form.addEventListener("submit", async e => {
   e.preventDefault();
   const m = readForm(form);
   try {
-    await post("/api/v1/kata/calc", payload([m]));  // kiểm tra dữ liệu trước khi thêm
+    await post("/api/v1/structural/calc", payload([m]));  // kiểm tra dữ liệu trước khi thêm
     const i = members.findIndex(x => x.name === m.name && x.type === m.type);
     if (i >= 0) members[i] = m; else members.push(m);
     save();
@@ -299,7 +299,7 @@ async function render() {
   const card = document.getElementById("summaryCard");
   if (!members.length) { out.innerHTML = ""; card.hidden = true; return; }
   try {
-    const data = await (await post("/api/v1/kata/calc", payload(members))).json();
+    const data = await (await post("/api/v1/structural/calc", payload(members))).json();
     card.hidden = false;
     const s = data.summary;
     document.getElementById("summary").innerHTML = `
@@ -309,7 +309,7 @@ async function render() {
         <div><b>${fmt(s.formwork_m2, 1)}</b><span>Cốp pha (m²)</span></div>
         <div><b>${fmt(s.lean_concrete_m3, 3)}</b><span>BT lót (m³)</span></div>
       </div>
-      <table class="kata-table"><thead><tr><th>Nhóm thép</th><th>kg</th></tr></thead><tbody>
+      <table class="struct-table"><thead><tr><th>Nhóm thép</th><th>kg</th></tr></thead><tbody>
         ${Object.entries(s.steel_by_diameter_kg).map(([k, v]) => `<tr><td>${k}</td><td>${fmt(v)}</td></tr>`).join("")}
         ${Object.entries(s.steel_by_group_kg).map(([k, v]) => `<tr class="sub"><td>Thép ${escapeHtml(k)}</td><td>${fmt(v)}</td></tr>`).join("")}
       </tbody></table>`;
@@ -318,7 +318,7 @@ async function render() {
         <div class="section-title"><span>${TYPE_ICONS[m.type]}</span>
           <h3>${TYPE_NAMES[m.type]} ${escapeHtml(m.name)} · ${fmt(m.steel_kg, 1)} kg thép</h3></div>
         <div class="drawing">${m.svg}</div>
-        <div class="table-wrap"><table class="kata-table">
+        <div class="table-wrap"><table class="struct-table">
           <thead><tr><th>SH</th><th>Hình dạng</th><th>Ø</th><th>Dài 1 thanh (mm)</th><th>SL/CK</th><th>Tổng SL</th><th>Tổng dài (m)</th><th>KL (kg)</th><th>Ghi chú</th></tr></thead>
           <tbody>${m.schedule.map(r => `<tr><td>${r.mark}</td><td>${r.shape}</td><td>${r.d}</td><td>${fmt(r.length, 0)}</td>
             <td>${r.n_per_member}</td><td>${r.n_total}</td><td>${fmt(r.total_length_m)}</td><td>${fmt(r.weight_kg)}</td><td>${escapeHtml(r.note)}</td></tr>`).join("")}</tbody>
@@ -335,8 +335,8 @@ async function download(path, filename) {
     URL.revokeObjectURL(a.href);
   } catch (err) { setState("❌ " + err.message, "error"); }
 }
-document.getElementById("dxfBtn").onclick = () => download("/api/v1/kata/export.dxf", "kata_ban_ve.dxf");
-document.getElementById("csvBtn").onclick = () => download("/api/v1/kata/export.csv", "kata_thong_ke_thep.csv");
+document.getElementById("dxfBtn").onclick = () => download("/api/v1/structural/export.dxf", "{{ app_slug }}_ban_ve.dxf");
+document.getElementById("csvBtn").onclick = () => download("/api/v1/structural/export.csv", "{{ app_slug }}_thong_ke_thep.csv");
 
 render();
 </script>

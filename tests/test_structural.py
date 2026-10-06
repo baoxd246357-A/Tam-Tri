@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.kata.members import (
+from app.structural.members import (
     BeamInput, Bars, ColumnInput, beam_schedule, column_schedule, stirrup_positions,
     unit_weight, with_laps,
 )
@@ -72,7 +72,7 @@ PAYLOAD = {
 
 
 def test_calc_api():
-    r = client.post("/api/v1/kata/calc", json=PAYLOAD)
+    r = client.post("/api/v1/structural/calc", json=PAYLOAD)
     assert r.status_code == 200
     data = r.json()
     assert len(data["members"]) == 2
@@ -84,11 +84,11 @@ def test_calc_api():
 
 def test_calc_api_validation_error():
     bad = {"members": [{"type": "beam", "spans": [4000], "bottom": {"n": 2, "d": 17}}]}
-    assert client.post("/api/v1/kata/calc", json=bad).status_code == 422
+    assert client.post("/api/v1/structural/calc", json=bad).status_code == 422
 
 
 def test_dxf_export_is_valid_ascii_dxf():
-    r = client.post("/api/v1/kata/export.dxf", json=PAYLOAD)
+    r = client.post("/api/v1/structural/export.dxf", json=PAYLOAD)
     assert r.status_code == 200
     text = r.content.decode("ascii")
     assert text.startswith("0\nSECTION") and text.rstrip().endswith("EOF")
@@ -98,15 +98,26 @@ def test_dxf_export_is_valid_ascii_dxf():
 
 
 def test_csv_export():
-    r = client.post("/api/v1/kata/export.csv", json=PAYLOAD)
+    r = client.post("/api/v1/structural/export.csv", json=PAYLOAD)
     assert r.status_code == 200
     body = r.content.decode("utf-8")
     assert body.startswith("\ufeff") and "Tổng thép (kg)" in body
 
 
-def test_kata_page():
-    r = client.get("/kata")
+def test_structural_page():
+    r = client.get("/ket-cau")
     assert r.status_code == 200 and "Triển khai bản vẽ kết cấu" in r.text
+    assert "QBCONS · KẾT CẤU" in r.text and "qbcons_ban_ve.dxf" in r.text
+
+
+def test_home_page_uses_brand_name():
+    r = client.get("/")
+    assert r.status_code == 200 and "QBcons" in r.text and 'href="/ket-cau"' in r.text
+
+
+def test_export_filenames_use_brand_slug():
+    r = client.post("/api/v1/structural/export.csv", json=PAYLOAD)
+    assert 'filename="qbcons_thong_ke_thep.csv"' in r.headers["content-disposition"]
 
 
 def test_beam_default_supports_expand_to_all_spans():
@@ -116,7 +127,7 @@ def test_beam_default_supports_expand_to_all_spans():
 
 # --------------------------------------------------------------------------- sàn, móng
 
-from app.kata.slab_footing import (  # noqa: E402
+from app.structural.slab_footing import (  # noqa: E402
     FootingInput, Mesh, SlabInput, bar_count, footing_schedule, slab_schedule,
 )
 
@@ -169,7 +180,7 @@ def test_api_all_member_types_and_lean_concrete():
         {"type": "slab", "count": 4},
         {"type": "footing", "count": 2},
     ]}
-    data = client.post("/api/v1/kata/calc", json=payload).json()
+    data = client.post("/api/v1/structural/calc", json=payload).json()
     assert [m["type"] for m in data["members"]] == ["beam", "column", "slab", "footing"]
     footing = data["members"][3]
     assert footing["lean_concrete_m3"] == pytest.approx(2000 * 2000 * 100 / 1e9 * 2, abs=1e-3)
@@ -177,4 +188,4 @@ def test_api_all_member_types_and_lean_concrete():
     slab = data["members"][2]
     assert slab["concrete_m3"] == pytest.approx(3.6 * 4.2 * 0.1 * 4, abs=1e-3)
     assert all(m["svg"].startswith("<svg") for m in data["members"])
-    assert client.post("/api/v1/kata/export.dxf", json=payload).status_code == 200
+    assert client.post("/api/v1/structural/export.dxf", json=payload).status_code == 200

@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<title>AI TVGS Tâm Trí Pilot</title>
+<title>{{ app_name }} — AI TVGS Pilot</title>
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 <header class="topbar">
   <div>
-    <div class="eyebrow">AI TVGS TÂM TRÍ · PILOT V0.1</div>
+    <div class="eyebrow">{{ app_name | upper }} · AI TVGS · PILOT V0.1</div>
     <h1>🏗️ {{ project.name if project else "Project" }}</h1>
     <p>{{ project.code if project else "" }} · {{ project.location if project else "" }}</p>
   </div>
@@ -21,7 +21,7 @@
 <section class="hero">
   <h2>📱 Kiểm tra hiện trường</h2>
   <p>Chụp ảnh + ghi nhận bằng giọng nói → AI phân tích → lưu bằng chứng.</p>
-  <p><a class="evidence-link" href="/kata">📐 Kata — Triển khai bản vẽ dầm/cột &amp; thống kê thép →</a></p>
+  <p><a class="evidence-link" href="/ket-cau">📐 Kết cấu — Triển khai bản vẽ dầm/cột/sàn/móng &amp; thống kê thép →</a></p>
 </section>
 
 <section class="card sticky-card">

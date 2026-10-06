@@ -1,4 +1,4 @@
-# Deploy AI Site Control v1.1 on Render
+# Deploy QBcons on Render
 
 1. Create a GitHub repository and upload this project.
 2. In Render: New -> Web Service -> connect the GitHub repository.
@@ -8,10 +8,11 @@
 4. Add Environment Variables:
    - `GEMINI_API_KEY` = your Gemini API key
    - `GEMINI_MODEL` = `gemini-3.7-flash`
+   - `APP_NAME` = `QBcons` (optional; display name shown in the app)
 5. Deploy.
 6. Open the generated `https://....onrender.com` URL on the phone.
 7. Test `/health` first, then create a Site Visit and capture a photo.
-8. Open `/kata` for structural detailing (beam/column/slab/footing). It needs no API key.
+8. Open `/ket-cau` for structural detailing (beam/column/slab/footing). It needs no API key.
 
 IMPORTANT:
 - Render Free web services spin down after inactivity and local files are ephemeral.

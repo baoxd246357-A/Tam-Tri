@@ -85,7 +85,7 @@ class Drawing:
         stroke = max(w, h) / 900
         out = [
             f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x0:.0f} {-y1:.0f} {w:.0f} {h:.0f}" '
-            f'class="kata-svg" preserveAspectRatio="xMidYMid meet">'
+            f'class="struct-svg" preserveAspectRatio="xMidYMid meet">'
         ]
         for kind, layer, g in self.entities:
             color = LAYERS[layer][1]
