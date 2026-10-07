@@ -88,4 +88,22 @@ Cấu kiện giống nhau được gộp số lượng; dầm/sàn tự đặt c
 
 **AI đọc bản vẽ** dùng `GEMINI_API_KEY` sẵn có. AI chỉ đề xuất — luôn kiểm tra kích thước trước khi thêm.
 
-Chạy test: `pip install pytest httpx && python -m pytest -q tests`
+### Construction Cells (WBS)
+
+Mỗi dòng khối lượng có mã 4 cấp: `01` hạng mục (cell 100) → `01.02` phần việc (300) →
+`01.02.03` công tác (600) → `01.02.03.004` cấu kiện/vị trí (1000). Hạng mục nhập ở từng cấu kiện
+(trường *Hạng mục*, cột cuối mẫu Excel, hoặc ô Hạng mục khi nhập DXF). API: `GET /api/v1/boq/projects/{id}/wbs`.
+
+### Dự toán / QS (bước 6)
+
+1. **Thư viện định mức & đơn giá** cho từng dự án: tài nguyên (VL / NC / M + đơn giá), định mức
+   (hao phí cho 1 đơn vị; đơn vị `100m2`, `100m3`… tự quy đổi), ánh xạ công tác BOQ → mã định mức.
+   Nhập/xuất bằng Excel (sheet `TaiNguyen`, `DinhMuc`, `AnhXa`). Có **thư viện MẪU** để chạy thử —
+   hao phí và giá chỉ minh hoạ, phải thay bằng định mức áp dụng và giá công bố trước khi phát hành.
+2. Công tác chưa có định mức dùng **đơn giá nhập trực tiếp** ở bước 5.
+3. Tổng hợp chi phí theo bố cục TT 11/2021: T = VL+NC+M(+K); C, LT, TT = T × %; TL = (T+GT) × %;
+   G; GTGT; Gxd; dự phòng. Tỷ lệ mặc định chỉ để khởi tạo — sửa theo loại công trình.
+4. **Excel dự toán** (`TongHop_ChiPhi`, `DuToan`, `PhanTich_DonGia`, `TongHop_VT`) toàn công thức:
+   sửa đơn giá ở `TongHop_VT` hoặc tỷ lệ ở `TongHop_ChiPhi` → cả file tự tính lại.
+
+Chạy test: `pip install -r requirements-dev.txt && python -m pytest -q tests`

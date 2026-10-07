@@ -183,3 +183,146 @@ def test_api_end_to_end(client):
     assert x.status_code == 200 and x.content[:2] == b"PK"
     assert client.get("/boq").status_code == 200
     assert client.delete(f"/api/v1/boq/elements/{eid}").status_code == 200
+
+
+# ---------------------------------------------------------------- WBS + dự toán
+
+from app import estimate_engine as est  # noqa: E402
+
+
+def test_wbs_codes():
+    els = [el(type="COT", code="C1", hang_muc="Nhà A", id=1), el(type="COT", code="C2", hang_muc="Nhà A", id=2),
+           el(type="MONG", code="M1", hang_muc="Nhà A", id=3), el(type="COT", code="C9", hang_muc="Nhà B", id=4)]
+    lines = eng.takeoff(els)
+    bt = [ln for ln in lines if ln.code == "BT_COT"]
+    # Nhà A = 01, Kết cấu is the 2nd phần việc after Phần ngầm, BT cột first công tác.
+    assert [ln.wbs for ln in bt] == ["01.02.01.001", "01.02.01.002", "02.01.01.001"]
+    assert lines[0].wbs.startswith("01.01.")  # Phần ngầm sorts first
+    summary = eng.summarize(lines)
+    assert [s["wbs"] for s in summary if s["code"] == "BT_COT"] == ["01.02.01", "02.01.01"]
+    nodes = {n["code"]: n for n in eng.wbs_tree(lines)}
+    assert nodes["01"]["level"] == 100 and nodes["01"]["name"] == "Nhà A"
+    assert nodes["01.02"]["level"] == 300 and nodes["01.02"]["name"] == "Kết cấu"
+    assert nodes["01.02.01"]["qty"] == pytest.approx(2 * 0.3 * 0.3 * 3.6)
+
+
+def test_unit_factor():
+    assert est.unit_factor("m2", "100m2") == pytest.approx(0.01)
+    assert est.unit_factor("m3", "m³") == 1
+    assert est.unit_factor("tấn", "T") == 1
+    assert est.unit_factor("m2", "m3") is None
+
+
+def _estimate(els, lib=None, direct=None, rates=None):
+    return est.estimate(eng.summarize(eng.takeoff(els)), lib or est.sample_library(), direct, rates)
+
+
+def test_estimate_unit_price_and_costs():
+    lib = est.Library()
+    lib.resources["XM"] = est.Resource("XM", "Xi măng", "kg", "VL", 2000)
+    lib.resources["NC"] = est.Resource("NC", "Nhân công", "công", "NC", 300000)
+    lib.resources["MAY"] = est.Resource("MAY", "Máy trộn", "ca", "M", 400000)
+    lib.norms["DM1"] = est.Norm("DM1", "BT cột", "m3", [("XM", 350), ("NC", 3), ("MAY", 0.1)])
+    lib.mapping["BT_COT"] = "DM1"
+    e = _estimate([el(type="COT", n=10, params={"ham_luong": 0})], lib,
+                  rates={"C": 6, "LT": 1, "TT": 2, "TL": 5, "VAT": 10, "DP": 5})
+    item = e["items"][0]
+    qty = 10 * 0.3 * 0.3 * 3.6
+    assert item["dg"] == pytest.approx({"VL": 700000, "NC": 900000, "M": 40000, "K": 0})
+    assert item["total"] == pytest.approx(qty * 1640000)
+    costs = {c["key"]: c["value"] for c in e["costs"]}
+    T = qty * 1640000
+    assert costs["T"] == pytest.approx(T)
+    assert costs["GT"] == pytest.approx(T * 0.09)
+    assert costs["TL"] == pytest.approx(T * 1.09 * 0.05)
+    G = T * 1.09 * 1.05
+    assert costs["G"] == pytest.approx(G)
+    assert costs["TONG"] == pytest.approx(G * 1.1 * 1.05)
+    res = {r["code"]: r for r in e["resources"]}
+    assert res["XM"]["haophi"] == pytest.approx(qty * 350)
+    # VK_COT has no norm and no direct price → warning
+    assert any("Ván khuôn cột" in w for w in e["warnings"])
+
+
+def test_estimate_unit_conversion_and_direct_price():
+    lib = est.sample_library()
+    norm = lib.norms["MAU.VK.SAN"]
+    per_m2 = _estimate([el(type="SAN")], lib)["items"]
+    norm.unit = "100m2"
+    norm.items = [(r, q * 100) for r, q in norm.items]
+    per_100 = _estimate([el(type="SAN")], lib)["items"]
+    vk = lambda items: next(i for i in items if i["code"] == "VK_SAN")  # noqa: E731
+    assert vk(per_100)["factor"] == pytest.approx(0.01)
+    assert vk(per_100)["unit_price"] == pytest.approx(vk(per_m2)["unit_price"])
+    norm.unit = "m3"  # wrong unit → not priced, warned
+    e = _estimate([el(type="SAN")], lib)
+    assert vk(e["items"])["norm"] is None and any("khác đơn vị" in w for w in e["warnings"])
+    k = _estimate([el(type="KHAC", n=2, item_name="Cửa", unit="bộ", params={"khoi_luong": 1})],
+                  lib, {"KHAC|Cửa|bộ": 5000000})
+    assert k["direct"]["K"] == 10000000
+
+
+def test_library_roundtrip():
+    lib = est.sample_library()
+    back, errors = est.import_library(est.library_workbook(lib))
+    assert not errors
+    assert back.to_dict() == lib.to_dict()
+
+
+def test_estimate_excel_recalculates():
+    from openpyxl import load_workbook
+    from pycel import ExcelCompiler
+    els = [el(type=t, n=2, hang_muc="Nhà A") for t in eng.ELEMENT_TYPES if t != "KHAC"]
+    e = _estimate(els, rates={"VAT": 8, "DP": 5})
+    assert not e["warnings"]
+    path = Path(tempfile.mkdtemp()) / "dt.xlsx"
+    path.write_bytes(est.export_estimate({"name": "T"}, e))
+    ws = load_workbook(path)["TongHop_ChiPhi"]
+    row = {ws.cell(r, 3).value: r for r in range(5, 25) if ws.cell(r, 3).value}
+    xl = ExcelCompiler(filename=str(path))
+    for c in e["costs"]:
+        assert xl.evaluate(f"TongHop_ChiPhi!F{row[c['key']]}") == pytest.approx(c["value"], abs=0.5)
+    # Changing one resource price in TongHop_VT flows through to the total.
+    old = xl.evaluate(f"TongHop_ChiPhi!F{row['TONG']}")
+    wb = load_workbook(path)
+    vt = wb["TongHop_VT"]
+    xm = next(r for r in range(5, 60) if vt.cell(r, 1).value == "XM40")
+    vt.cell(xm, 6).value += 1000
+    wb.save(path)
+    hao = next(r["haophi"] for r in e["resources"] if r["code"] == "XM40")
+    expected = old + hao * 1000 * (1 + 0.065 + 0.011 + 0.025) * 1.055 * 1.08 * 1.05
+    fresh = ExcelCompiler(filename=str(path))
+    assert fresh.evaluate(f"TongHop_ChiPhi!F{row['TONG']}") == pytest.approx(expected, rel=1e-9)
+
+
+def test_api_estimate(client):
+    pid = client.post("/api/v1/boq/projects", json={"name": "Dự toán"}).json()["id"]
+    client.post(f"/api/v1/boq/projects/{pid}/elements",
+                json={"elements": [{"type": "COT", "n": 4, "hang_muc": "Nhà A"},
+                                   {"type": "KHAC", "item_name": "Cửa", "unit": "bộ",
+                                    "params": {"khoi_luong": 1}}]})
+    assert client.get(f"/api/v1/boq/projects/{pid}/library").json()["norms"] == []
+    assert client.post(f"/api/v1/boq/projects/{pid}/library/sample").json()["norms"] > 10
+    e = client.get(f"/api/v1/boq/projects/{pid}/estimate").json()
+    assert e["items"][0]["norm"] == "MAU.BT.COT" and e["items"][0]["wbs"] == "01.01.01"
+    total = e["costs"][-1]["value"]
+    r = client.put(f"/api/v1/boq/projects/{pid}/library/prices", json={"prices": {"XM40": 99999}})
+    assert r.status_code == 200
+    assert client.get(f"/api/v1/boq/projects/{pid}/estimate").json()["costs"][-1]["value"] > total
+    assert client.put(f"/api/v1/boq/projects/{pid}/library/mapping",
+                      json={"mapping": {"BT_COT|B22.5": "NOPE"}}).status_code == 400
+    client.put(f"/api/v1/boq/projects/{pid}/library/mapping", json={"mapping": {"BT_COT": None}})
+    e = client.get(f"/api/v1/boq/projects/{pid}/estimate").json()
+    assert e["items"][0]["norm"] is None
+    assert client.put(f"/api/v1/boq/projects/{pid}/rates", json={"rates": {"C": -1}}).status_code == 400
+    client.put(f"/api/v1/boq/projects/{pid}/rates", json={"rates": {"VAT": 8}})
+    assert client.get(f"/api/v1/boq/projects/{pid}/estimate").json()["rates"]["VAT"] == 8
+    lib_x = client.get(f"/api/v1/boq/projects/{pid}/library.xlsx")
+    r = client.post(f"/api/v1/boq/projects/{pid}/library/import", data={"mode": "replace"},
+                    files={"file": ("dm.xlsx", lib_x.content, "application/octet-stream")})
+    assert r.json()["errors"] == []
+    x = client.get(f"/api/v1/boq/projects/{pid}/estimate.xlsx")
+    assert x.status_code == 200 and x.content[:2] == b"PK"
+    w = client.get(f"/api/v1/boq/projects/{pid}/wbs").json()
+    assert w["nodes"][0] == {"code": "01", "level": 100, "name": "Nhà A", "unit": "", "qty": 0.0,
+                             "cells": 3}

@@ -23,7 +23,7 @@ label input,label select{font-weight:400;color:#18202a;padding:10px}
 .ghost{background:#fff;color:#111827;border:1px solid #d1d5db}
 .ghost.danger{color:#991b1b;border-color:#fecaca}
 .small-btn{padding:6px 10px;min-height:0;font-size:12px;margin:2px}
-.steps{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;background:var(--bg);padding:6px 0}
+.steps{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;background:var(--bg);padding:6px 0}
 @media(min-width:651px){.steps{position:sticky;top:0;z-index:5}}
 .steps button{margin:0;background:#fff;color:#374151;border:1px solid #e5e7eb;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;padding:8px 4px}
 .steps button b{display:inline-flex;width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center;background:#e5e7eb;font-size:12px}
@@ -36,6 +36,7 @@ td{padding:7px 8px;border-top:1px solid #eef0f3;vertical-align:top}
 td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 tr.clickable{cursor:pointer}
 tr.clickable:hover td{background:#f9fafb}
+tr.hm td{background:#cbd5e1;font-weight:800;font-size:12px}
 tr.group td{background:#e5e7eb;font-weight:800;font-size:12px;text-transform:uppercase}
 tr.total td{font-weight:800;border-top:2px solid #111827}
 input.price{padding:6px 8px;min-width:110px;text-align:right}
@@ -54,6 +55,11 @@ code{background:#f1f3f5;padding:1px 5px;border-radius:5px}
   .cols3,.split,.cols2{grid-template-columns:1fr}
 }
 @media(max-width:650px){
-  .steps{grid-template-columns:repeat(3,1fr)}
+  .steps{grid-template-columns:repeat(4,1fr)}
   .grid2{grid-template-columns:1fr 1fr}
 }
+.warn-text{color:var(--warn)}
+.big-total{display:flex;justify-content:space-between;align-items:baseline;background:#111827;color:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.big-total b{font-size:22px;font-variant-numeric:tabular-nums}
+select.norm{padding:6px 8px;font-size:12px;min-width:200px}
+.cols2>.card{margin:12px 0 0;min-width:0}

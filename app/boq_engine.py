@@ -164,6 +164,13 @@ ELEMENT_TYPES: "OrderedDict[str, dict]" = OrderedDict(
 )
 
 DEFAULT_GRADE = "B22.5"
+DEFAULT_HANG_MUC = "Hạng mục chính"
+
+# Phần việc (WBS level 300) in display order.
+GROUP_ORDER = ["Phần ngầm", "Kết cấu", "Kiến trúc", "Hoàn thiện", "Khác"]
+
+# Construction Cells — WBS levels.
+WBS_LEVELS = {100: "Hạng mục", 300: "Phần việc", 600: "Công tác", 1000: "Cấu kiện / vị trí"}
 
 
 class BoqError(ValueError):
@@ -188,6 +195,7 @@ class Element:
     dy: float = 0.0
     params: dict = field(default_factory=dict)
     grade: str = ""  # mác bê tông / vật liệu
+    hang_muc: str = ""  # WBS level 100
     # Only for type KHAC
     item_name: str = ""
     unit: str = ""
@@ -225,6 +233,7 @@ class Element:
             dy=_num(d.get("dy", 0) or 0, "dy"),
             params=params,
             grade=str(d.get("grade") or "").strip(),
+            hang_muc=str(d.get("hang_muc") or "").strip(),
             item_name=str(d.get("item_name") or "").strip(),
             unit=str(d.get("unit") or "").strip(),
             id=d.get("id"),
@@ -244,6 +253,7 @@ class Element:
             "dy": self.dy,
             "params": dict(self.params),
             "grade": self.grade,
+            "hang_muc": self.hang_muc,
             "item_name": self.item_name,
             "unit": self.unit,
         }
@@ -332,9 +342,23 @@ class QtyLine:
     expr: str  # full expression incl. the count, evaluates to qty
     note: str  # human-readable explanation
     qty: float = 0.0
+    hang_muc: str = DEFAULT_HANG_MUC
+    group: str = "Khác"
+    element_id: int | None = None
+    wbs: str = ""  # level-1000 code, e.g. 01.02.03.004
+
+    @property
+    def cell(self) -> str:
+        """Level-600 cell key: one BOQ line = one (hạng mục, công tác)."""
+        return f"{self.hang_muc}|{self.item}"
 
     def to_dict(self) -> dict:
         return {
+            "wbs": self.wbs,
+            "cell": self.cell,
+            "hang_muc": self.hang_muc,
+            "group": self.group,
+            "element_id": self.element_id,
             "item": self.item,
             "code": self.code,
             "name": self.name,
@@ -369,6 +393,9 @@ def _line(el: Element, code: str, per_unit_expr: str, note: str, scale: float = 
         n=el.n,
         expr=expr,
         note=note,
+        hang_muc=el.hang_muc or DEFAULT_HANG_MUC,
+        group=meta["group"],
+        element_id=el.id,
     )
     line.qty = eval_expr(expr)
     return line
@@ -459,7 +486,9 @@ def takeoff_element(el: Element) -> list[QtyLine]:
         expr = mul(el.n, q)
         lines.append(QtyLine(item=key, code="KHAC", name=name, unit=unit,
                              element=el.code, floor=el.floor, n=el.n, expr=expr,
-                             note="Nhập trực tiếp", qty=eval_expr(expr)))
+                             note="Nhập trực tiếp", qty=eval_expr(expr),
+                             hang_muc=el.hang_muc or DEFAULT_HANG_MUC, group="Khác",
+                             element_id=el.id))
     return lines
 
 
@@ -467,29 +496,89 @@ def takeoff(elements: list[Element]) -> list[QtyLine]:
     lines: list[QtyLine] = []
     for el in elements:
         lines.extend(takeoff_element(el))
-    return lines
+    return assign_wbs(lines)
+
+
+def _sort_key(ln: QtyLine, hm_order: dict) -> tuple:
+    order = {code: i for i, code in enumerate(WORK_ITEMS)}
+    grp = GROUP_ORDER.index(ln.group) if ln.group in GROUP_ORDER else len(GROUP_ORDER)
+    return (hm_order[ln.hang_muc], grp, order.get(ln.code, 999), ln.item)
+
+
+def assign_wbs(lines: list[QtyLine]) -> list[QtyLine]:
+    """Number Construction Cells: 100 hạng mục → 300 phần việc → 600 công tác → 1000 cấu kiện.
+
+    Codes are sequential inside their parent (01, 01.02, 01.02.03, 01.02.03.004).
+    Lines are returned in WBS order; element order is kept inside each công tác.
+    """
+    hm_order: dict[str, int] = {}
+    for ln in lines:
+        hm_order.setdefault(ln.hang_muc, len(hm_order))
+    ordered = sorted(enumerate(lines), key=lambda p: (_sort_key(p[1], hm_order), p[0]))
+    codes: dict[tuple, str] = {}
+    counters: dict[tuple, int] = {}
+
+    def code_for(key: tuple, parent: str, width: int = 2) -> str:
+        if key not in codes:
+            counters[parent] = counters.get(parent, 0) + 1
+            num = f"{counters[parent]:0{width}d}"
+            codes[key] = f"{parent}.{num}" if parent else num
+        return codes[key]
+
+    result = []
+    for _, ln in ordered:
+        c100 = code_for((ln.hang_muc,), "")
+        c300 = code_for((ln.hang_muc, ln.group), c100)
+        c600 = code_for((ln.hang_muc, ln.group, ln.item), c300)
+        counters[c600] = counters.get(c600, 0) + 1
+        ln.wbs = f"{c600}.{counters[c600]:03d}"
+        result.append(ln)
+    return result
+
+
+def wbs_parent(code: str, level: int) -> str:
+    """Prefix of a level-1000 code at the given level (100/300/600/1000)."""
+    depth = {100: 1, 300: 2, 600: 3, 1000: 4}[level]
+    return ".".join(code.split(".")[:depth])
 
 
 def summarize(lines: list[QtyLine], prices: dict | None = None) -> list[dict]:
-    """Group take-off lines into BOQ items, ordered as in the catalogue."""
+    """Group take-off lines into BOQ items (level-600 cells), in WBS order.
+
+    ``prices`` is keyed by work item (``code|grade``), shared by all hạng mục.
+    """
     prices = prices or {}
-    order = {code: i for i, code in enumerate(WORK_ITEMS)}
     items: "OrderedDict[str, dict]" = OrderedDict()
-    for ln in lines:
-        it = items.setdefault(ln.item, {
-            "item": ln.item, "code": ln.code, "name": ln.name, "unit": ln.unit,
-            "group": WORK_ITEMS.get(ln.code, {}).get("group", "Khác"),
-            "qty": 0.0, "lines": 0,
+    for ln in sorted(lines, key=lambda x: x.wbs):
+        it = items.setdefault(ln.cell, {
+            "cell": ln.cell, "wbs": wbs_parent(ln.wbs, 600) if ln.wbs else "",
+            "hang_muc": ln.hang_muc, "item": ln.item, "code": ln.code, "name": ln.name,
+            "unit": ln.unit, "group": ln.group, "qty": 0.0, "lines": 0,
         })
         it["qty"] += ln.qty
         it["lines"] += 1
-    result = sorted(items.values(), key=lambda it: (order.get(it["code"], 999), it["item"]))
+    result = list(items.values())
     for it in result:
         it["qty"] = round(it["qty"], 4)
         price = float(prices.get(it["item"], 0) or 0)
         it["price"] = price
         it["amount"] = round(it["qty"] * price, 0)
     return result
+
+
+def wbs_tree(lines: list[QtyLine]) -> list[dict]:
+    """Flat list of WBS nodes (levels 100, 300, 600) for display."""
+    nodes: "OrderedDict[str, dict]" = OrderedDict()
+    for ln in sorted(lines, key=lambda x: x.wbs):
+        for level, name in ((100, ln.hang_muc), (300, ln.group), (600, ln.name)):
+            code = wbs_parent(ln.wbs, level)
+            node = nodes.setdefault(code, {"code": code, "level": level, "name": name,
+                                           "unit": ln.unit if level == 600 else "",
+                                           "qty": 0.0, "cells": 0})
+            node["cells"] += 1
+            if level == 600:
+                node["qty"] = round(node["qty"] + ln.qty, 4)
+    return list(nodes.values())
 
 
 # ---------------------------------------------------------------------------
@@ -868,7 +957,7 @@ def _shoelace(pts) -> float:
 
 
 TEMPLATE_COLUMNS = ["type", "code", "floor", "n", "x", "y", "z", "dx", "dy", "grade",
-                    "p1", "p2", "p3", "p4", "p5", "p6", "item_name", "unit"]
+                    "p1", "p2", "p3", "p4", "p5", "p6", "item_name", "unit", "hang_muc"]
 
 
 def template_workbook() -> bytes:
@@ -882,7 +971,7 @@ def template_workbook() -> bytes:
     ws.title = "CauKien"
     headers = ["Loại", "Mã CK", "Tầng", "Số lượng", "X (m)", "Y (m)", "Z (m)",
                "Bước X (m)", "Bước Y (m)", "Mác BT", "TS1", "TS2", "TS3", "TS4", "TS5", "TS6",
-               "Tên công việc (Khác)", "Đơn vị (Khác)"]
+               "Tên công việc (Khác)", "Đơn vị (Khác)", "Hạng mục (WBS 100)"]
     ws.append(headers)
     for c in ws[1]:
         c.font = Font(bold=True, color="FFFFFF")
@@ -898,11 +987,12 @@ def template_workbook() -> bytes:
          "Cửa đi gỗ D1 900×2200", "bộ"],
     ]
     for row in examples:
-        ws.append(row)
+        ws.append(row + [None] * (len(headers) - len(row)))
     dv = DataValidation(type="list", formula1='"' + ",".join(ELEMENT_TYPES) + '"', allow_blank=False)
     ws.add_data_validation(dv)
     dv.add("A2:A1000")
-    for col, width in zip("ABCDEFGHIJKLMNOPQR", [9, 8, 8, 9, 7, 7, 7, 9, 9, 8, 7, 7, 7, 7, 7, 7, 26, 12]):
+    for col, width in zip("ABCDEFGHIJKLMNOPQRS",
+                          [9, 8, 8, 9, 7, 7, 7, 9, 9, 8, 7, 7, 7, 7, 7, 7, 26, 12, 22]):
         ws.column_dimensions[col].width = width
     ws.freeze_panes = "A2"
 
@@ -949,7 +1039,7 @@ def import_template(data: bytes) -> dict:
             if v not in (None, ""):
                 params[key] = v
         d = {k: rec[k] for k in ("code", "floor", "n", "x", "y", "z", "dx", "dy", "grade",
-                                 "item_name", "unit") if rec.get(k) not in (None, "")}
+                                 "item_name", "unit", "hang_muc") if rec.get(k) not in (None, "")}
         d["type"] = etype
         d["params"] = params
         try:
@@ -1006,32 +1096,37 @@ def export_workbook(project: dict, elements: list[Element], prices: dict | None 
     ws = wb.active
     ws.title = "TongHop_BOQ"
     title(ws, "BẢNG TỔNG HỢP KHỐI LƯỢNG (BOQ)", 8)
-    header(ws, 4, ["STT", "Mã hiệu", "Nội dung công việc", "Đơn vị", "Khối lượng",
-                   "Đơn giá (VNĐ)", "Thành tiền (VNĐ)", "Mã nội bộ"],
-           [6, 14, 42, 9, 15, 16, 18, 22])
+    header(ws, 4, ["STT", "WBS (Cell)", "Nội dung công việc", "Đơn vị", "Khối lượng",
+                   "Đơn giá (VNĐ)", "Thành tiền (VNĐ)", "Mã cell"],
+           [6, 14, 42, 9, 15, 16, 18, 26])
     row = 5
     first_item_row = row
-    group = None
+    seen_parents: set[str] = set()
+    hm_fill = PatternFill("solid", fgColor="CBD5E1")
     stt = 0
     for it in summary:
-        if it["group"] != group:
-            group = it["group"]
-            c = ws.cell(row=row, column=3, value=group.upper())
+        for level, label, fill in ((100, it["hang_muc"], hm_fill), (300, it["group"], group_fill)):
+            code = wbs_parent(it["wbs"], level) if it["wbs"] else label
+            if code in seen_parents:
+                continue
+            seen_parents.add(code)
+            ws.cell(row=row, column=2, value=code).font = Font(bold=True)
+            c = ws.cell(row=row, column=3, value=label.upper())
             c.font = Font(bold=True)
             for col in range(1, 9):
-                ws.cell(row=row, column=col).fill = group_fill
+                ws.cell(row=row, column=col).fill = fill
                 ws.cell(row=row, column=col).border = border
             row += 1
         stt += 1
         ws.cell(row=row, column=1, value=stt).alignment = center
-        ws.cell(row=row, column=2, value="")  # Mã hiệu định mức: người dùng điền
+        ws.cell(row=row, column=2, value=it["wbs"])
         ws.cell(row=row, column=3, value=it["name"]).alignment = wrap
         ws.cell(row=row, column=4, value=it["unit"]).alignment = center
         ws.cell(row=row, column=5,
                 value=f'=SUMIF(ChiTiet!$K:$K,$H{row},ChiTiet!$J:$J)').number_format = qty_fmt
         ws.cell(row=row, column=6, value=it["price"] or None).number_format = money_fmt
         ws.cell(row=row, column=7, value=f"=E{row}*F{row}").number_format = money_fmt
-        ws.cell(row=row, column=8, value=it["item"]).font = Font(color="6B7280", size=9)
+        ws.cell(row=row, column=8, value=it["cell"]).font = Font(color="6B7280", size=9)
         for col in range(1, 9):
             ws.cell(row=row, column=col).border = border
         row += 1
@@ -1051,12 +1146,12 @@ def export_workbook(project: dict, elements: list[Element], prices: dict | None 
     # --- Sheet 2: detailed take-off with live formulas ---------------------
     wd = wb.create_sheet("ChiTiet")
     title(wd, "BẢNG TÍNH CHI TIẾT KHỐI LƯỢNG (DIỄN GIẢI)", 11)
-    header(wd, 4, ["STT", "Nội dung công việc", "Cấu kiện", "Tầng", "SL", "Diễn giải",
-                   "Công thức", "Đơn vị", "KL 1 CK", "Khối lượng", "Mã nội bộ"],
-           [6, 30, 10, 8, 6, 46, 30, 8, 12, 14, 22])
+    header(wd, 4, ["WBS (Cell 1000)", "Nội dung công việc", "Cấu kiện", "Tầng", "SL", "Diễn giải",
+                   "Công thức", "Đơn vị", "KL 1 CK", "Khối lượng", "Mã cell"],
+           [16, 30, 10, 8, 6, 46, 30, 8, 12, 14, 26])
     r = 5
-    for i, ln in enumerate(lines, start=1):
-        wd.cell(row=r, column=1, value=i).alignment = center
+    for ln in lines:
+        wd.cell(row=r, column=1, value=ln.wbs)
         wd.cell(row=r, column=2, value=ln.name).alignment = wrap
         wd.cell(row=r, column=3, value=ln.element)
         wd.cell(row=r, column=4, value=ln.floor)
@@ -1066,7 +1161,7 @@ def export_workbook(project: dict, elements: list[Element], prices: dict | None 
         wd.cell(row=r, column=8, value=ln.unit).alignment = center
         wd.cell(row=r, column=9, value=f"=J{r}/E{r}").number_format = qty_fmt
         wd.cell(row=r, column=10, value=f"={ln.expr}").number_format = qty_fmt
-        wd.cell(row=r, column=11, value=ln.item).font = Font(color="6B7280", size=9)
+        wd.cell(row=r, column=11, value=ln.cell).font = Font(color="6B7280", size=9)
         for col in range(1, 12):
             wd.cell(row=r, column=col).border = border
         r += 1

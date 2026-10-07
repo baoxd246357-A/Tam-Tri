@@ -39,7 +39,8 @@
   <button data-step="3"><b>3</b>3D</button>
   <button data-step="4"><b>4</b>Thống kê</button>
   <button data-step="5"><b>5</b>Bóc KL</button>
-  <button data-step="6"><b>6</b>Excel</button>
+  <button data-step="6"><b>6</b>Dự toán</button>
+  <button data-step="7"><b>7</b>Excel</button>
 </nav>
 
 <!-- STEP 1 · BẢN VẼ -->
@@ -58,6 +59,7 @@
           <div class="grid2">
             <label>Đơn vị<select name="unit"><option>mm</option><option>cm</option><option>m</option></select></label>
             <label>Tầng<input name="floor" placeholder="L01"></label>
+            <label>Hạng mục<input name="hang_muc" placeholder="Hạng mục chính"></label>
             <label>Cao độ Z (m)<input name="z" value="0"></label>
             <label>Cao cột (m)<input name="H_cot" value="3.6"></label>
             <label>Cao dầm (m)<input name="h_dam" value="0.5"></label>
@@ -117,6 +119,8 @@
           <label>Tầng<input name="floor" placeholder="L01"></label>
           <label>Số lượng<input name="n" value="1" inputmode="numeric"></label>
           <label>Mác BT / VL<input name="grade" placeholder="B22.5"></label>
+          <label>Hạng mục (WBS 100)<input name="hang_muc" placeholder="Hạng mục chính" list="hmList"></label>
+          <datalist id="hmList"></datalist>
         </div>
         <div id="khacFields" class="grid2 hidden">
           <label>Tên công việc<input name="item_name" placeholder="Cửa đi D1"></label>
@@ -185,7 +189,9 @@
 <section class="step hidden" data-step="5">
   <div class="card">
     <div class="section-title"><span>🧮</span><h3>Bảng tổng hợp khối lượng</h3></div>
-    <p class="small muted">Nhập đơn giá (tuỳ chọn) để có thành tiền. Cốt thép là ước tính theo hàm lượng kg/m3.</p>
+    <p class="small muted">Mã WBS: 01 = hạng mục (cell 100) · 01.02 = phần việc (300) · 01.02.03 = công tác (600) ·
+      01.02.03.004 = cấu kiện (1000). Đơn giá ở đây là <b>đơn giá nhập trực tiếp</b> — dùng cho công tác chưa gắn
+      định mức ở bước 6. Cốt thép là ước tính theo hàm lượng kg/m3.</p>
     <div class="table-wrap"><table id="boqTable"></table></div>
     <button class="primary" type="button" onclick="savePrices()">💾 Lưu đơn giá</button>
     <span id="priceState" class="small muted"></span>
@@ -198,18 +204,73 @@
   </div>
 </section>
 
-<!-- STEP 6 · EXCEL -->
+<!-- STEP 6 · DỰ TOÁN -->
 <section class="step hidden" data-step="6">
+  <div class="card">
+    <div class="section-title"><span>📚</span><h3>Thư viện định mức &amp; đơn giá</h3></div>
+    <div id="libState" class="small">…</div>
+    <div class="row">
+      <button class="ghost" type="button" onclick="loadSample()">Nạp thư viện mẫu</button>
+      <a id="libraryLink" class="button ghost" href="#">⬇️ Tải thư viện (Excel)</a>
+    </div>
+    <form id="libForm" class="row">
+      <input type="file" name="file" accept=".xlsx" required>
+      <select name="mode" style="max-width:220px"><option value="merge">Bổ sung / ghi đè theo mã</option><option value="replace">Thay toàn bộ</option></select>
+      <button class="primary" type="submit">Nhập định mức từ Excel</button>
+    </form>
+    <p class="small muted">File gồm sheet <b>TaiNguyen</b> (mã, tên, ĐV, loại VL/NC/M, đơn giá), <b>DinhMuc</b> (mã ĐM, tên,
+      ĐV như m3 / 100m2, mã TN, hao phí) và <b>AnhXa</b> (công tác BOQ → mã ĐM). Tải thư viện về để có file mẫu đúng cấu trúc.</p>
+    <div id="estState" class="state muted hidden"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title"><span>🔗</span><h3>Công tác → định mức · đơn giá chi tiết</h3></div>
+    <div class="table-wrap"><table id="mapTable"></table></div>
+    <button class="primary" type="button" onclick="saveMapping()">💾 Lưu ánh xạ</button>
+    <div id="estWarnings" class="small warn-text" style="margin-top:8px"></div>
+  </div>
+
+  <div class="cols2">
+    <div class="card">
+      <div class="section-title"><span>🧱</span><h3>Tổng hợp vật liệu · nhân công · máy</h3></div>
+      <div class="table-wrap"><table id="resTable"></table></div>
+      <button class="primary" type="button" onclick="saveResPrices()">💾 Lưu đơn giá tài nguyên</button>
+    </div>
+    <div class="card">
+      <div class="section-title"><span>💰</span><h3>Tổng hợp dự toán</h3></div>
+      <div class="big-total"><span>Tổng cộng</span><b id="estTotal">—</b></div>
+      <div class="table-wrap"><table id="costTable"></table></div>
+      <details>
+        <summary>Tỷ lệ chi phí (TT 11/2021)</summary>
+        <p class="small muted">Giá trị mặc định chỉ để khởi tạo — kiểm tra theo loại và cấp công trình.</p>
+        <div id="rateInputs" class="grid2"></div>
+        <button class="primary" type="button" onclick="saveRates()">Cập nhật tỷ lệ</button>
+      </details>
+      <a id="estimateLink" class="button primary full" href="#" style="margin-top:10px">⬇️ TẢI DỰ TOÁN EXCEL</a>
+    </div>
+  </div>
+</section>
+
+<!-- STEP 7 · EXCEL -->
+<section class="step hidden" data-step="7">
   <div class="card">
     <div class="section-title"><span>📗</span><h3>Xuất Excel</h3></div>
     <p>File gồm 3 sheet, công thức được giữ nguyên để kiểm tra:</p>
     <ul>
-      <li><b>TongHop_BOQ</b> — STT, Mã hiệu (điền định mức), Nội dung, Đơn vị, Khối lượng
+      <li><b>TongHop_BOQ</b> — STT, mã WBS (Construction Cell), Nội dung, Đơn vị, Khối lượng
         (=SUMIF liên kết sheet chi tiết), Đơn giá, Thành tiền.</li>
       <li><b>ChiTiet</b> — diễn giải từng cấu kiện, khối lượng là công thức <code>=SL*kích thước</code>.</li>
       <li><b>ThongKe_CauKien</b> — danh sách cấu kiện, kích thước, bê tông, tổng hợp theo tầng.</li>
     </ul>
     <a id="exportLink" class="button primary full" href="#">⬇️ TẢI FILE BOQ EXCEL</a>
+    <h4 style="margin-top:20px">Dự toán (từ bước 6)</h4>
+    <ul>
+      <li><b>TongHop_ChiPhi</b> — VL, NC, M → T, C, LT, TT, TL, G, GTGT, Gxd, dự phòng. Tỷ lệ % sửa được.</li>
+      <li><b>DuToan</b> — đơn giá VL/NC/M từng công tác theo WBS, thành tiền.</li>
+      <li><b>PhanTich_DonGia</b> — hao phí từng tài nguyên theo định mức.</li>
+      <li><b>TongHop_VT</b> — tổng vật tư, nhân công, máy. <b>Sửa đơn giá ở đây, cả file tự tính lại.</b></li>
+    </ul>
+    <a id="estimateLink2" class="button primary full" href="#">⬇️ TẢI FILE DỰ TOÁN EXCEL</a>
   </div>
 </section>
 </main>
@@ -254,6 +315,9 @@ async function openProject(id){
   PROJECT=await api("/projects/"+id);
   localSet("boqProject",id);
   $("exportLink").href=`${API}/projects/${id}/export.xlsx`;
+  $("estimateLink").href=$("estimateLink2").href=`${API}/projects/${id}/estimate.xlsx`;
+  $("libraryLink").href=`${API}/projects/${id}/library.xlsx`;
+  $("hmList").innerHTML=[...new Set(PROJECT.elements.map(e=>e.hang_muc).filter(Boolean))].map(h=>`<option value="${esc(h)}">`).join("");
   renderDrawings(); renderElements(); refreshStep();
 }
 $("projectSelect").addEventListener("change",e=>openProject(Number(e.target.value)));
@@ -277,6 +341,7 @@ function refreshStep(){
   if(STEP===3) load3D();
   if(STEP===4) loadStats();
   if(STEP===5) loadTakeoff();
+  if(STEP===6) loadEstimate();
 }
 
 /* ---------- step 1 ---------- */
@@ -371,7 +436,7 @@ function readElForm(){
   const f=$("elForm"), fd=Object.fromEntries(new FormData(f));
   const params={};
   for(const [k,v] of Object.entries(fd)) if(k.startsWith("p_")) params[k.slice(2)]=v;
-  return {type:fd.type,code:fd.code,floor:fd.floor,n:fd.n,grade:fd.grade,x:fd.x,y:fd.y,z:fd.z,dx:fd.dx,dy:fd.dy,
+  return {type:fd.type,code:fd.code,floor:fd.floor,n:fd.n,grade:fd.grade,hang_muc:fd.hang_muc,x:fd.x,y:fd.y,z:fd.z,dx:fd.dx,dy:fd.dy,
           item_name:fd.item_name,unit:fd.unit,params};
 }
 $("elForm").addEventListener("submit",async e=>{
@@ -392,7 +457,7 @@ function editElement(id){
   const f=$("elForm");
   f.type.value=el.type; renderParamFields(el.params);
   f.eid.value=el.id;
-  for(const k of ["code","floor","n","grade","x","y","z","dx","dy","item_name","unit"]) f[k].value=el[k]??"";
+  for(const k of ["code","floor","n","grade","hang_muc","x","y","z","dx","dy","item_name","unit"]) f[k].value=el[k]??"";
   $("elFormTitle").textContent="Sửa "+el.code;
   showShop(id); f.scrollIntoView({behavior:"smooth"});
 }
@@ -411,13 +476,13 @@ function showShop(id){
 function renderElements(){
   const q=($("elFilter").value||"").toLowerCase();
   const rows=PROJECT.elements.filter(e=>!q||[e.code,e.floor,e.type,CAT.element_types[e.type].label].join(" ").toLowerCase().includes(q));
-  $("elTable").innerHTML=`<tr><th>Mã</th><th>Loại</th><th>Tầng</th><th>SL</th><th>Kích thước (m)</th><th>Mác</th><th></th></tr>`+
+  $("elTable").innerHTML=`<tr><th>Mã</th><th>Loại</th><th>Hạng mục</th><th>Tầng</th><th>SL</th><th>Kích thước (m)</th><th>Mác</th><th></th></tr>`+
     (rows.length?rows.map(e=>`<tr onclick="showShop(${e.id})" class="clickable">
-      <td><b>${esc(e.code)}</b></td><td>${esc(CAT.element_types[e.type].label)}</td><td>${esc(e.floor)}</td><td>${e.n}</td>
+      <td><b>${esc(e.code)}</b></td><td>${esc(CAT.element_types[e.type].label)}</td><td class="small">${esc(e.hang_muc||"—")}</td><td>${esc(e.floor)}</td><td>${e.n}</td>
       <td class="small">${e.type==="KHAC"?esc(e.item_name+" · "+e.params.khoi_luong+" "+e.unit):esc(dimsText(e))}</td><td>${esc(e.grade)}</td>
       <td class="nowrap"><button class="ghost small-btn" type="button" onclick="event.stopPropagation();editElement(${e.id})">Sửa</button>
       <button class="ghost small-btn danger" type="button" onclick="event.stopPropagation();deleteElement(${e.id})">Xoá</button></td></tr>`).join("")
-    :`<tr><td colspan="7" class="muted">Chưa có cấu kiện. Nhập ở bước 1 hoặc form bên trên.</td></tr>`);
+    :`<tr><td colspan="8" class="muted">Chưa có cấu kiện. Nhập ở bước 1 hoặc form bên trên.</td></tr>`);
 }
 $("elFilter").addEventListener("input",renderElements);
 
@@ -503,20 +568,20 @@ async function loadStats(){
 /* ---------- step 5 ---------- */
 async function loadTakeoff(){
   const j=await api(`/projects/${PROJECT.id}/takeoff`);
-  let total=0, group=null, stt=0;
+  let total=0;
+  _seenWbs=new Set();
   const rows=j.summary.map(it=>{
     total+=it.amount;
-    const g=it.group!==group?`<tr class="group"><td colspan="7">${esc(group=it.group)}</td></tr>`:"";
-    return g+`<tr><td>${++stt}</td><td>${esc(it.name)}</td><td>${esc(it.unit)}</td><td class="num">${num(it.qty)}</td>
+    return wbsHeaders(it,7)+`<tr><td class="small muted">${esc(it.wbs)}</td><td>${esc(it.name)}</td><td>${esc(it.unit)}</td><td class="num">${num(it.qty)}</td>
       <td><input class="price" data-item="${esc(it.item)}" data-qty="${it.qty}" value="${it.price||""}" inputmode="numeric" placeholder="0"></td>
       <td class="num amount">${num(it.amount,0)}</td><td class="small muted">${it.lines} dòng</td></tr>`;
   }).join("");
-  $("boqTable").innerHTML=`<tr><th>STT</th><th>Nội dung công việc</th><th>ĐV</th><th>Khối lượng</th><th>Đơn giá</th><th>Thành tiền</th><th></th></tr>`+
+  $("boqTable").innerHTML=`<tr><th>WBS</th><th>Nội dung công việc</th><th>ĐV</th><th>Khối lượng</th><th>Đơn giá</th><th>Thành tiền</th><th></th></tr>`+
     (rows||`<tr><td colspan="7" class="muted">Chưa có khối lượng.</td></tr>`)+
     `<tr class="total"><td></td><td>TỔNG CỘNG</td><td></td><td></td><td></td><td class="num" id="boqTotal">${num(total,0)}</td><td></td></tr>`;
   document.querySelectorAll("#boqTable .price").forEach(inp=>inp.addEventListener("input",recalc));
-  $("lineTable").innerHTML=`<tr><th>Công việc</th><th>CK</th><th>Tầng</th><th>Diễn giải</th><th>ĐV</th><th>KL</th></tr>`+
-    j.lines.map(l=>`<tr><td>${esc(l.name)}</td><td>${esc(l.element)}</td><td>${esc(l.floor)}</td>
+  $("lineTable").innerHTML=`<tr><th>Cell 1000</th><th>Công việc</th><th>CK</th><th>Tầng</th><th>Diễn giải</th><th>ĐV</th><th>KL</th></tr>`+
+    j.lines.map(l=>`<tr><td class="small muted">${esc(l.wbs)}</td><td>${esc(l.name)}</td><td>${esc(l.element)}</td><td>${esc(l.floor)}</td>
       <td class="small">${l.n} × ${esc(l.note)}</td><td>${esc(l.unit)}</td><td class="num">${num(l.qty)}</td></tr>`).join("");
 }
 function recalc(){
@@ -532,6 +597,83 @@ async function savePrices(){
   document.querySelectorAll("#boqTable .price").forEach(inp=>prices[inp.dataset.item]=Number(inp.value||0));
   await api(`/projects/${PROJECT.id}/prices`,jsonOpts("PUT",{prices}));
   $("priceState").textContent=" ✅ Đã lưu — đơn giá sẽ có trong file Excel.";
+}
+
+/* WBS header rows (cell 100 hạng mục, cell 300 phần việc) above each cell-600 row */
+let _seenWbs=new Set();
+function wbsHeaders(it,cols){
+  const parts=(it.wbs||"").split("."), out=[];
+  [[1,it.hang_muc,"hm"],[2,it.group,"group"]].forEach(([d,label,cls])=>{
+    const code=parts.slice(0,d).join(".");
+    if(!_seenWbs.has(code)){_seenWbs.add(code);out.push(`<tr class="${cls}"><td>${esc(code)}</td><td colspan="${cols-1}">${esc(label)}</td></tr>`);}
+  });
+  return out.join("");
+}
+
+/* ---------- step 6 · dự toán ---------- */
+let EST=null;
+async function loadEstimate(){
+  const [e,lib]=await Promise.all([api(`/projects/${PROJECT.id}/estimate`),api(`/projects/${PROJECT.id}/library`)]);
+  EST=e;
+  $("libState").innerHTML=lib.norms.length
+    ? `Thư viện: <b>${lib.resources.length}</b> tài nguyên · <b>${lib.norms.length}</b> định mức · <b>${Object.keys(lib.mapping).length}</b> ánh xạ.`
+      + (lib.norms.some(n=>n.code.startsWith("MAU."))?` <span class="warn-text">⚠️ Đang có định mức MẪU — chỉ để chạy thử.</span>`:"")
+    : "Chưa có thư viện định mức. Bấm <b>Nạp thư viện mẫu</b> để thử, hoặc nhập file Excel định mức của đơn vị.";
+  const opts=['<option value="">— Đơn giá nhập trực tiếp (bước 5) —</option>'].concat(
+    e.norms.map(n=>`<option value="${esc(n.code)}">${esc(n.code)} · ${esc(n.name)} (${esc(n.unit)})</option>`)).join("");
+  _seenWbs=new Set();
+  $("mapTable").innerHTML=`<tr><th>WBS</th><th>Công tác</th><th>ĐV</th><th>Khối lượng</th><th>Định mức</th><th>ĐG VL</th><th>ĐG NC</th><th>ĐG M</th><th>Đơn giá</th><th>Thành tiền</th></tr>`+
+    (e.items.length?e.items.map(it=>wbsHeaders(it,10)+`<tr>
+      <td class="small muted">${esc(it.wbs)}</td><td>${esc(it.name)}${it.factor&&it.factor!==1?`<div class="small muted">quy đổi ×${it.factor} (${esc(it.norm_unit)})</div>`:""}</td>
+      <td>${esc(it.unit)}</td><td class="num">${num(it.qty)}</td>
+      <td><select class="norm" data-item="${esc(it.item)}">${opts}</select></td>
+      <td class="num">${num(it.dg.VL,0)}</td><td class="num">${num(it.dg.NC,0)}</td><td class="num">${num(it.dg.M,0)}</td>
+      <td class="num"><b>${num(it.unit_price,0)}</b></td><td class="num">${num(it.total,0)}</td></tr>`).join("")
+     :`<tr><td colspan="10" class="muted">Chưa có khối lượng — nhập cấu kiện ở bước 1–2.</td></tr>`);
+  document.querySelectorAll("#mapTable select.norm").forEach((sel,i)=>{sel.value=e.items[i].norm||"";});
+  $("resTable").innerHTML=`<tr><th>Mã</th><th>Tài nguyên</th><th>ĐV</th><th>Loại</th><th>Tổng hao phí</th><th>Đơn giá</th><th>Thành tiền</th></tr>`+
+    (e.resources.length?e.resources.map(r=>`<tr><td>${esc(r.code)}</td><td>${esc(r.name)}</td><td>${esc(r.unit)}</td><td>${r.kind}</td>
+      <td class="num">${num(r.haophi)}</td><td><input class="price res-price" data-code="${esc(r.code)}" value="${r.price}" inputmode="numeric"></td>
+      <td class="num">${num(r.amount,0)}</td></tr>`).join("")
+     :`<tr><td colspan="7" class="muted">Chưa có công tác nào gắn định mức.</td></tr>`);
+  $("rateInputs").innerHTML=Object.entries(e.rate_labels).map(([k,label])=>
+    `<label>${esc(label)} (%)<input class="rate" data-key="${k}" value="${e.rates[k]}" inputmode="decimal"></label>`).join("");
+  $("costTable").innerHTML=`<tr><th>Khoản mục</th><th>Ký hiệu</th><th>Cách tính</th><th>Tỷ lệ</th><th>Giá trị (VNĐ)</th></tr>`+
+    e.costs.map(c=>`<tr class="${["T","G","Gxd","TONG"].includes(c.key)?"total":""}"><td>${esc(c.name)}</td><td>${c.key}</td>
+      <td class="small muted">${esc(c.formula)}</td><td class="num">${c.rate==null?"":c.rate+"%"}</td><td class="num">${num(c.value,0)}</td></tr>`).join("");
+  $("estTotal").textContent=num(e.costs[e.costs.length-1].value,0)+" đ";
+  $("estWarnings").innerHTML=e.warnings.map(w=>`<div>⚠️ ${esc(w)}</div>`).join("");
+}
+async function estAction(fn,msg){
+  setState($("estState"),"⏳ Đang xử lý…","loading");
+  try{const r=await fn(); await loadEstimate(); setState($("estState"),"✅ "+(typeof msg==="function"?msg(r):msg),"ok");}
+  catch(err){setState($("estState"),"❌ "+err.message,"error");}
+}
+function loadSample(){
+  if(!confirm("Nạp thư viện định mức MẪU? (hao phí & giá chỉ minh hoạ, phải thay trước khi phát hành)")) return;
+  estAction(()=>api(`/projects/${PROJECT.id}/library/sample`,{method:"POST"}),r=>`Đã nạp ${r.norms} định mức mẫu.`);
+}
+$("libForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const fd=new FormData(e.target);
+  if(fd.get("mode")==="replace"&&!confirm("Thay toàn bộ thư viện hiện tại bằng file này?")) return;
+  estAction(()=>api(`/projects/${PROJECT.id}/library/import`,{method:"POST",body:fd}),
+    r=>`Thư viện: ${r.resources} tài nguyên, ${r.norms} định mức.`+(r.errors.length?" Lỗi: "+r.errors.slice(0,5).join("; "):""));
+});
+function saveMapping(){
+  const mapping={};
+  document.querySelectorAll("#mapTable select.norm").forEach(s=>mapping[s.dataset.item]=s.value||null);
+  estAction(()=>api(`/projects/${PROJECT.id}/library/mapping`,jsonOpts("PUT",{mapping})),"Đã lưu ánh xạ định mức.");
+}
+function saveResPrices(){
+  const prices={};
+  document.querySelectorAll("#resTable .res-price").forEach(i=>prices[i.dataset.code]=Number(i.value||0));
+  estAction(()=>api(`/projects/${PROJECT.id}/library/prices`,jsonOpts("PUT",{prices})),"Đã lưu đơn giá tài nguyên.");
+}
+function saveRates(){
+  const rates={};
+  document.querySelectorAll("#rateInputs .rate").forEach(i=>rates[i.dataset.key]=Number(String(i.value).replace(",",".")));
+  estAction(()=>api(`/projects/${PROJECT.id}/rates`,jsonOpts("PUT",{rates})),"Đã cập nhật tỷ lệ chi phí.");
 }
 
 /* ---------- boot ---------- */
