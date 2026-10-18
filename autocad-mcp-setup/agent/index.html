@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tro ly AutoCAD</title>
+<style>
+:root{--bg:#f6f7f9;--fg:#1c2128;--card:#fff;--bd:#d8dce2;--ac:#0b6bcb;--mut:#6b7480}
+@media(prefers-color-scheme:dark){:root{--bg:#14171c;--fg:#e6e9ee;--card:#1d2128;--bd:#323944;--ac:#4c9aff;--mut:#98a2b0}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif;display:flex;flex-direction:column;height:100vh}
+header{padding:10px 16px;border-bottom:1px solid var(--bd);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header b{font-size:16px}#st{color:var(--mut);font-size:13px}
+#log{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.m{max-width:820px;padding:10px 14px;border-radius:10px;background:var(--card);border:1px solid var(--bd);white-space:pre-wrap;word-break:break-word}
+.u{align-self:flex-end;background:var(--ac);color:#fff;border-color:var(--ac)}
+details{max-width:820px;font-size:13px;color:var(--mut)}details pre{margin:4px 0;white-space:pre-wrap;word-break:break-word}
+.q{padding:6px 16px;display:flex;gap:6px;flex-wrap:wrap}
+button{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(--fg);padding:6px 12px;border-radius:8px;cursor:pointer}
+button.p{background:var(--ac);color:#fff;border-color:var(--ac)}button:disabled{opacity:.5;cursor:wait}
+form{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--bd)}
+textarea{flex:1;font:inherit;padding:8px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--fg);resize:none}
+</style></head><body>
+<header><b>Tro ly AutoCAD</b><span id="st">dang kiem tra...</span><button id="clr" type="button">Xoa hoi thoai</button></header>
+<div id="log"></div>
+<div class="q" id="q"></div>
+<form id="f"><textarea id="t" rows="2" placeholder="Vi du: goi system status, roi cho toi thong tin ban ve"></textarea><button class="p" id="go">Gui</button></form>
+<script>
+const log=document.getElementById('log'),t=document.getElementById('t'),go=document.getElementById('go');
+let hist=[];
+const el=(c,txt)=>{const d=document.createElement('div');d.className='m '+c;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9;return d};
+function render(m){
+  if(m.role==='assistant'){ if(m.content) el('a',m.content);
+    (m.tool_calls||[]).forEach(c=>{const d=document.createElement('details');d.innerHTML='<summary></summary><pre></pre>';
+      d.querySelector('summary').textContent='Goi: '+c.function.name;d.querySelector('pre').textContent=c.function.arguments;d.id='c'+c.id;log.appendChild(d)});}
+  else if(m.role==='tool'){const d=document.getElementById('c'+m.tool_call_id);
+    if(d){const p=document.createElement('pre');p.textContent='-> '+m.content;d.appendChild(p)}}
+}
+async function send(text){
+  if(!text.trim())return; go.disabled=true; el('u',text); hist.push({role:'user',content:text}); t.value='';
+  const w=el('a','...');
+  try{
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist})});
+    const j=await r.json(); w.remove();
+    if(!r.ok) throw new Error(j.detail||r.status);
+    j.new.forEach(m=>{hist.push(m);render(m)});
+  }catch(e){w.textContent='Loi: '+e.message}
+  go.disabled=false; t.focus();
+}
+document.getElementById('f').onsubmit=e=>{e.preventDefault();send(t.value)};
+t.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send(t.value)}};
+document.getElementById('clr').onclick=()=>{hist=[];log.innerHTML=''};
+[['Trang thai he thong','Goi system status va cho biet backend dang dung.'],
+ ['Thong tin ban ve','Cho toi thong tin ban ve hien tai (drawing info).'],
+ ['Dem doi tuong theo layer','Dem so doi tuong theo tung layer (entity count).'],
+ ['Chup man hinh','Chup man hinh ban ve (view get_screenshot).'],
+ ['Hoan tac lo vua ve','Hoan tac lo vua ve bang drawing undo, roi dem lai doi tuong.']]
+ .forEach(([a,b])=>{const x=document.createElement('button');x.type='button';x.textContent=a;x.onclick=()=>send(b);document.getElementById('q').appendChild(x)});
+fetch('/api/status').then(r=>r.json()).then(s=>{
+  document.getElementById('st').textContent=(s.key_set?'key OK':'THIEU key')+' | model: '+(s.model||'chua dat')+' | '+s.tools.length+' cong cu'+(s.execute_lisp?' | execute_lisp BAT':'')
+}).catch(()=>document.getElementById('st').textContent='server chua chay');
+</script></body></html>
