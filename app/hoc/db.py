@@ -49,4 +49,11 @@ class Task(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class ChatState(Base):
+    """Nhớ mỗi cuộc chat/nhóm Zalo đang 'chọn' bé nào."""
+    __tablename__ = "hoc_chat_state"
+    chat_id = Column(String(100), primary_key=True)
+    learner_id = Column(Integer)
+
+
 Base.metadata.create_all(engine)

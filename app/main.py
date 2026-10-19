@@ -257,6 +257,8 @@ Return ONLY JSON:
 
 @app.on_event("startup")
 def seed():
+    from app.hoc import zalo
+    zalo.start_background()
     db = SessionLocal()
     if db.query(Project).count() == 0:
         db.add(Project(code="PRJ-001", name="Bệnh viện Tâm Trí", location="TP.HCM"))

@@ -12,7 +12,7 @@
 <header class="topbar">
   <div>
     <div class="eyebrow">TÂM TRÍ · HỌC TẬP GIA ĐÌNH</div>
-    <h1>📚 Học tập cả nhà</h1>
+    <h1>🤖 Trợ lý học tập cả nhà</h1>
     <p><a href="/" style="color:inherit">← Kiểm tra hiện trường</a></p>
   </div>
   <select id="who" aria-label="Người học"></select>
@@ -22,6 +22,17 @@
 <div class="card warn">⚠️ Bảng quy tắc học tập (<code>app/hoc/rules.py</code>) chưa được phụ huynh duyệt
 (<code>REVIEWED = False</code>). Giới hạn giờ học/ngưỡng cảnh báo là giá trị tạm.</div>
 {% endif %}
+
+<section class="card chat">
+  <div class="section-title"><span>💬</span><h3>Chat với trợ lý</h3></div>
+  <div id="chatlog" class="chatlog"></div>
+  <div class="chips">
+    <button type="button" data-cmd="menu">menu</button><button type="button" data-cmd="ds">ds</button>
+    <button type="button" data-cmd="báo cáo">báo cáo</button><button type="button" data-cmd="bé">bé</button>
+  </div>
+  <form id="chatForm" class="row"><input id="chatText" placeholder="VD: việc Bin Toán trang 45 hạn 25/10" autocomplete="off" required><button>Gửi</button></form>
+  <small>Cùng bộ lệnh với nhóm Zalo (gõ <code>/menu</code> trong nhóm).</small>
+</section>
 
 <section class="card">
   <div class="section-title"><span>👨‍👩‍👧</span><h3>Thành viên</h3></div>

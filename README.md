@@ -57,7 +57,19 @@ Open from a phone on the same Wi-Fi:
 
 This is a field-trial prototype, not a production safety/quality certification system. AI observations must be reviewed by the site engineer/inspector before contractual decisions are made.
 
-## 📚 Học tập cả nhà (`/hoc`)
+## 🤖 Trợ lý học tập cả nhà (`/hoc` + nhóm Zalo)
+
+Trợ lý nghe lệnh tiếng Việt (có dấu hoặc không), dùng chung cho **khung chat trên web** và **nhóm Zalo**. Không dùng AI/API ngoài.
+
+### Đưa vào nhóm Zalo
+1. Vào https://bot.zapps.me, tạo bot bằng Zalo cá nhân, lấy **token** (không cần OA doanh nghiệp).
+2. Render → Environment → đặt `ZALO_BOT_TOKEN`, redeploy. Bot tự đọc tin bằng getUpdates (không cần webhook).
+3. Thêm bot vào nhóm Zalo của gia đình. Trong nhóm gõ `/menu` (bot chỉ trả lời tin bắt đầu bằng `/` hoặc `bot `; chat riêng thì không cần).
+4. Lệnh: `/thêm Bin thcs lớp 7` · `/chọn Bin` · `/việc Bin Toán trang 45 hạn 25/10` · `/ds` · `/xong 3` · `/học Bin Toán 45 hiểu 4` · `/báo cáo`.
+
+Lưu ý: Zalo Bot Platform là dịch vụ bên ngoài, chưa kiểm thử với Zalo thật (chỉ kiểm thử giả lập); nếu bot không nhận tin trong nhóm, kiểm tra quyền bot trong nhóm và log Render. Chỉ chạy 1 worker uvicorn.
+
+### Trang web `/hoc`
 
 Quản lý việc học của gia đình theo khung agent QS (bảng quy tắc `rules.py` + nhật ký + báo cáo), **không dùng AI/API ngoài**.
 

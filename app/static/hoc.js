@@ -55,4 +55,17 @@ $("#weeklyBtn").onclick = async () => {
 document.addEventListener("change", async (e) => {
   if (e.target.dataset.task) { await api(`/api/v1/hoc/tasks/${e.target.dataset.task}/toggle`, { method: "POST" }); refresh(); }
 });
+
+function say(cls, t) { const d = document.createElement("div"); d.className = "msg " + cls; d.textContent = t; $("#chatlog").append(d); d.scrollIntoView({ block: "end" }); }
+async function send(text) {
+  say("me", text);
+  try {
+    const f = new FormData(); f.append("text", text);
+    say("bot", (await api("/api/v1/hoc/agent", { method: "POST", body: f })).reply);
+    loadLearners(who);
+  } catch (x) { say("bot", "Lỗi: " + x.message); }
+}
+$("#chatForm").onsubmit = (e) => { e.preventDefault(); const t = $("#chatText").value.trim(); if (t) { $("#chatText").value = ""; send(t); } };
+document.querySelectorAll("[data-cmd]").forEach((b) => (b.onclick = () => send(b.dataset.cmd)));
+say("bot", "Chào! Mình là trợ lý học tập của cả nhà. Gõ menu để xem lệnh.");
 loadLearners();
