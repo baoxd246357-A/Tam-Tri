@@ -138,7 +138,7 @@ async def zalo_webhook(request: Request, background: BackgroundTasks):
     try:
         event = await request.json()
     except Exception:
-        raise HTTPException(400, "JSON không hợp lệ")
+        event = {}  # request kiểm tra của Zalo có thể không có nội dung: vẫn trả 200
     bot = zalo.get_bot()
     if bot:
         background.add_task(_zalo_reply, bot, event)

@@ -170,3 +170,28 @@ def test_webhook_url(monkeypatch):
     monkeypatch.delenv("ZALO_WEBHOOK_URL", raising=False)
     monkeypatch.setenv("RENDER_EXTERNAL_URL", "https://x.onrender.com/")
     assert zalo.webhook_url() == "https://x.onrender.com/api/v1/hoc/zalo/webhook"
+
+
+def test_register_webhook_retries_until_verified():
+    calls = []
+    class Bot:
+        def call(self, method, data):
+            calls.append(method)
+            ok = len(calls) >= 3
+            return {"verification": {"ok": ok, "outcome": "webhook.ok" if ok else "webhook.http.5xx", "hint": ""}}
+    assert zalo.register_webhook(Bot(), "https://x/y", "secret123", sleep=lambda s: None) is True
+    assert calls == ["setWebhook"] * 3
+
+
+def test_register_webhook_gives_up_and_survives_errors():
+    class Bad:
+        def call(self, m, d): raise RuntimeError("boom")
+    assert zalo.register_webhook(Bad(), "u", "s", delays=(1, 1), sleep=lambda s: None) is False
+
+
+def test_webhook_accepts_empty_body(client, monkeypatch):
+    c, r = client
+    monkeypatch.setattr(r.zalo, "get_bot", lambda: None)
+    monkeypatch.setenv("ZALO_WEBHOOK_SECRET", "s3cret-key")
+    resp = c.post("/api/v1/hoc/zalo/webhook", headers={"X-Bot-Api-Secret-Token": "s3cret-key"})
+    assert resp.status_code == 200
