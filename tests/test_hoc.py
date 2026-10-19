@@ -195,3 +195,21 @@ def test_webhook_accepts_empty_body(client, monkeypatch):
     monkeypatch.setenv("ZALO_WEBHOOK_SECRET", "s3cret-key")
     resp = c.post("/api/v1/hoc/zalo/webhook", headers={"X-Bot-Api-Secret-Token": "s3cret-key"})
     assert resp.status_code == 200
+
+
+def test_strip_mention():
+    n = "Bot Học Tập TV"
+    assert zalo.strip_mention("@Bot Học Tập TV /menu", n) == ("/menu", True)
+    assert zalo.strip_mention("@Bot Học Tập TV ds", n) == ("ds", True)
+    assert zalo.strip_mention("@bot hoc tap tv, báo cáo", n) == ("báo cáo", True)
+    assert zalo.strip_mention("@Ai đó /menu", n) == ("/menu", True)
+    assert zalo.strip_mention("ds", n) == ("ds", False)
+
+
+def test_zalo_group_mention_without_slash(monkeypatch, db):
+    import contextlib
+    monkeypatch.setattr(zalo, "SessionLocal", lambda: contextlib.nullcontext(db))
+    monkeypatch.setattr(zalo, "BOT_NAME", "Bot Học Tập TV")
+    assert "Trợ lý học tập" in zalo.reply_for(ev("@Bot Học Tập TV menu", ctype="GROUP"))[1]
+    assert "Đã thêm" in zalo.reply_for(ev("@Bot Học Tập TV /thêm Bin", ctype="GROUP"))[1]
+    assert zalo.reply_for(ev("chiều nay đi học", ctype="GROUP")) is None

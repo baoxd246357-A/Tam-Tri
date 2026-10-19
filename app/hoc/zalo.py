@@ -56,20 +56,40 @@ def extract(event) -> tuple[str, str, bool, str] | None:
     return chat_id, str(text), ctype in ("GROUP", "GROUPCHAT", "SUPERGROUP"), sender.get("display_name") or sender.get("name") or ""
 
 
+BOT_NAME = ""  # display_name của bot (lấy từ getMe) để nhận ra tin nhắc tên bot trong nhóm
+
+
+def strip_mention(text: str, bot_name: str = ""):
+    """Bỏ phần '@Tên bot' ở đầu tin. Trả (text_còn_lại, có_nhắc_bot)."""
+    t = text.strip()
+    if not t.startswith("@"):
+        return t, False
+    name = (bot_name or BOT_NAME).strip()
+    if name and agent.norm(t[1:]).startswith(agent.norm(name)):
+        return t[1 + len(name):].lstrip(" ,:-\u00a0"), True   # norm giữ độ dài ký tự nên cắt theo len(name)
+    i = t.find("/")
+    if i != -1:
+        return t[i:], True
+    parts = t.split(None, 1)
+    return (parts[1] if len(parts) > 1 else ""), True
+
+
 def reply_for(event) -> tuple[str, str] | None:
     got = extract(event)
     if not got:
         return None
     chat_id, text, is_group, _ = got
     t = text.strip()
+    addressed = t.startswith("/")
     if is_group:
-        low = t.lower()
-        if t.startswith("/"):
-            pass
-        elif low.startswith("bot "):
-            t = t[4:]
-        else:
+        t, mentioned = strip_mention(t)
+        addressed = addressed or mentioned
+        if t.lower().startswith("bot "):
+            t, addressed = t[4:].strip(), True
+        if not addressed:
+            log.warning("Zalo nhận tin nhóm không gọi bot (bỏ qua)")
             return None
+    log.warning("Zalo nhận tin chat_type=%s", "GROUP" if is_group else "PRIVATE")
     with SessionLocal() as db:
         ans = agent.handle(db, chat_id, t)
     if ans is None:
@@ -135,7 +155,10 @@ def start_background():
     if not bot:
         return None
     try:
-        log.warning("Zalo bot sẵn sàng (%s): %s", bot.api, str(bot.call("getMe", {}))[:200])
+        me = bot.call("getMe", {}) or {}
+        global BOT_NAME
+        BOT_NAME = (me.get("display_name") or "") if isinstance(me, dict) else ""
+        log.warning("Zalo bot sẵn sàng (%s): %s", bot.api, str(me)[:200])
     except Exception as e:  # noqa: BLE001
         log.warning("Zalo getMe lỗi (%s) — kiểm tra ZALO_BOT_TOKEN / ZALO_API_BASE: %s", bot.api, e)
     secret, url = os.getenv("ZALO_WEBHOOK_SECRET", ""), webhook_url()
