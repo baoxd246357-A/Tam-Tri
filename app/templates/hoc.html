@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>Gia sư AI cả nhà</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/hoc.css">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="eyebrow">TÂM TRÍ · HỌC TẬP GIA ĐÌNH</div>
+    <h1>📚 Gia sư AI cả nhà</h1>
+    <p><a href="/" style="color:inherit">← Kiểm tra hiện trường</a></p>
+  </div>
+  <select id="who" aria-label="Người học"></select>
+</header>
+<main>
+{% if not reviewed %}
+<div class="card warn">⚠️ Bảng quy tắc dạy kèm (<code>app/hoc/rules.py</code>) chưa được phụ huynh duyệt
+(<code>REVIEWED = False</code>). AI có thể sai — luôn kiểm tra lại, nhất là môn tính toán.</div>
+{% endif %}
+
+<section class="card">
+  <div class="section-title"><span>👨‍👩‍👧</span><h3>Thành viên</h3></div>
+  <form id="learnerForm" class="grid">
+    <input name="name" placeholder="Tên · VD: Bin" required>
+    <input name="grade" placeholder="Lớp · VD: Lớp 7">
+    <select name="level">
+      <option value="tieu_hoc">Tiểu học</option><option value="thcs" selected>THCS</option>
+      <option value="thpt">THPT</option><option value="dai_hoc">Đại học / người lớn</option>
+    </select>
+    <input name="goal" placeholder="Mục tiêu · VD: thi vào lớp 10">
+    <button>Thêm</button>
+  </form>
+</section>
+
+<section class="card">
+  <div class="section-title"><span>🧠</span><h3>Hỏi bài (chụp vở / đề)</h3></div>
+  <form id="askForm">
+    <div class="grid">
+      <select name="subject">{% for s in subjects %}<option>{{ s }}</option>{% endfor %}</select>
+      <select name="hint_level" title="Mức gợi ý">
+        {% for h in ladder %}<option value="{{ loop.index }}" {% if loop.index == 2 %}selected{% endif %}>Mức {{ loop.index }}: {{ h }}</option>{% endfor %}
+      </select>
+    </div>
+    <textarea name="text" rows="3" placeholder="Câu hỏi hoặc chỗ đang bí…"></textarea>
+    <input type="file" name="file" accept="image/*" capture="environment">
+    <button id="askBtn">Hỏi gia sư</button>
+  </form>
+  <div id="answer"></div>
+</section>
+
+<section class="card">
+  <div class="section-title"><span>📝</span><h3>Việc cần làm</h3></div>
+  <form id="taskForm" class="grid">
+    <input name="title" placeholder="VD: Bài tập Toán trang 45" required>
+    <select name="subject">{% for s in subjects %}<option>{{ s }}</option>{% endfor %}</select>
+    <input name="due" type="date">
+    <button>Thêm</button>
+  </form>
+  <ul id="tasks" class="list"></ul>
+</section>
+
+<section class="card">
+  <div class="section-title"><span>⏱️</span><h3>Ghi buổi học</h3></div>
+  <form id="logForm" class="grid">
+    <select name="subject">{% for s in subjects %}<option>{{ s }}</option>{% endfor %}</select>
+    <input name="minutes" type="number" min="1" max="720" placeholder="Số phút" required>
+    <select name="understanding" title="Mức hiểu bài">
+      <option value="1">Hiểu: 1 — chưa hiểu</option><option value="2">2</option>
+      <option value="3" selected>3 — tạm</option><option value="4">4</option><option value="5">5 — rất rõ</option>
+    </select>
+    <input name="note" placeholder="Ghi chú">
+    <button>Lưu</button>
+  </form>
+</section>
+
+<section class="card">
+  <div class="section-title"><span>📊</span><h3>Báo cáo tuần cho phụ huynh</h3></div>
+  <button id="weeklyBtn">Xem báo cáo + nhận xét AI</button>
+  <div id="weekly"></div>
+</section>
+
+<section class="card">
+  <div class="section-title"><span>🕘</span><h3>Câu hỏi gần đây</h3></div>
+  <div id="history"></div>
+</section>
+</main>
+<script src="/static/hoc.js"></script>
+</body>
+</html>

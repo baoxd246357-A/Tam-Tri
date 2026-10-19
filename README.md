@@ -56,3 +56,24 @@ Open from a phone on the same Wi-Fi:
 ## Important
 
 This is a field-trial prototype, not a production safety/quality certification system. AI observations must be reviewed by the site engineer/inspector before contractual decisions are made.
+
+## 📚 Gia sư AI cả nhà (`/hoc`)
+
+Dùng cùng khung với agent QS/TVGS (FastAPI + Gemini + JSON có schema + người duyệt lại), áp dụng cho việc học của gia đình.
+
+| Agent QS | Gia sư gia đình |
+|---|---|
+| Chụp ảnh hiện trường → JSON công tác/lỗi/đề xuất | Chụp vở/đề → JSON đề bài, gợi ý, bước giải, **lỗi sai**, ôn lại, bài luyện |
+| `confidence` thấp → kỹ sư xem lại | `confidence` < 0.7 → **phụ huynh** xem lại, bấm 👍/👎 |
+| Bảng quy tắc `rules.py`, `REVIEWED = False` | `app/hoc/rules.py`: cấp học, thang gợi ý, giới hạn giờ học — phụ huynh duyệt |
+| Nhật ký/biên bản, báo cáo ngày | Ghi buổi học, báo cáo **tuần** (số liệu tính bằng code, AI chỉ viết nhận xét) |
+| Bảng việc (tasks) | Việc cần làm / bài tập có hạn nộp, cảnh báo trễ |
+
+- **Thang gợi ý 4 mức** (hỏi lại đề → hướng làm → làm mẫu bước đầu → giải đầy đủ). Server chỉ trả đáp án ở mức 4; bé bấm "vẫn chưa ra" để lên mức.
+- Nhiều thành viên, mỗi người một cấp học (Tiểu học / THCS / THPT / Đại học) → lời giải thích đúng tầm.
+- Cảnh báo học quá giờ/ngày, môn hiểu bài thấp (tự đánh giá 1-5).
+- API: `/api/v1/hoc/learners`, `/questions`, `/questions/{id}/hint`, `/questions/{id}/review`, `/logs`, `/tasks`, `/learners/{id}/weekly?note=true`.
+- Dữ liệu: `data/hoc.db`, ảnh `data/hoc_uploads/`. Trên Render gói free dữ liệu mất khi redeploy — gắn disk nếu muốn giữ lâu dài.
+- Chạy thử: `pip install pytest httpx && pytest tests -q` (AI được giả, không cần API key).
+
+AI có thể đọc nhầm đề hoặc giải sai, nhất là môn tính toán — phụ huynh nên xem lại các câu bị gắn cờ.
