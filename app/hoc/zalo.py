@@ -9,6 +9,7 @@ import logging
 import os
 import threading
 import time
+import time
 
 import httpx
 
@@ -113,6 +114,22 @@ def webhook_url():
     return base if base.rstrip("/").endswith(WEBHOOK_PATH) else base.rstrip("/") + WEBHOOK_PATH
 
 
+def register_webhook(bot, url, secret, delays=(8, 15, 30, 60), sleep=time.sleep):
+    """setWebhook, thử lại nếu Zalo báo kiểm tra thất bại (app chưa sẵn sàng). Trả True khi verification ok."""
+    for d in delays:
+        sleep(d)
+        try:
+            res = bot.call("setWebhook", {"url": url, "secret_token": secret}) or {}
+        except Exception as e:  # noqa: BLE001
+            log.warning("Zalo setWebhook lỗi: %s", e)
+            continue
+        ver = (res.get("verification") or {}) if isinstance(res, dict) else {}
+        log.warning("Zalo setWebhook %s → ok=%s outcome=%s hint=%s", url, ver.get("ok"), ver.get("outcome"), ver.get("hint"))
+        if ver.get("ok"):
+            return True
+    return False
+
+
 def start_background():
     bot = get_bot()
     if not bot:
@@ -123,11 +140,8 @@ def start_background():
         log.warning("Zalo getMe lỗi (%s) — kiểm tra ZALO_BOT_TOKEN / ZALO_API_BASE: %s", bot.api, e)
     secret, url = os.getenv("ZALO_WEBHOOK_SECRET", ""), webhook_url()
     if secret and url:
-        try:
-            res = bot.call("setWebhook", {"url": url, "secret_token": secret})
-            log.warning("Zalo setWebhook %s → %s", url, str(res)[:300])
-        except Exception as e:  # noqa: BLE001
-            log.warning("Zalo setWebhook lỗi: %s", e)
+        # Đăng ký sau khi app đã nhận request được: setWebhook làm Zalo gọi thử vào ngay, gọi trong lúc khởi động sẽ báo 5xx.
+        threading.Thread(target=register_webhook, args=(bot, url, secret), daemon=True, name="zalo-webhook").start()
         return None
     if secret:
         log.warning("Có ZALO_WEBHOOK_SECRET nhưng thiếu ZALO_WEBHOOK_URL/RENDER_EXTERNAL_URL — chuyển sang getUpdates")
