@@ -13,3 +13,5 @@ services:
         value: gemini-3.7-flash
       - key: ZALO_BOT_TOKEN
         sync: false
+      - key: ZALO_WEBHOOK_SECRET
+        sync: false

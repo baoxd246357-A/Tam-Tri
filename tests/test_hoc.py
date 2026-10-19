@@ -141,3 +141,32 @@ def test_web_agent_endpoint(client):
     c, _ = client
     assert "Trợ lý học tập" in c.post("/api/v1/hoc/agent", data={"text": "menu"}).json()["reply"]
     assert "Đã thêm" in c.post("/api/v1/hoc/agent", data={"text": "thêm Bin"}).json()["reply"]
+
+
+def test_zalo_extract_unwraps_webhook_result():
+    wrapped = {"ok": True, "result": {"event_name": "message.text.received", "message": ev("/menu")["message"]}}
+    assert zalo.extract(wrapped)[1] == "/menu"
+    assert zalo.extract({"ok": True, "result": {"event_name": "message.sticker.received", "message": {"chat": {"id": 1}}}}) is None
+
+
+def test_zalo_webhook_auth_and_reply(client, monkeypatch):
+    c, r = client
+    sent = []
+    class Bot:
+        def send(self, chat, text): sent.append((chat, text))
+    monkeypatch.setattr(r.zalo, "get_bot", lambda: Bot())
+    monkeypatch.setattr(r.zalo, "reply_for", lambda e: ("c9", "xin chào"))
+    body = {"ok": True, "result": ev("/menu")}
+    monkeypatch.delenv("ZALO_WEBHOOK_SECRET", raising=False)
+    assert c.post("/api/v1/hoc/zalo/webhook", json=body).status_code == 503
+    monkeypatch.setenv("ZALO_WEBHOOK_SECRET", "s3cret-key")
+    assert c.post("/api/v1/hoc/zalo/webhook", json=body).status_code == 403
+    assert c.post("/api/v1/hoc/zalo/webhook", json=body, headers={"X-Bot-Api-Secret-Token": "sai"}).status_code == 403
+    ok = c.post("/api/v1/hoc/zalo/webhook", json=body, headers={"X-Bot-Api-Secret-Token": "s3cret-key"})
+    assert ok.status_code == 200 and sent == [("c9", "xin chào")]
+
+
+def test_webhook_url(monkeypatch):
+    monkeypatch.delenv("ZALO_WEBHOOK_URL", raising=False)
+    monkeypatch.setenv("RENDER_EXTERNAL_URL", "https://x.onrender.com/")
+    assert zalo.webhook_url() == "https://x.onrender.com/api/v1/hoc/zalo/webhook"

@@ -1,12 +1,14 @@
 """API + trang /hoc: quản lý việc học của cả nhà (không dùng AI)."""
+import hmac
+import os
 from datetime import date
 from pathlib import Path
 
-from fastapi import APIRouter, Form, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from . import agent, rules, stats
+from . import agent, rules, stats, zalo
 from .db import Learner, SessionLocal, StudyLog, Task
 
 router = APIRouter()
@@ -122,3 +124,29 @@ def agent_chat(text: str = Form(...), chat_id: str = Form("web")):
     with SessionLocal() as db:
         reply = agent.handle(db, f"web:{chat_id}", text)
     return {"reply": reply or "Chưa hiểu lệnh này. Gõ menu để xem hướng dẫn."}
+
+
+@router.post("/api/v1/hoc/zalo/webhook")
+async def zalo_webhook(request: Request, background: BackgroundTasks):
+    """Zalo Bot Platform gọi vào đây; xác thực bằng header X-Bot-Api-Secret-Token."""
+    secret = os.getenv("ZALO_WEBHOOK_SECRET", "")
+    if not secret:
+        raise HTTPException(503, "Chưa đặt ZALO_WEBHOOK_SECRET")
+    got = request.headers.get("x-bot-api-secret-token", "")
+    if not hmac.compare_digest(got.encode(), secret.encode()):
+        raise HTTPException(403, "Unauthorized")
+    try:
+        event = await request.json()
+    except Exception:
+        raise HTTPException(400, "JSON không hợp lệ")
+    bot = zalo.get_bot()
+    if bot:
+        background.add_task(_zalo_reply, bot, event)
+    return {"message": "Success"}
+
+
+def _zalo_reply(bot, event):
+    try:
+        zalo.handle_event(bot, event)
+    except Exception as e:  # noqa: BLE001
+        zalo.log.warning("Zalo webhook xử lý lỗi: %s", e)
