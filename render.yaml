@@ -15,3 +15,7 @@ services:
         sync: false
       - key: ZALO_WEBHOOK_SECRET
         sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: HOC_PASSWORD
+        sync: false

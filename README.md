@@ -79,6 +79,17 @@ Quản lý việc học của gia đình theo khung agent QS (bảng quy tắc `
 - **Báo cáo tuần** cho phụ huynh (tính bằng code): tổng giờ, số ngày học, thời gian và mức hiểu theo môn, môn cần chú ý, ngày học quá giới hạn, việc trễ.
 - Ngưỡng cảnh báo chỉnh ở `app/hoc/rules.py` (`REVIEWED = False` cho đến khi phụ huynh duyệt).
 - API: `/api/v1/hoc/learners`, `/logs`, `/tasks`, `/tasks/{id}/toggle`, `/learners/{id}/tasks`, `/learners/{id}/weekly`.
-- Dữ liệu: `data/hoc.db`. Chạy thử: `pip install pytest httpx && pytest tests -q`.
+- Chạy thử: `pip install pytest httpx && pytest tests -q`.
+
+### Vận hành (Render)
+| Biến | Tác dụng |
+|---|---|
+| `DATABASE_URL` | Chuỗi kết nối Postgres (VD Neon/Supabase, dạng `postgresql://user:pass@host/db?sslmode=require`). **Bắt buộc nếu muốn giữ dữ liệu**: không đặt thì dùng SQLite `data/hoc.db`, mất khi Render Free ngủ hoặc deploy lại. Bảng tự tạo ở lần chạy đầu. |
+| `HOC_PASSWORD` | Mật khẩu chung cho trang `/hoc` và `/api/v1/hoc/*` (trình duyệt hỏi mật khẩu, tên đăng nhập gõ gì cũng được). Không đặt = ai có link cũng vào được. Webhook Zalo không dùng mật khẩu này (dùng `ZALO_WEBHOOK_SECRET`). |
+| `ZALO_BOT_TOKEN`, `ZALO_WEBHOOK_SECRET` | Bot Zalo, xem phần trên. |
+
+Tạo Postgres miễn phí: vào https://neon.tech, tạo project, copy *connection string* rồi dán vào `DATABASE_URL` trên Render (không dán vào chat/repo).
+Lệnh trong nhóm Zalo không cần mật khẩu: ai ở trong nhóm đều gõ được, nên chỉ thêm người tin cậy vào nhóm.
+Trang `/` (kiểm tra hiện trường) chưa có mật khẩu.
 
 Phần kiểm tra hiện trường (`/`) vẫn dùng Gemini như cũ.

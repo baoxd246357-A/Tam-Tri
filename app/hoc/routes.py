@@ -4,14 +4,28 @@ import os
 from datetime import date
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.templating import Jinja2Templates
 
 from . import agent, rules, stats, zalo
 from .db import Learner, SessionLocal, StudyLog, Task
 
-router = APIRouter()
+_basic = HTTPBasic(auto_error=False)
+
+
+def require_auth(cred: HTTPBasicCredentials | None = Depends(_basic)):
+    """Mật khẩu chung cho trang /hoc và API (HTTP Basic, tên đăng nhập tuỳ ý). Không đặt HOC_PASSWORD = mở (chỉ nên khi chạy local)."""
+    pw = os.getenv("HOC_PASSWORD", "")
+    if not pw:
+        return
+    if cred is None or not hmac.compare_digest(cred.password.encode(), pw.encode()):
+        raise HTTPException(401, "Cần mật khẩu", headers={"WWW-Authenticate": 'Basic realm="Hoc tap gia dinh"'})
+
+
+router = APIRouter(dependencies=[Depends(require_auth)])
+webhook_router = APIRouter()  # Zalo gọi vào: xác thực bằng X-Bot-Api-Secret-Token, không dùng mật khẩu
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
 
 
@@ -126,7 +140,7 @@ def agent_chat(text: str = Form(...), chat_id: str = Form("web")):
     return {"reply": reply or "Chưa hiểu lệnh này. Gõ menu để xem hướng dẫn."}
 
 
-@router.post("/api/v1/hoc/zalo/webhook")
+@webhook_router.post("/api/v1/hoc/zalo/webhook")
 async def zalo_webhook(request: Request, background: BackgroundTasks):
     """Zalo Bot Platform gọi vào đây; xác thực bằng header X-Bot-Api-Secret-Token."""
     secret = os.getenv("ZALO_WEBHOOK_SECRET", "")

@@ -1,4 +1,9 @@
-"""CSDL SQLite riêng cho module học tập (data/hoc.db)."""
+"""CSDL cho module học tập.
+
+Mặc định SQLite (data/hoc.db) — trên Render gói Free file này mất khi app ngủ/deploy lại.
+Đặt biến DATABASE_URL (Postgres, VD Neon/Supabase) để dữ liệu được giữ lâu dài.
+"""
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -10,9 +15,26 @@ DATA = BASE / "data"
 UPLOADS = DATA / "hoc_uploads"
 UPLOADS.mkdir(parents=True, exist_ok=True)
 
-engine = create_engine(
-    f"sqlite:///{DATA / 'hoc.db'}", connect_args={"check_same_thread": False}
-)
+
+
+def normalize_db_url(url: str) -> str:
+    """postgres:// (kiểu Heroku/Neon cũ) → postgresql+psycopg2:// để SQLAlchemy nhận."""
+    url = url.strip()
+    for old in ("postgres://", "postgresql://"):
+        if url.startswith(old):
+            return "postgresql+psycopg2://" + url[len(old):]
+    return url
+
+
+def make_engine(url: str | None = None):
+    url = normalize_db_url(url or os.getenv("DATABASE_URL", ""))
+    if not url:
+        return create_engine(f"sqlite:///{DATA / 'hoc.db'}", connect_args={"check_same_thread": False})
+    # pool_pre_ping/recycle: Postgres miễn phí tự ngắt kết nối khi rảnh
+    return create_engine(url, pool_pre_ping=True, pool_recycle=300)
+
+
+engine = make_engine()
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 

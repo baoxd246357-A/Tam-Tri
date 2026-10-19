@@ -22,6 +22,7 @@ def client(tmp_path, monkeypatch):
     from fastapi import FastAPI
     a = FastAPI()
     a.include_router(r.router)
+    a.include_router(r.webhook_router)
     return TestClient(a), r
 
 
@@ -213,3 +214,40 @@ def test_zalo_group_mention_without_slash(monkeypatch, db):
     assert "Trợ lý học tập" in zalo.reply_for(ev("@Bot Học Tập TV menu", ctype="GROUP"))[1]
     assert "Đã thêm" in zalo.reply_for(ev("@Bot Học Tập TV /thêm Bin", ctype="GROUP"))[1]
     assert zalo.reply_for(ev("chiều nay đi học", ctype="GROUP")) is None
+
+
+# ---------------------------------------------------------------- mật khẩu + CSDL ngoài
+def test_password_protects_hoc_but_not_webhook(client, monkeypatch):
+    c, r = client
+    monkeypatch.setenv("HOC_PASSWORD", "mat-khau-nha")
+    monkeypatch.setenv("ZALO_WEBHOOK_SECRET", "s3cret-key")
+    monkeypatch.setattr(r.zalo, "get_bot", lambda: None)
+    assert c.get("/hoc").status_code == 401
+    assert c.get("/hoc").headers["www-authenticate"].startswith("Basic")
+    assert c.get("/api/v1/hoc/learners").status_code == 401
+    assert c.post("/api/v1/hoc/agent", data={"text": "menu"}).status_code == 401
+    assert c.get("/api/v1/hoc/learners", auth=("me", "sai")).status_code == 401
+    assert c.get("/api/v1/hoc/learners", auth=("me", "mat-khau-nha")).status_code == 200
+    assert c.get("/hoc", auth=("bat-ky", "mat-khau-nha")).status_code == 200
+    # webhook Zalo không dùng mật khẩu, chỉ dùng secret header
+    ok = c.post("/api/v1/hoc/zalo/webhook", json={}, headers={"X-Bot-Api-Secret-Token": "s3cret-key"})
+    assert ok.status_code == 200
+    assert c.post("/api/v1/hoc/zalo/webhook", json={}).status_code == 403
+
+
+def test_open_when_no_password(client, monkeypatch):
+    c, _ = client
+    monkeypatch.delenv("HOC_PASSWORD", raising=False)
+    assert c.get("/api/v1/hoc/learners").status_code == 200
+
+
+def test_db_url_normalize_and_engine(tmp_path, monkeypatch):
+    import app.hoc.db as hdb
+    assert hdb.normalize_db_url("postgres://u:p@h/db?sslmode=require") == "postgresql+psycopg2://u:p@h/db?sslmode=require"
+    assert hdb.normalize_db_url("postgresql://u:p@h/db") == "postgresql+psycopg2://u:p@h/db"
+    assert hdb.normalize_db_url("  sqlite:///x.db ") == "sqlite:///x.db"
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    assert hdb.make_engine().dialect.name == "sqlite"
+    pg = hdb.make_engine("postgres://u:p@localhost:1/db")   # chỉ tạo engine, chưa kết nối
+    assert pg.dialect.name == "postgresql"
+    assert hdb.make_engine(f"sqlite:///{tmp_path/'z.db'}").dialect.name == "sqlite"
