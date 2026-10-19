@@ -13,7 +13,8 @@ from .db import ChatState, Learner, StudyLog, Task
 LEVEL_WORDS = {"tieuhoc": "tieu_hoc", "thcs": "thcs", "thpt": "thpt", "daihoc": "dai_hoc"}
 
 HELP = """🤖 Trợ lý học tập — lệnh:
-• thêm Bin thcs lớp 7  — thêm thành viên (tieuhoc/thcs/thpt/daihoc)
+• thêm Bin thcs lớp 7  — thêm thành viên (tieuhoc/thcs/thpt/daihoc; tên nhiều từ: Minh_Anh)
+• đổi Bin Minh lớp 6  — đổi tên (và lớp) thành viên; cấp học tự suy ra từ lớp
 • chọn Bin  — chọn bé mặc định cho nhóm này
 • việc Bin Bài tập Toán trang 45 hạn 25/10  — giao việc (hạn: dd/mm, hôm nay, mai)
 • ds [Bin]  — danh sách việc  |  xong 3  — đánh dấu xong việc số 3
@@ -62,9 +63,23 @@ def _find_learner(db, words: list[str]):
         return None, words
     first = norm(words[0])
     for l in db.query(Learner):
-        if norm(l.name) == first:
+        if norm(l.name) == first or norm(l.name).replace(" ", "_") == first:
             return l, words[1:]
     return None, words
+
+
+def infer_level(grade: str):
+    """'lớp 4' → tieu_hoc, 'lớp 6-9' → thcs, 'lớp 10-12' → thpt; không có số thì None."""
+    m = re.search(r"\d+", grade or "")
+    if not m:
+        return None
+    n = int(m[0])
+    return "tieu_hoc" if 1 <= n <= 5 else "thcs" if 6 <= n <= 9 else "thpt" if 10 <= n <= 12 else None
+
+
+def _clean_name(word: str) -> str:
+    """Tên một từ khi gõ lệnh; dùng dấu gạch dưới cho tên nhiều từ (Minh_Anh → Minh Anh)."""
+    return word.replace("_", " ").strip()
 
 
 def _target(db, chat_id, words):
@@ -109,7 +124,7 @@ def handle(db, chat_id: str, text: str) -> str | None:
     if not words:
         return None
     cmd, args = norm(words[0]), words[1:]
-    if args and cmd + norm(args[0]) in ("baocao", "danhsach", "thanhvien", "hoanthanh"):
+    if args and cmd + norm(args[0]) in ("baocao", "danhsach", "thanhvien", "hoanthanh", "doiten", "suaten"):
         cmd, args = cmd + norm(args[0]), args[1:]
 
     if cmd in ("menu", "help", "giup", "huongdan", "?", "start"):
@@ -118,11 +133,12 @@ def handle(db, chat_id: str, text: str) -> str | None:
     if cmd in ("them", "add"):
         if not args:
             return "Cú pháp: thêm Bin thcs lớp 7"
-        name, level, grade = args[0], "thcs", ""
+        name, level = _clean_name(args[0]), None
         rest = args[1:]
         if rest and norm(rest[0]) in LEVEL_WORDS:
             level, rest = LEVEL_WORDS[norm(rest[0])], rest[1:]
         grade = " ".join(rest)
+        level = level or infer_level(grade) or "thcs"
         if any(norm(l.name) == norm(name) for l in db.query(Learner)):
             return f"Đã có {name} rồi."
         l = Learner(name=name, level=level, grade=grade)
@@ -132,6 +148,28 @@ def handle(db, chat_id: str, text: str) -> str | None:
             db.merge(ChatState(chat_id=chat_id, learner_id=l.id))
             db.commit()
         return f"✅ Đã thêm {l.name} ({rules.LEVELS[level].split(' (')[0]}{', ' + grade if grade else ''})."
+
+    if cmd in ("doi", "doiten", "suaten", "sua", "rename"):
+        old, rest = _find_learner(db, args)
+        if not old:
+            return "Cú pháp: đổi Bin Minh  (tên cũ rồi tên mới; tên nhiều từ dùng gạch dưới: Minh_Anh). Gõ 'bé' để xem danh sách."
+        if not rest:
+            return "Thiếu tên mới. Cú pháp: đổi Bin Minh"
+        new = _clean_name(rest[0])
+        if any(l.id != old.id and norm(l.name) == norm(new) for l in db.query(Learner)):
+            return f"Đã có bạn tên {new} rồi."
+        extra = rest[1:]
+        level = None
+        if extra and norm(extra[0]) in LEVEL_WORDS:
+            level, extra = LEVEL_WORDS[norm(extra[0])], extra[1:]
+        was, old.name = old.name, new
+        if extra:
+            old.grade = " ".join(extra)
+            level = level or infer_level(old.grade)
+        if level:
+            old.level = level
+        db.commit()
+        return f"✏️ Đã đổi tên {was} → {new}" + (f" ({old.grade})" if extra else "") + "."
 
     if cmd in ("be", "thanhvien", "ds-be"):
         ls = db.query(Learner).order_by(Learner.id).all()

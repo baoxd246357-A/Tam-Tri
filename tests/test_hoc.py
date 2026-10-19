@@ -251,3 +251,43 @@ def test_db_url_normalize_and_engine(tmp_path, monkeypatch):
     pg = hdb.make_engine("postgres://u:p@localhost:1/db")   # chỉ tạo engine, chưa kết nối
     assert pg.dialect.name == "postgresql"
     assert hdb.make_engine(f"sqlite:///{tmp_path/'z.db'}").dialect.name == "sqlite"
+
+
+def test_rename_learner(db):
+    agent.handle(db, "g", "thêm Bin thcs lớp 7")
+    agent.handle(db, "g", "việc Toán bài 1")
+    assert "Bin → Minh" in agent.handle(db, "g", "/đổi Bin Minh")
+    assert "Việc của Minh" in agent.handle(db, "g", "ds")               # việc và bé đang chọn đi theo bé
+    assert "Không thấy" not in (agent.handle(db, "g", "chọn minh") or "")
+    assert "Cú pháp" in agent.handle(db, "g", "đổi Bin Khoa")           # tên cũ không còn
+    agent.handle(db, "g", "thêm Khoa")
+    assert "Đã có bạn tên khoa" in agent.handle(db, "g", "đổi tên Minh khoa")   # trùng tên (không phân biệt hoa/dấu)
+    assert "Thiếu tên mới" in agent.handle(db, "g", "đổi Minh")
+    assert "Minh Anh" in agent.handle(db, "g", "đổi Minh Minh_Anh")      # tên nhiều từ
+    assert "Việc của Minh Anh" in agent.handle(db, "g", "ds Minh_Anh")
+    assert "Minh Anh" in agent.handle(db, "g", "bé")
+
+
+def test_add_multiword_name(db):
+    assert "Đã thêm Bảo An" in agent.handle(db, "g", "thêm Bảo_An thcs lớp 6")
+    assert "Việc của Bảo An" in agent.handle(db, "g", "ds Bao_An")
+
+
+def test_rename_with_grade_and_level_inference(db):
+    from app.hoc.db import Learner
+    agent.handle(db, "g", "thêm Bin thcs lớp 7")
+    r = agent.handle(db, "g", "/đổi Bin Quốc_Thịnh lớp 6")
+    assert "Bin → Quốc Thịnh (lớp 6)" in r
+    l = db.query(Learner).one()
+    assert (l.name, l.grade, l.level) == ("Quốc Thịnh", "lớp 6", "thcs")
+    assert "Đã thêm Kiến Văn (Tiểu học, lớp 4)" in agent.handle(db, "g", "/Thêm Kiến_Văn lớp 4")
+    assert db.query(Learner).filter_by(name="Kiến Văn").one().level == "tieu_hoc"
+    agent.handle(db, "g", "đổi Kiến_Văn Kiến_Văn lớp 10")
+    assert db.query(Learner).filter_by(name="Kiến Văn").one().level == "thpt"
+    agent.handle(db, "g", "đổi Kiến_Văn Kiến_Văn thcs lớp 5")           # cấp ghi rõ thắng suy luận
+    assert db.query(Learner).filter_by(name="Kiến Văn").one().level == "thcs"
+
+
+def test_infer_level():
+    assert [agent.infer_level(x) for x in ("lớp 1", "lớp 5", "lớp 6", "9", "lớp 12", "lớp 13", "mầm non")] == \
+        ["tieu_hoc", "tieu_hoc", "thcs", "thcs", "thpt", None, None]
