@@ -251,3 +251,23 @@ def test_db_url_normalize_and_engine(tmp_path, monkeypatch):
     pg = hdb.make_engine("postgres://u:p@localhost:1/db")   # chỉ tạo engine, chưa kết nối
     assert pg.dialect.name == "postgresql"
     assert hdb.make_engine(f"sqlite:///{tmp_path/'z.db'}").dialect.name == "sqlite"
+
+
+def test_rename_learner(db):
+    agent.handle(db, "g", "thêm Bin thcs lớp 7")
+    agent.handle(db, "g", "việc Toán bài 1")
+    assert "Bin → Minh" in agent.handle(db, "g", "/đổi Bin Minh")
+    assert "Việc của Minh" in agent.handle(db, "g", "ds")               # việc và bé đang chọn đi theo bé
+    assert "Không thấy" not in (agent.handle(db, "g", "chọn minh") or "")
+    assert "Cú pháp" in agent.handle(db, "g", "đổi Bin Khoa")           # tên cũ không còn
+    agent.handle(db, "g", "thêm Khoa")
+    assert "Đã có bạn tên khoa" in agent.handle(db, "g", "đổi tên Minh khoa")   # trùng tên (không phân biệt hoa/dấu)
+    assert "Thiếu tên mới" in agent.handle(db, "g", "đổi Minh")
+    assert "Minh Anh" in agent.handle(db, "g", "đổi Minh Minh_Anh")      # tên nhiều từ
+    assert "Việc của Minh Anh" in agent.handle(db, "g", "ds Minh_Anh")
+    assert "Minh Anh" in agent.handle(db, "g", "bé")
+
+
+def test_add_multiword_name(db):
+    assert "Đã thêm Bảo An" in agent.handle(db, "g", "thêm Bảo_An thcs lớp 6")
+    assert "Việc của Bảo An" in agent.handle(db, "g", "ds Bao_An")
