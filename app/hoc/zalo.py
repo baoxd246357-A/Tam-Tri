@@ -1,6 +1,6 @@
 """Bot Zalo (Zalo Bot Platform, bot.zapps.me) — đọc tin bằng getUpdates, trả lời bằng trợ lý lệnh.
 
-Biến môi trường: ZALO_BOT_TOKEN. Không có token thì không chạy gì cả.
+Biến môi trường: ZALO_BOT_TOKEN (bắt buộc), ZALO_API_BASE (tuỳ chọn, mặc định bot-api.zapps.me). Không có token thì không chạy gì cả.
 Trong nhóm bot chỉ trả lời tin bắt đầu bằng '/' hoặc 'bot'; chat riêng trả lời mọi lệnh hợp lệ.
 """
 import logging
@@ -14,16 +14,17 @@ from . import agent
 from .db import SessionLocal
 
 log = logging.getLogger("tamtri.zalo")
-ZALO_API = "https://bot-api.zapps.me"
+DEFAULT_API = "https://bot-api.zapps.me"
 
 
 class ZaloBot:
-    def __init__(self, token, transport=None):
+    def __init__(self, token, transport=None, api=None):
         self.token = token
+        self.api = (api or os.getenv("ZALO_API_BASE") or DEFAULT_API).rstrip("/")
         self.http = httpx.Client(timeout=45, transport=transport)
 
     def call(self, method, data):
-        r = self.http.post(f"{ZALO_API}/bot{self.token}/{method}", json=data)
+        r = self.http.post(f"{self.api}/bot{self.token}/{method}", json=data)
         body = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
         if r.status_code != 200 or body.get("ok") is False:
             raise RuntimeError(f"Zalo {method}: HTTP {r.status_code} {str(body or r.text)[:200]}")
@@ -98,5 +99,10 @@ def start_background():
     if not token:
         return None
     stop = threading.Event()
-    threading.Thread(target=run_forever, args=(ZaloBot(token), stop), daemon=True, name="zalo-hoc").start()
+    bot = ZaloBot(token)
+    try:
+        log.warning("Zalo bot sẵn sàng (%s): %s", bot.api, str(bot.call("getMe", {}))[:200])
+    except Exception as e:  # noqa: BLE001
+        log.warning("Zalo getMe lỗi (%s) — kiểm tra ZALO_BOT_TOKEN / ZALO_API_BASE: %s", bot.api, e)
+    threading.Thread(target=run_forever, args=(bot, stop), daemon=True, name="zalo-hoc").start()
     return stop

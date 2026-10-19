@@ -63,7 +63,7 @@ Trợ lý nghe lệnh tiếng Việt (có dấu hoặc không), dùng chung cho 
 
 ### Đưa vào nhóm Zalo
 1. Vào https://bot.zapps.me, tạo bot bằng Zalo cá nhân, lấy **token** (không cần OA doanh nghiệp).
-2. Render → Environment → đặt `ZALO_BOT_TOKEN`, redeploy. Bot tự đọc tin bằng getUpdates (không cần webhook).
+2. Render → Environment → đặt `ZALO_BOT_TOKEN`, redeploy. Bot tự đọc tin bằng getUpdates (không cần webhook). Nếu log Render báo `getMe lỗi`, đặt thêm `ZALO_API_BASE` (VD `https://bot-api.zaloplatforms.com`) theo tài liệu hiện hành của Zalo.
 3. Thêm bot vào nhóm Zalo của gia đình. Trong nhóm gõ `/menu` (bot chỉ trả lời tin bắt đầu bằng `/` hoặc `bot `; chat riêng thì không cần).
 4. Lệnh: `/thêm Bin thcs lớp 7` · `/chọn Bin` · `/việc Bin Toán trang 45 hạn 25/10` · `/ds` · `/xong 3` · `/học Bin Toán 45 hiểu 4` · `/báo cáo`.
 
