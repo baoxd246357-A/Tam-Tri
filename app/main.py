@@ -90,8 +90,9 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOADS)), name="uploads")
 app.mount("/evidence", StaticFiles(directory=str(EVIDENCE)), name="evidence")
 templates = Jinja2Templates(directory=str(BASE / "app/templates"))
 
-from app.hoc.routes import router as hoc_router  # noqa: E402
+from app.hoc.routes import router as hoc_router, webhook_router as hoc_webhook_router  # noqa: E402
 app.include_router(hoc_router)
+app.include_router(hoc_webhook_router)
 
 
 def get_client():
