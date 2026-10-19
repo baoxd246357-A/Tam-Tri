@@ -9,8 +9,8 @@ def week_start(d: date) -> date:
     return d - timedelta(days=d.weekday())
 
 
-def weekly_summary(level: str, logs: list, tasks: list, questions: list, today: date | None = None) -> dict:
-    """logs/tasks/questions: danh sách dict. Trả số liệu 7 ngày gần nhất tính đến `today`."""
+def weekly_summary(level: str, logs: list, tasks: list, today: date | None = None) -> dict:
+    """logs/tasks: danh sách dict. Trả số liệu 7 ngày gần nhất tính đến `today`."""
     today = today or date.today()
     since = today - timedelta(days=6)
 
@@ -38,7 +38,6 @@ def weekly_summary(level: str, logs: list, tasks: list, questions: list, today: 
 
     due_tasks = [t for t in tasks if t["due"]]
     overdue = [t for t in due_tasks if not t["done"] and t["due"] < today.isoformat()]
-    wq = [q for q in questions if in_week(q["created_at"])]
 
     return {
         "from": since.isoformat(), "to": today.isoformat(),
@@ -50,18 +49,5 @@ def weekly_summary(level: str, logs: list, tasks: list, questions: list, today: 
         "tasks_open": sum(1 for t in tasks if not t["done"]),
         "tasks_done": sum(1 for t in tasks if t["done"]),
         "tasks_overdue": [t["title"] for t in overdue],
-        "questions": len(wq),
-        "questions_need_review": sum(1 for q in wq if q["needs_review"] and not q["parent_review"]),
     }
 
-
-def needs_review(confidence: float, subject_is_math_like: bool = False) -> bool:
-    return confidence < rules.REVIEW_CONFIDENCE_BELOW
-
-
-def clamp_hint_level(v) -> int:
-    try:
-        v = int(v)
-    except (TypeError, ValueError):
-        return rules.DEFAULT_HINT_LEVEL
-    return max(1, min(rules.MAX_HINT_LEVEL, v))

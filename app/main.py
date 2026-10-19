@@ -90,9 +90,7 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOADS)), name="uploads")
 app.mount("/evidence", StaticFiles(directory=str(EVIDENCE)), name="evidence")
 templates = Jinja2Templates(directory=str(BASE / "app/templates"))
 
-from app.hoc.db import UPLOADS as HOC_UPLOADS  # noqa: E402
 from app.hoc.routes import router as hoc_router  # noqa: E402
-app.mount("/hoc-uploads", StaticFiles(directory=str(HOC_UPLOADS)), name="hoc-uploads")
 app.include_router(hoc_router)
 
 

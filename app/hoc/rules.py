@@ -1,4 +1,4 @@
-"""Bảng quy tắc dạy kèm — phụ huynh/giáo viên chỉnh ở đây, không cần sửa code.
+"""Bảng quy tắc học tập — phụ huynh chỉnh ở đây, không cần sửa code.
 
 Tương tự bảng thông số kết cấu của QBcons: giá trị tạm, `REVIEWED = False` cho đến khi
 phụ huynh đọc lại, chỉnh theo con mình rồi đặt `REVIEWED = True`.
@@ -18,19 +18,6 @@ LEVELS = {
     "thpt": "THPT (lớp 10-12): lập luận chặt chẽ, nêu công thức/định lý liên quan, chú ý thi cử.",
     "dai_hoc": "Đại học/người lớn: ngắn gọn, nêu nguồn khái niệm, cho hướng tự kiểm tra.",
 }
-
-# Thang gợi ý: bé tự nghĩ trước, đáp án chỉ ra khi đã thử các mức trước.
-HINT_LADDER = [
-    "Chỉ hỏi lại đề: bé hiểu đề bài đang hỏi gì?",
-    "Gợi ý hướng làm (khái niệm/công thức cần dùng), chưa tính toán.",
-    "Làm mẫu bước đầu tiên, để bé tự làm tiếp.",
-    "Giải đầy đủ từng bước kèm giải thích vì sao.",
-]
-DEFAULT_HINT_LEVEL = 2          # mức mặc định khi mở bài
-MAX_HINT_LEVEL = len(HINT_LADDER)
-
-# Ngưỡng AI phải nhờ phụ huynh/thầy cô xem lại
-REVIEW_CONFIDENCE_BELOW = 0.7
 
 # Cảnh báo thời lượng học liên tục (phút/ngày) theo cấp
 DAILY_MINUTES_SOFT_LIMIT = {"tieu_hoc": 120, "thcs": 180, "thpt": 240, "dai_hoc": 360}

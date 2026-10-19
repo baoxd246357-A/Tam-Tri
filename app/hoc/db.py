@@ -27,25 +27,6 @@ class Learner(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
-class Question(Base):
-    """Một lần hỏi bài (có thể kèm ảnh vở/đề) và kết quả AI."""
-    __tablename__ = "hoc_questions"
-    id = Column(Integer, primary_key=True)
-    learner_id = Column(Integer, nullable=False)
-    subject = Column(String(50), default="Khác")
-    text = Column(Text, default="")
-    image_path = Column(String(500), default="")
-    mime_type = Column(String(100), default="")
-    hint_level = Column(Integer, default=2)
-    ai_status = Column(String(30), default="PENDING")   # PENDING|DONE|ERROR
-    ai_json = Column(Text, default="")
-    ai_confidence = Column(Float, default=0)
-    needs_review = Column(Integer, default=0)
-    parent_review = Column(String(20), default="")      # ""|OK|WRONG
-    parent_note = Column(Text, default="")
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-
 class StudyLog(Base):
     __tablename__ = "hoc_logs"
     id = Column(Integer, primary_key=True)
