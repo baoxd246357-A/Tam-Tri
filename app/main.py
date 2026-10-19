@@ -90,6 +90,9 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOADS)), name="uploads")
 app.mount("/evidence", StaticFiles(directory=str(EVIDENCE)), name="evidence")
 templates = Jinja2Templates(directory=str(BASE / "app/templates"))
 
+from app.hoc.routes import router as hoc_router  # noqa: E402
+app.include_router(hoc_router)
+
 
 def get_client():
     key = os.getenv("GEMINI_API_KEY")
@@ -247,12 +250,15 @@ Return ONLY JSON:
             },
         ),
     )
+    )
     raw = response.text
     return json.loads(clean_json_text(raw))
 
 
 @app.on_event("startup")
 def seed():
+    from app.hoc import zalo
+    zalo.start_background()
     db = SessionLocal()
     if db.query(Project).count() == 0:
         db.add(Project(code="PRJ-001", name="Bệnh viện Tâm Trí", location="TP.HCM"))
@@ -407,7 +413,7 @@ async def upload_voice(visit_id: int, file: UploadFile = File(...)):
         result = transcribe_voice(path, content_type, context)
         voice.transcript = result.get("transcript", "")
         voice.ai_status = "ANALYZED"
-       except Exception as e:
+    except Exception as e:
         if is_retryable_ai_error(e):
             voice.ai_status = "FAILED_RETRYABLE"
             voice.transcript = (

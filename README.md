@@ -56,3 +56,29 @@ Open from a phone on the same Wi-Fi:
 ## Important
 
 This is a field-trial prototype, not a production safety/quality certification system. AI observations must be reviewed by the site engineer/inspector before contractual decisions are made.
+
+## 🤖 Trợ lý học tập cả nhà (`/hoc` + nhóm Zalo)
+
+Trợ lý nghe lệnh tiếng Việt (có dấu hoặc không), dùng chung cho **khung chat trên web** và **nhóm Zalo**. Không dùng AI/API ngoài.
+
+### Đưa vào nhóm Zalo
+1. Vào https://bot.zapps.me, tạo bot bằng Zalo cá nhân, lấy **token** (không cần OA doanh nghiệp).
+2. Render → Environment → đặt `ZALO_BOT_TOKEN`, redeploy. Bot tự đọc tin bằng getUpdates (không cần webhook). API mặc định `https://bot-api.zaloplatforms.com` (đổi bằng `ZALO_API_BASE`). **Khuyên dùng webhook**: đặt thêm `ZALO_WEBHOOK_SECRET` (chuỗi tự chọn 8-256 ký tự); app tự gọi setWebhook tới `<RENDER_EXTERNAL_URL>/api/v1/hoc/zalo/webhook` khi khởi động và ghi kết quả kiểm tra vào log. Không đặt secret thì dùng getUpdates (Zalo chỉ khuyên cho thử nghiệm). Render gói free ngủ khi rảnh, webhook sẽ đánh thức nó nhưng tin đầu có thể chậm.
+3. Thêm bot vào nhóm Zalo của gia đình. Trong nhóm gõ `/menu` (bot chỉ trả lời tin bắt đầu bằng `/` hoặc `bot `; chat riêng thì không cần).
+4. Lệnh: `/thêm Bin thcs lớp 7` · `/chọn Bin` · `/việc Bin Toán trang 45 hạn 25/10` · `/ds` · `/xong 3` · `/học Bin Toán 45 hiểu 4` · `/báo cáo`.
+
+Lưu ý: Zalo Bot Platform là dịch vụ bên ngoài, chưa kiểm thử với Zalo thật (chỉ kiểm thử giả lập); nếu bot không nhận tin trong nhóm, kiểm tra quyền bot trong nhóm và log Render. Chỉ chạy 1 worker uvicorn.
+
+### Trang web `/hoc`
+
+Quản lý việc học của gia đình theo khung agent QS (bảng quy tắc `rules.py` + nhật ký + báo cáo), **không dùng AI/API ngoài**.
+
+- Nhiều thành viên, mỗi người một cấp học và mục tiêu.
+- **Việc cần làm** có hạn nộp, đánh dấu xong, cảnh báo trễ.
+- **Ghi buổi học**: môn, số phút, mức hiểu bài tự đánh giá 1-5.
+- **Báo cáo tuần** cho phụ huynh (tính bằng code): tổng giờ, số ngày học, thời gian và mức hiểu theo môn, môn cần chú ý, ngày học quá giới hạn, việc trễ.
+- Ngưỡng cảnh báo chỉnh ở `app/hoc/rules.py` (`REVIEWED = False` cho đến khi phụ huynh duyệt).
+- API: `/api/v1/hoc/learners`, `/logs`, `/tasks`, `/tasks/{id}/toggle`, `/learners/{id}/tasks`, `/learners/{id}/weekly`.
+- Dữ liệu: `data/hoc.db`. Chạy thử: `pip install pytest httpx && pytest tests -q`.
+
+Phần kiểm tra hiện trường (`/`) vẫn dùng Gemini như cũ.

@@ -6,3 +6,4 @@ sqlalchemy
 pydantic
 google-genai
 python-dotenv
+httpx
