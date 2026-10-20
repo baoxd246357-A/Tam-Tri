@@ -136,7 +136,7 @@ def weekly(lid: int):
 def agent_chat(text: str = Form(...), chat_id: str = Form("web")):
     """Khung chat trên web — cùng bộ lệnh với nhóm Zalo."""
     with SessionLocal() as db:
-        reply = agent.handle(db, f"web:{chat_id}", text)
+        reply = agent.handle(db, f"web:{chat_id}", text) or agent.ask_tutor(db, f"web:{chat_id}", text)
     return {"reply": reply or "Chưa hiểu lệnh này. Gõ menu để xem hướng dẫn."}
 
 

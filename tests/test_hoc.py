@@ -335,3 +335,26 @@ def test_reminder_endpoint_auth(client, monkeypatch):
     monkeypatch.setenv("ZALO_WEBHOOK_SECRET", "s3cret-key")
     assert c.get("/api/v1/hoc/reminders/run?key=sai").status_code == 403
     assert c.get("/api/v1/hoc/reminders/run?key=s3cret-key").json() == {"sent": 2}
+
+
+def test_llm_tutor(db, monkeypatch):
+    import httpx
+    from app.hoc import llm
+    for k in ("LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL"):
+        monkeypatch.delenv(k, raising=False)
+    assert agent.ask_tutor(db, "c1", "1+1 bằng mấy?") is None            # chưa cấu hình → như cũ
+    monkeypatch.setenv("LLM_API_KEY", "k-test")
+    monkeypatch.setenv("LLM_BASE_URL", "https://llm.example/v1/")
+    monkeypatch.setenv("LLM_MODEL", "m1")
+    seen = {}
+
+    def handler(req):
+        seen.update(url=str(req.url), auth=req.headers["authorization"], body=req.content.decode())
+        return httpx.Response(200, json={"choices": [{"message": {"content": "Bằng 2 nhé"}}]})
+
+    agent.handle(db, "c1", "thêm Bin lớp 6")
+    assert llm.ask("1+1?", "THCS", transport=httpx.MockTransport(handler)).endswith("Bằng 2 nhé")
+    assert seen["url"] == "https://llm.example/v1/chat/completions" and seen["auth"] == "Bearer k-test"
+    assert "Bin" not in seen["body"] and '"m1"' in seen["body"]            # không gửi tên bé
+    bad = httpx.MockTransport(lambda r: httpx.Response(500))
+    assert llm.ask("x", transport=bad) is None

@@ -92,6 +92,8 @@ def reply_for(event) -> tuple[str, str] | None:
     log.warning("Zalo nhận tin chat_type=%s", "GROUP" if is_group else "PRIVATE")
     with SessionLocal() as db:
         ans = agent.handle(db, chat_id, t)
+        if ans is None and (is_group or t.startswith("/") or len(t) > 3):
+            ans = agent.ask_tutor(db, chat_id, t)
     if ans is None:
         if is_group or t.startswith("/"):
             ans = "Chưa hiểu lệnh này. Gõ /menu để xem hướng dẫn."

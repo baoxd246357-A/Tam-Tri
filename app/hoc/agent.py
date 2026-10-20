@@ -8,7 +8,7 @@ import unicodedata
 from datetime import date, timedelta
 
 from . import rules, stats
-from . import reminders
+from . import llm, reminders
 from .db import ChatState, Learner, ReminderSub, StudyLog, Task
 
 LEVEL_WORDS = {"tieuhoc": "tieu_hoc", "thcs": "thcs", "thpt": "thpt", "daihoc": "dai_hoc"}
@@ -278,3 +278,15 @@ def report_text(db, l: Learner) -> str:
     if s["days_over_limit"]:
         out.append(f"🌙 Học quá {s['daily_limit']} phút: " + ", ".join(d[5:] for d in s["days_over_limit"]))
     return "\n".join(out)
+
+
+def ask_tutor(db, chat_id: str, text: str) -> str | None:
+    """Câu không phải lệnh → gia sư AI (nếu đã cấu hình). Chỉ gửi nội dung câu hỏi + cấp học của bé đang chọn."""
+    if not llm.configured():
+        return None
+    st = db.get(ChatState, chat_id)
+    l = db.get(Learner, st.learner_id) if st and st.learner_id else None
+    if not l and db.query(Learner).count() == 1:
+        l = db.query(Learner).first()
+    desc = (rules.LEVELS.get(l.level, "").split(" (")[0] + (f", {l.grade}" if l.grade else "")) if l else ""
+    return llm.ask(text, desc)
