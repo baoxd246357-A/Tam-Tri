@@ -161,6 +161,8 @@ def start_background():
         log.warning("Zalo bot sẵn sàng (%s): %s", bot.api, str(me)[:200])
     except Exception as e:  # noqa: BLE001
         log.warning("Zalo getMe lỗi (%s) — kiểm tra ZALO_BOT_TOKEN / ZALO_API_BASE: %s", bot.api, e)
+    from . import reminders
+    reminders.start_background(bot)
     secret, url = os.getenv("ZALO_WEBHOOK_SECRET", ""), webhook_url()
     if secret and url:
         # Đăng ký sau khi app đã nhận request được: setWebhook làm Zalo gọi thử vào ngay, gọi trong lúc khởi động sẽ báo 5xx.

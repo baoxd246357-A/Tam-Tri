@@ -93,3 +93,9 @@ Lệnh trong nhóm Zalo không cần mật khẩu: ai ở trong nhóm đều gõ
 Trang `/` (kiểm tra hiện trường) chưa có mật khẩu.
 
 Phần kiểm tra hiện trường (`/`) vẫn dùng Gemini như cũ.
+
+
+### Nhắc việc quá hạn
+Trong nhóm Zalo gõ `/nhắc bật`: mỗi ngày từ 7h sáng (giờ VN) bot gửi danh sách việc trễ hạn, đến hạn hôm nay và ngày mai (chỉ gửi khi có việc). `/nhắc tắt` để tắt, `/nhắc` để xem ngay.
+Render Free tự ngủ khi không có người dùng nên cần một dịch vụ ping (UptimeRobot, mỗi 30 phút) gọi
+`https://<app>.onrender.com/api/v1/hoc/reminders/run?key=<ZALO_WEBHOOK_SECRET>` — vừa đánh thức app vừa gửi nhắc nếu đến giờ (mỗi chat tối đa 1 lần/ngày).

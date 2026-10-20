@@ -78,4 +78,11 @@ class ChatState(Base):
     learner_id = Column(Integer)
 
 
+class ReminderSub(Base):
+    """Chat/nhóm Zalo đăng ký nhận nhắc việc hằng ngày."""
+    __tablename__ = "hoc_reminders"
+    chat_id = Column(String(100), primary_key=True)
+    last_sent = Column(String(10), default="")          # YYYY-MM-DD (giờ VN) lần nhắc gần nhất
+
+
 Base.metadata.create_all(engine)

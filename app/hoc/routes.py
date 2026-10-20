@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.templating import Jinja2Templates
 
-from . import agent, rules, stats, zalo
+from . import agent, reminders, rules, stats, zalo
 from .db import Learner, SessionLocal, StudyLog, Task
 
 _basic = HTTPBasic(auto_error=False)
@@ -164,3 +164,18 @@ def _zalo_reply(bot, event):
         zalo.handle_event(bot, event)
     except Exception as e:  # noqa: BLE001
         zalo.log.warning("Zalo webhook xử lý lỗi: %s", e)
+
+
+@webhook_router.api_route("/api/v1/hoc/reminders/run", methods=["GET", "POST"])
+def run_reminders(key: str = ""):
+    """Cho dịch vụ ping ngoài (UptimeRobot...) gọi mỗi 30-60 phút: đánh thức Render và gửi nhắc việc nếu đến giờ.
+    Xác thực: ?key=<ZALO_WEBHOOK_SECRET>."""
+    secret = os.getenv("ZALO_WEBHOOK_SECRET", "")
+    if not secret:
+        raise HTTPException(503, "Chưa cấu hình ZALO_WEBHOOK_SECRET")
+    if not hmac.compare_digest(key, secret):
+        raise HTTPException(403, "Sai key")
+    bot = zalo.get_bot()
+    if not bot:
+        raise HTTPException(503, "Chưa cấu hình ZALO_BOT_TOKEN")
+    return {"sent": reminders.tick(bot)}

@@ -8,7 +8,8 @@ import unicodedata
 from datetime import date, timedelta
 
 from . import rules, stats
-from .db import ChatState, Learner, StudyLog, Task
+from . import reminders
+from .db import ChatState, Learner, ReminderSub, StudyLog, Task
 
 LEVEL_WORDS = {"tieuhoc": "tieu_hoc", "thcs": "thcs", "thpt": "thpt", "daihoc": "dai_hoc"}
 
@@ -20,6 +21,7 @@ HELP = """🤖 Trợ lý học tập — lệnh:
 • ds [Bin]  — danh sách việc  |  xong 3  — đánh dấu xong việc số 3
 • học Bin Toán 45 hiểu 4  — ghi buổi học 45 phút, mức hiểu 1-5
 • báo cáo [Bin]  — báo cáo 7 ngày  |  bé  — danh sách thành viên
+• nhắc bật / nhắc tắt  — 7h sáng mỗi ngày bot nhắc việc trễ & đến hạn  |  nhắc  — xem ngay
 Bỏ tên bé nếu nhóm đã chọn hoặc chỉ có một bé."""
 
 
@@ -232,6 +234,21 @@ def handle(db, chat_id: str, text: str) -> str | None:
         db.add(StudyLog(learner_id=l.id, subject=subj, minutes=minutes, understanding=und))
         db.commit()
         return f"⏱️ Đã ghi {l.name}: {subj} {minutes} phút (hiểu {und}/5)."
+
+    if cmd in ("nhac", "nhacviec", "remind"):
+        sub = norm(args[0]) if args else ""
+        if sub in ("bat", "on"):
+            db.merge(ReminderSub(chat_id=chat_id, last_sent=""))
+            db.commit()
+            return f"🔔 Đã bật nhắc việc: {reminders.SEND_HOUR_VN}h sáng mỗi ngày (nếu có việc trễ hoặc đến hạn). Gõ 'nhắc tắt' để tắt."
+        if sub in ("tat", "off"):
+            sub_row = db.get(ReminderSub, chat_id)
+            if sub_row:
+                db.delete(sub_row)
+                db.commit()
+            return "🔕 Đã tắt nhắc việc cho nhóm này."
+        on = "đang bật" if db.get(ReminderSub, chat_id) else "đang tắt (gõ 'nhắc bật')"
+        return (reminders.build_reminder(db) or "🎉 Không có việc nào trễ hoặc đến hạn.") + f"\n(Nhắc tự động {on})"
 
     if cmd in ("baocao", "tuan", "report"):
         l, _, err = _target(db, chat_id, args)
