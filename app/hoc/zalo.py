@@ -92,6 +92,8 @@ def reply_for(event) -> tuple[str, str] | None:
     log.warning("Zalo nhận tin chat_type=%s", "GROUP" if is_group else "PRIVATE")
     with SessionLocal() as db:
         ans = agent.handle(db, chat_id, t)
+        if ans is None and (is_group or t.startswith("/") or len(t) > 3):
+            ans = agent.ask_tutor(db, chat_id, t)
     if ans is None:
         if is_group or t.startswith("/"):
             ans = "Chưa hiểu lệnh này. Gõ /menu để xem hướng dẫn."
@@ -161,6 +163,8 @@ def start_background():
         log.warning("Zalo bot sẵn sàng (%s): %s", bot.api, str(me)[:200])
     except Exception as e:  # noqa: BLE001
         log.warning("Zalo getMe lỗi (%s) — kiểm tra ZALO_BOT_TOKEN / ZALO_API_BASE: %s", bot.api, e)
+    from . import reminders
+    reminders.start_background(bot)
     secret, url = os.getenv("ZALO_WEBHOOK_SECRET", ""), webhook_url()
     if secret and url:
         # Đăng ký sau khi app đã nhận request được: setWebhook làm Zalo gọi thử vào ngay, gọi trong lúc khởi động sẽ báo 5xx.

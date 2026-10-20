@@ -291,3 +291,70 @@ def test_rename_with_grade_and_level_inference(db):
 def test_infer_level():
     assert [agent.infer_level(x) for x in ("lớp 1", "lớp 5", "lớp 6", "9", "lớp 12", "lớp 13", "mầm non")] == \
         ["tieu_hoc", "tieu_hoc", "thcs", "thcs", "thpt", None, None]
+
+
+def test_reminder_command_and_text(db):
+    from app.hoc import reminders
+    agent.handle(db, "g1", "thêm Bin lớp 6")
+    agent.handle(db, "g1", "thêm Văn lớp 4")
+    today = date(2026, 10, 20)
+    assert reminders.build_reminder(db, today) is None
+    agent.handle(db, "g1", "việc Bin Bài Toán hạn 18/10/2026")
+    agent.handle(db, "g1", "việc Văn Đọc sách hạn 20/10/2026")
+    agent.handle(db, "g1", "việc Văn Vẽ hạn 21/10/2026")
+    agent.handle(db, "g1", "việc Bin Xa hạn 30/10/2026")
+    txt = reminders.build_reminder(db, today)
+    assert "Trễ hạn" in txt and "Bài Toán" in txt and "trễ 2 ngày" in txt
+    assert "Hôm nay" in txt and "Đọc sách" in txt and "Ngày mai" in txt and "Xa" not in txt
+    assert "đang tắt" in agent.handle(db, "g1", "nhắc")
+    assert "Đã bật" in agent.handle(db, "g1", "nhắc bật")
+    assert "đang bật" in agent.handle(db, "g1", "nhắc")
+    assert "Đã tắt" in agent.handle(db, "g1", "nhắc tắt")
+
+
+def test_reminder_run_due_once_per_day(db):
+    from app.hoc import reminders
+    agent.handle(db, "g1", "thêm Bin lớp 6")
+    agent.handle(db, "g1", "việc Bin Bài Toán hạn 18/10/2026")
+    agent.handle(db, "g1", "nhắc bật")
+    sent = []
+    send = lambda c, t: sent.append((c, t))
+    assert reminders.run_due(db, send, datetime(2026, 10, 20, 5, 0)) == 0   # 5h sáng VN: chưa tới giờ
+    assert reminders.run_due(db, send, datetime(2026, 10, 20, 7, 30)) == 1
+    assert reminders.run_due(db, send, datetime(2026, 10, 20, 10, 0)) == 0   # đã nhắc hôm nay
+    assert reminders.run_due(db, send, datetime(2026, 10, 21, 8, 0)) == 1    # ngày sau
+    assert len(sent) == 2 and sent[0][0] == "g1"
+
+
+def test_reminder_endpoint_auth(client, monkeypatch):
+    c, r = client
+    monkeypatch.setattr(r.zalo, "get_bot", lambda: type("B", (), {"send": lambda s, c, t: None})())
+    monkeypatch.setattr(r.reminders, "tick", lambda bot: 2)
+    monkeypatch.delenv("ZALO_WEBHOOK_SECRET", raising=False)
+    assert c.get("/api/v1/hoc/reminders/run").status_code == 503
+    monkeypatch.setenv("ZALO_WEBHOOK_SECRET", "s3cret-key")
+    assert c.get("/api/v1/hoc/reminders/run?key=sai").status_code == 403
+    assert c.get("/api/v1/hoc/reminders/run?key=s3cret-key").json() == {"sent": 2}
+
+
+def test_llm_tutor(db, monkeypatch):
+    import httpx
+    from app.hoc import llm
+    for k in ("LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL"):
+        monkeypatch.delenv(k, raising=False)
+    assert agent.ask_tutor(db, "c1", "1+1 bằng mấy?") is None            # chưa cấu hình → như cũ
+    monkeypatch.setenv("LLM_API_KEY", "k-test")
+    monkeypatch.setenv("LLM_BASE_URL", "https://llm.example/v1/")
+    monkeypatch.setenv("LLM_MODEL", "m1")
+    seen = {}
+
+    def handler(req):
+        seen.update(url=str(req.url), auth=req.headers["authorization"], body=req.content.decode())
+        return httpx.Response(200, json={"choices": [{"message": {"content": "Bằng 2 nhé"}}]})
+
+    agent.handle(db, "c1", "thêm Bin lớp 6")
+    assert llm.ask("1+1?", "THCS", transport=httpx.MockTransport(handler)).endswith("Bằng 2 nhé")
+    assert seen["url"] == "https://llm.example/v1/chat/completions" and seen["auth"] == "Bearer k-test"
+    assert "Bin" not in seen["body"] and '"m1"' in seen["body"]            # không gửi tên bé
+    bad = httpx.MockTransport(lambda r: httpx.Response(500))
+    assert llm.ask("x", transport=bad) is None

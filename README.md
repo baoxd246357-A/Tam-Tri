@@ -93,3 +93,12 @@ Lệnh trong nhóm Zalo không cần mật khẩu: ai ở trong nhóm đều gõ
 Trang `/` (kiểm tra hiện trường) chưa có mật khẩu.
 
 Phần kiểm tra hiện trường (`/`) vẫn dùng Gemini như cũ.
+
+
+### Nhắc việc quá hạn
+Trong nhóm Zalo gõ `/nhắc bật`: mỗi ngày từ 7h sáng (giờ VN) bot gửi danh sách việc trễ hạn, đến hạn hôm nay và ngày mai (chỉ gửi khi có việc). `/nhắc tắt` để tắt, `/nhắc` để xem ngay.
+Render Free tự ngủ khi không có người dùng nên cần một dịch vụ ping (UptimeRobot, mỗi 30 phút) gọi
+`https://<app>.onrender.com/api/v1/hoc/reminders/run?key=<ZALO_WEBHOOK_SECRET>` — vừa đánh thức app vừa gửi nhắc nếu đến giờ (mỗi chat tối đa 1 lần/ngày).
+
+### Gia sư AI (tuỳ chọn)
+Đặt 3 biến trên Render: `LLM_API_KEY`, `LLM_BASE_URL` (mặc định `https://agent.cetrix.app/v1`, chuẩn OpenAI-compatible) và `LLM_MODEL` (tên model trong gói). Khi đó câu không phải lệnh (trong nhóm: có `/` hoặc nhắc tên bot) được chuyển cho gia sư AI trả lời ngắn, từng bước. Chỉ gửi nội dung câu hỏi và cấp học, không gửi tên bé hay dữ liệu học tập. Không đặt → bot chạy bằng luật như cũ.
