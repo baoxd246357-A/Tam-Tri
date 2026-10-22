@@ -22,6 +22,7 @@ HELP = """🤖 Trợ lý học tập — lệnh:
 • học Bin Toán 45 hiểu 4  — ghi buổi học 45 phút, mức hiểu 1-5
 • báo cáo [Bin]  — báo cáo 7 ngày  |  bé  — danh sách thành viên
 • tổng kết bật / tổng kết tắt  — Chủ nhật 19h bot gửi báo cáo tuần cả nhà  |  tổng kết  — xem ngay
+• xóa việc 3  |  xóa bé Bin  — xóa (xóa bé phải gõ thêm 'ok' để xác nhận)
 • nhắc bật / nhắc tắt  — 7h sáng mỗi ngày bot nhắc việc trễ & đến hạn  |  nhắc  — xem ngay
 Bỏ tên bé nếu nhóm đã chọn hoặc chỉ có một bé."""
 
@@ -68,6 +69,9 @@ def _find_learner(db, words: list[str]):
     for l in db.query(Learner):
         if norm(l.name) == first or norm(l.name).replace(" ", "_") == first:
             return l, words[1:]
+    given = [l for l in db.query(Learner) if norm(l.name.split()[-1]) == first]   # gọi tắt bằng tên: "Thịnh"
+    if len(given) == 1:
+        return given[0], words[1:]
     return None, words
 
 
@@ -127,6 +131,8 @@ def handle(db, chat_id: str, text: str) -> str | None:
     if not words:
         return None
     cmd, args = norm(words[0]), words[1:]
+    if args and norm(args[0]) in ("hoc", "study") and _find_learner(db, words[:1])[0]:
+        cmd, args = "hoc", [words[0]] + args[1:]          # "Thịnh học Toán 30 hiểu 4" = "học Thịnh Toán 30 hiểu 4"
     if args and cmd + norm(args[0]) in ("baocao", "danhsach", "thanhvien", "hoanthanh", "doiten", "suaten", "tongket"):
         cmd, args = cmd + norm(args[0]), args[1:]
 
@@ -235,6 +241,31 @@ def handle(db, chat_id: str, text: str) -> str | None:
         db.add(StudyLog(learner_id=l.id, subject=subj, minutes=minutes, understanding=und))
         db.commit()
         return f"⏱️ Đã ghi {l.name}: {subj} {minutes} phút (hiểu {und}/5)."
+
+    if cmd in ("xoa", "delete"):
+        what = norm(args[0]) if args else ""
+        if what in ("viec", "bt"):
+            t = db.get(Task, int(args[1])) if len(args) > 1 and args[1].isdigit() else None
+            if not t:
+                return "Cú pháp: xóa việc 3  (số việc xem ở 'ds')"
+            title = t.title
+            db.delete(t)
+            db.commit()
+            return f"🗑️ Đã xóa việc #{args[1]}: {title}"
+        if what == "be":
+            l, rest = _find_learner(db, args[1:])
+            if not l:
+                return "Cú pháp: xóa bé Bin  (gõ 'bé' để xem danh sách)"
+            if not rest or norm(rest[0]) not in ("ok", "dongy", "xacnhan"):
+                return f"⚠️ Xóa {l.name} sẽ mất toàn bộ buổi học và việc của bé. Nếu chắc chắn gõ: xóa bé {l.name.replace(' ', '_')} ok"
+            db.query(StudyLog).filter_by(learner_id=l.id).delete()
+            db.query(Task).filter_by(learner_id=l.id).delete()
+            db.query(ChatState).filter_by(learner_id=l.id).delete()
+            name = l.name
+            db.delete(l)
+            db.commit()
+            return f"🗑️ Đã xóa {name} và dữ liệu học của bé."
+        return "Cú pháp: xóa việc 3  |  xóa bé Bin ok"
 
     if cmd in ("tongket", "weekly"):
         sub = norm(args[0]) if args else ""

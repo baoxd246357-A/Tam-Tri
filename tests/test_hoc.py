@@ -377,3 +377,16 @@ def test_weekly_summary_sunday_once(db):
     assert reminders.run_weekly(db, send, datetime(2026, 11, 1, 19, 5)) == 1    # Chủ nhật sau
     assert "Bin" in sent[0][1] and "Văn" in sent[0][1] and "Toán" in sent[0][1]
     assert "Đã tắt" in agent.handle(db, "g1", "tổng kết tắt")
+
+
+def test_short_name_natural_log_and_delete(db):
+    agent.handle(db, "g1", "thêm Quốc_Thịnh lớp 6")
+    agent.handle(db, "g1", "thêm Kiến_Văn lớp 4")
+    assert "Quốc Thịnh: Toán 30" in agent.handle(db, "g1", "Thịnh học Toán 30 hiểu 4")
+    assert "Kiến Văn" in agent.handle(db, "g1", "việc Văn Đọc sách hạn mai")
+    assert "Đã xóa việc #1" in agent.handle(db, "g1", "xóa việc 1")
+    assert "xóa việc" in agent.handle(db, "g1", "xóa việc 99").lower()
+    warn = agent.handle(db, "g1", "xóa bé Thịnh")
+    assert "Quốc Thịnh" in warn and "ok" in warn and "Quốc Thịnh" in agent.handle(db, "g1", "bé")
+    assert "Đã xóa Quốc Thịnh" in agent.handle(db, "g1", "xóa bé Quốc_Thịnh ok")
+    assert "Quốc Thịnh" not in agent.handle(db, "g1", "bé")
