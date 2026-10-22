@@ -85,4 +85,11 @@ class ReminderSub(Base):
     last_sent = Column(String(10), default="")          # YYYY-MM-DD (giờ VN) lần nhắc gần nhất
 
 
+class WeeklySub(Base):
+    """Chat/nhóm Zalo đăng ký nhận tổng kết tuần tự động (Chủ nhật tối)."""
+    __tablename__ = "hoc_weekly"
+    chat_id = Column(String(100), primary_key=True)
+    last_sent = Column(String(10), default="")          # YYYY-MM-DD (giờ VN) lần gửi gần nhất
+
+
 Base.metadata.create_all(engine)

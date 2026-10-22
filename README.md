@@ -102,3 +102,6 @@ Render Free tự ngủ khi không có người dùng nên cần một dịch v�
 
 ### Gia sư AI (tuỳ chọn)
 Đặt 3 biến trên Render: `LLM_API_KEY`, `LLM_BASE_URL` (mặc định `https://agent.cetrix.app/v1`, chuẩn OpenAI-compatible) và `LLM_MODEL` (tên model trong gói). Khi đó câu không phải lệnh (trong nhóm: có `/` hoặc nhắc tên bot) được chuyển cho gia sư AI trả lời ngắn, từng bước. Chỉ gửi nội dung câu hỏi và cấp học, không gửi tên bé hay dữ liệu học tập. Không đặt → bot chạy bằng luật như cũ.
+
+### Tổng kết tuần tự gửi
+`/tổng kết bật` trong nhóm: Chủ nhật từ 19h (giờ VN) bot gửi báo cáo 7 ngày của cả hai bé (giờ học, môn yếu, việc trễ). `/tổng kết tắt` để tắt, `/tổng kết` để xem ngay. Dùng chung ping UptimeRobot với nhắc việc (mỗi 30 phút), mỗi nhóm tối đa 1 tin mỗi Chủ nhật.

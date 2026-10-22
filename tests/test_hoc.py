@@ -358,3 +358,22 @@ def test_llm_tutor(db, monkeypatch):
     assert "Bin" not in seen["body"] and '"m1"' in seen["body"]            # không gửi tên bé
     bad = httpx.MockTransport(lambda r: httpx.Response(500))
     assert llm.ask("x", transport=bad) is None
+
+
+def test_weekly_summary_sunday_once(db):
+    from app.hoc import reminders
+    assert "Chưa có" in agent.handle(db, "g1", "tổng kết")
+    agent.handle(db, "g1", "thêm Bin lớp 6")
+    agent.handle(db, "g1", "thêm Văn lớp 4")
+    agent.handle(db, "g1", "học Bin Toán 30 hiểu 4")
+    assert "đang tắt" in agent.handle(db, "g1", "tổng kết")
+    assert "Đã bật" in agent.handle(db, "g1", "tổng kết bật")
+    sent = []
+    send = lambda c, t: sent.append((c, t))
+    assert reminders.run_weekly(db, send, datetime(2026, 10, 24, 20, 0)) == 0   # thứ Bảy
+    assert reminders.run_weekly(db, send, datetime(2026, 10, 25, 18, 0)) == 0   # Chủ nhật, chưa 19h
+    assert reminders.run_weekly(db, send, datetime(2026, 10, 25, 19, 30)) == 1
+    assert reminders.run_weekly(db, send, datetime(2026, 10, 25, 21, 0)) == 0   # đã gửi hôm nay
+    assert reminders.run_weekly(db, send, datetime(2026, 11, 1, 19, 5)) == 1    # Chủ nhật sau
+    assert "Bin" in sent[0][1] and "Văn" in sent[0][1] and "Toán" in sent[0][1]
+    assert "Đã tắt" in agent.handle(db, "g1", "tổng kết tắt")

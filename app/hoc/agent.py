@@ -9,7 +9,7 @@ from datetime import date, timedelta
 
 from . import rules, stats
 from . import llm, reminders
-from .db import ChatState, Learner, ReminderSub, StudyLog, Task
+from .db import ChatState, Learner, ReminderSub, StudyLog, Task, WeeklySub
 
 LEVEL_WORDS = {"tieuhoc": "tieu_hoc", "thcs": "thcs", "thpt": "thpt", "daihoc": "dai_hoc"}
 
@@ -21,6 +21,7 @@ HELP = """🤖 Trợ lý học tập — lệnh:
 • ds [Bin]  — danh sách việc  |  xong 3  — đánh dấu xong việc số 3
 • học Bin Toán 45 hiểu 4  — ghi buổi học 45 phút, mức hiểu 1-5
 • báo cáo [Bin]  — báo cáo 7 ngày  |  bé  — danh sách thành viên
+• tổng kết bật / tổng kết tắt  — Chủ nhật 19h bot gửi báo cáo tuần cả nhà  |  tổng kết  — xem ngay
 • nhắc bật / nhắc tắt  — 7h sáng mỗi ngày bot nhắc việc trễ & đến hạn  |  nhắc  — xem ngay
 Bỏ tên bé nếu nhóm đã chọn hoặc chỉ có một bé."""
 
@@ -126,7 +127,7 @@ def handle(db, chat_id: str, text: str) -> str | None:
     if not words:
         return None
     cmd, args = norm(words[0]), words[1:]
-    if args and cmd + norm(args[0]) in ("baocao", "danhsach", "thanhvien", "hoanthanh", "doiten", "suaten"):
+    if args and cmd + norm(args[0]) in ("baocao", "danhsach", "thanhvien", "hoanthanh", "doiten", "suaten", "tongket"):
         cmd, args = cmd + norm(args[0]), args[1:]
 
     if cmd in ("menu", "help", "giup", "huongdan", "?", "start"):
@@ -234,6 +235,21 @@ def handle(db, chat_id: str, text: str) -> str | None:
         db.add(StudyLog(learner_id=l.id, subject=subj, minutes=minutes, understanding=und))
         db.commit()
         return f"⏱️ Đã ghi {l.name}: {subj} {minutes} phút (hiểu {und}/5)."
+
+    if cmd in ("tongket", "weekly"):
+        sub = norm(args[0]) if args else ""
+        if sub in ("bat", "on"):
+            db.merge(WeeklySub(chat_id=chat_id, last_sent=""))
+            db.commit()
+            return f"📊 Đã bật tổng kết tuần: Chủ nhật {reminders.WEEKLY_HOUR_VN}h tối bot gửi báo cáo cả nhà. Gõ 'tổng kết tắt' để tắt."
+        if sub in ("tat", "off"):
+            row = db.get(WeeklySub, chat_id)
+            if row:
+                db.delete(row)
+                db.commit()
+            return "🔕 Đã tắt tổng kết tuần cho nhóm này."
+        on = "đang bật" if db.get(WeeklySub, chat_id) else "đang tắt (gõ 'tổng kết bật')"
+        return (reminders.weekly_text(db) or "Chưa có thành viên nào.") + f"\n(Tổng kết tự động {on})"
 
     if cmd in ("nhac", "nhacviec", "remind"):
         sub = norm(args[0]) if args else ""

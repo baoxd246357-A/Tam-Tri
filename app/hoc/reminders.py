@@ -4,11 +4,12 @@ import os
 import threading
 from datetime import date, datetime, timedelta
 
-from .db import Learner, ReminderSub, SessionLocal, Task
+from .db import Learner, ReminderSub, SessionLocal, Task, WeeklySub
 
 log = logging.getLogger("tamtri.reminders")
 SEND_HOUR_VN = 7          # nhắc từ 7h sáng giờ Việt Nam
 MAX_LINES = 12
+WEEKLY_HOUR_VN = 19       # tổng kết tuần: Chủ nhật từ 19h giờ VN
 
 
 def vn_now(now: datetime | None = None) -> datetime:
@@ -66,9 +67,40 @@ def run_due(db, send, now: datetime | None = None) -> int:
     return sent
 
 
+def weekly_text(db) -> str | None:
+    """Tổng kết 7 ngày của mọi bé (cùng nội dung lệnh 'báo cáo')."""
+    from .agent import report_text
+    ls = db.query(Learner).order_by(Learner.id).all()
+    if not ls:
+        return None
+    return "📊 Tổng kết tuần\n\n" + "\n\n".join(report_text(db, l) for l in ls)
+
+
+def run_weekly(db, send, now: datetime | None = None) -> int:
+    """Chủ nhật từ WEEKLY_HOUR_VN: gửi tổng kết cho các chat đăng ký, mỗi ngày một lần."""
+    now = vn_now(now)
+    if now.weekday() != 6 or now.hour < WEEKLY_HOUR_VN:
+        return 0
+    today = now.date().isoformat()
+    subs = [s for s in db.query(WeeklySub) if s.last_sent != today]
+    text = weekly_text(db) if subs else None
+    sent = 0
+    for s in subs:
+        if text:
+            try:
+                send(s.chat_id, text)
+                sent += 1
+            except Exception as e:  # noqa: BLE001
+                log.warning("Gửi tổng kết lỗi chat=%s: %s", s.chat_id, e)
+                continue
+        s.last_sent = today
+    db.commit()
+    return sent
+
+
 def tick(bot) -> int:
     with SessionLocal() as db:
-        return run_due(db, bot.send)
+        return run_due(db, bot.send) + run_weekly(db, bot.send)
 
 
 def loop(bot, stop: threading.Event, every=1800):
