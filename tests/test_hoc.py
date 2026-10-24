@@ -360,6 +360,30 @@ def test_llm_tutor(db, monkeypatch):
     assert llm.ask("x", transport=bad) is None
 
 
+def test_llm_auto_model(monkeypatch):
+    import httpx
+    from app.hoc import llm
+    assert llm.pick_model(["text-embedding-3", "gpt-4o", "claude-haiku-5-5", "gemini-2.5-flash"]) == "claude-haiku-5-5"
+    assert llm.pick_model(["whisper-1", "text-embedding-x"]) is None
+    monkeypatch.setenv("LLM_API_KEY", "k")
+    monkeypatch.setenv("LLM_BASE_URL", "https://auto.example/v1")
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+    llm._auto.clear()
+    calls = []
+
+    def handler(req):
+        calls.append(req.url.path)
+        if req.url.path.endswith("/models"):
+            return httpx.Response(200, json={"data": [{"id": "gpt-4o-mini"}, {"id": "text-embedding-3"}]})
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}], "m": req.content.decode()})
+
+    t = httpx.MockTransport(handler)
+    assert llm.configured() and llm.ask("2+2?", transport=t).endswith("ok")
+    llm.ask("3+3?", transport=t)
+    assert calls.count("/v1/models") == 1 and llm.model() == "gpt-4o-mini"     # chọn một lần rồi nhớ
+    llm._auto.clear()
+
+
 def test_weekly_summary_sunday_once(db):
     from app.hoc import reminders
     assert "Chưa có" in agent.handle(db, "g1", "tổng kết")
