@@ -12,7 +12,7 @@
 ;;; ==========================================================================
 
 (vl-load-com)
-(setq *SD:VER* "2.57.0")
+(setq *SD:VER* "2.58.0")
 
 ;;; --------------------------------------------------------------------------
 ;;;  Thiet lap mac dinh (luu kem trong ban ve bang LDATA)
@@ -16205,13 +16205,16 @@
 
 ;; Bo dinh thang hang (T giua canh, dinh thua): dinh lech <= 0.2 mm luon bo; dinh lech toi dung sai tol chi bo khi hai canh ke deu dai (T bi lech do noi ho),
 ;; de khong mat dinh cua cung nho
-(defun sd:dm-simp (pts tol / n i a b c r dv)
+(defun sd:dm-simp (pts tol) (sd:dm-simp2 pts tol nil))
+
+;; keeps = danh sach song song voi pts: T = dinh la nut giao (>= 3 canh) phai giu de cac polyline ke nhau trung dinh
+(defun sd:dm-simp2 (pts tol keeps / n i a b c r dv)
   (setq n (length pts) i 0)
   (foreach b pts
     (setq a (nth (rem (+ i n -1) n) pts) c (nth (rem (1+ i) n) pts)
           dv (/ (abs (- (* (- (car c) (car a)) (- (cadr b) (cadr a))) (* (- (cadr c) (cadr a)) (- (car b) (car a)))))
                 (max 1e-9 (distance a c))))
-    (if (or (> dv tol)
+    (if (or (> dv tol) (nth i keeps)
             (and (> dv 0.2) (or (< (distance a b) 150.0) (< (distance b c) 150.0))))
       (setq r (cons b r)))
     (setq i (1+ i)))
@@ -16253,7 +16256,8 @@
   (foreach cyc (sd:dm-walk n)
     (if (> (length cyc) 2)
       (progn
-        (setq p (sd:dm-simp (mapcar '(lambda (k) (sd:dm-hget (strcat "P" (itoa k)))) cyc) tol))
+        (setq p (sd:dm-simp2 (mapcar '(lambda (k) (sd:dm-hget (strcat "P" (itoa k)))) cyc) tol
+                             (mapcar '(lambda (k) (> (length (sd:dm-hget (strcat "A" (itoa k)))) 2)) cyc)))
         (if (and (> (length p) 2) (> (sd:dm-sarea p) amin))
           (setq polys (cons p polys))))))
   (sd:dm-clear)
@@ -16261,6 +16265,8 @@
 
 ;; Hinh chu nhat? (4 dinh, moi goc vuong)
 (defun sd:dm-rect-p (pts / i a b c ux uy vx vy ok)
+  ;; dinh nut chu T nam tren canh (thang hang) khong lam o mat tinh chu nhat
+  (if (> (length pts) 4) (setq pts (sd:dm-simp pts 0.3)))
   (if (= (length pts) 4)
     (progn
       (setq ok t i 0)
@@ -16986,6 +16992,148 @@
           (if anh (sd:dm-anhda tiles els)
             (princ "\n[SD] Tiep theo: SDANHDA (quet chon cac polyline vua ve), SDTKDA, SDGACHTK, SDVANDA.")))))))
 
+;;; --------------------------------------------------------------------------
+;;;  SDHANDINH - Han dinh: cac polyline sinh ra tu cung 1 diem giao cat phai co dinh TRUNG NHAU
+;;;  1) cac dinh cach nhau <= dung sai duoc gop ve 1 toa do chung (trung binh)
+;;;  2) dinh nam tren canh cua polyline ke ben (nut chu T) duoc chen them vao canh do
+;;; --------------------------------------------------------------------------
+;; Tach ban ghi polyline: (phan-dau (dinh ...) phan-duoi); dinh = ((x y) cap-phu ...) voi cap-phu = 40 / 41 / 42 / 91 ngay sau dinh
+(defun sd:wd-split (ed / head vs cur tail in)
+  (foreach p ed
+    (cond
+      (tail (setq tail (cons p tail)))
+      ((= (car p) 10) (if cur (setq vs (cons (reverse cur) vs))) (setq cur (list (list (cadr p) (caddr p))) in t))
+      ((and in (member (car p) '(40 41 42 91))) (setq cur (cons p cur)))
+      (in (if cur (setq vs (cons (reverse cur) vs))) (setq cur nil tail (list p)))
+      (t (setq head (cons p head)))))
+  (if cur (setq vs (cons (reverse cur) vs)))
+  (list (reverse head) (reverse vs) (reverse tail)))
+
+(defun sd:wd-join (head vs tail)
+  (append (mapcar '(lambda (p) (if (= (car p) 90) (cons 90 (length vs)) p)) head)
+          (apply 'append (mapcar '(lambda (v) (cons (list 10 (car (car v)) (cadr (car v))) (cdr v))) vs))
+          tail))
+
+;; Gop diem trong dung sai thanh nut. Tra ve toa do nut (x y) theo dung thu tu diem dau vao
+(defun sd:wd-cluster (pts tol / i items win hit asg nid x k res)
+  (setq i 0)
+  (foreach p pts (setq i (1+ i) items (cons (list i (car p) (cadr p)) items)))
+  (setq nid 0)
+  (foreach it (sd:sort items '(lambda (a b) (< (cadr a) (cadr b))))
+    (setq x (cadr it)
+          win (vl-remove-if '(lambda (n) (< (cadr n) (- x tol))) win)
+          hit (vl-some '(lambda (n) (if (<= (distance (cdr n) (cdr it)) tol) (car n))) win))
+    (if (null hit)
+      (progn (setq hit nid nid (1+ nid) win (cons (list hit (cadr it) (caddr it)) win))
+             (set (read (strcat "SDWD_S" (itoa hit))) (list 0.0 0.0 0))))
+    (set (read (strcat "SDWD_S" (itoa hit)))
+         (list (+ (cadr it) (car (eval (read (strcat "SDWD_S" (itoa hit))))))
+               (+ (caddr it) (cadr (eval (read (strcat "SDWD_S" (itoa hit))))))
+               (1+ (caddr (eval (read (strcat "SDWD_S" (itoa hit))))))))
+    (setq asg (cons (cons (car it) hit) asg)))
+  (setq k 0)
+  (while (< k nid)
+    (setq hit (eval (read (strcat "SDWD_S" (itoa k)))))
+    (set (read (strcat "SDWD_P" (itoa k))) (list (/ (car hit) (caddr hit)) (/ (cadr hit) (caddr hit))))
+    (set (read (strcat "SDWD_S" (itoa k))) nil)
+    (setq k (1+ k)))
+  (foreach a (sd:sort asg '(lambda (x y) (< (car x) (car y))))
+    (setq res (cons (eval (read (strcat "SDWD_P" (itoa (cdr a))))) res)))
+  (setq k 0)
+  (while (< k nid) (set (read (strcat "SDWD_P" (itoa k))) nil) (setq k (1+ k)))
+  (reverse res))
+
+(defun sd:wd-cell (x y cs) (strcat "SDWD_G" (itoa (fix (sd:floor (/ x cs)))) "_" (itoa (fix (sd:floor (/ y cs))))))
+(defun sd:floor (x) (if (and (< x 0.0) (/= x (fix x))) (1- (fix x)) (fix x)))
+
+;; Cac nut nam trong thanh tren canh a-b (khong tinh a, b): ((t x y) ...) da sap theo t
+(defun sd:wd-onedge (a b tol cs / x0 x1 y0 y1 ix iy r c pr)
+  (setq x0 (- (min (car a) (car b)) tol) x1 (+ (max (car a) (car b)) tol)
+        y0 (- (min (cadr a) (cadr b)) tol) y1 (+ (max (cadr a) (cadr b)) tol)
+        ix (sd:floor (/ x0 cs)))
+  (while (<= ix (sd:floor (/ x1 cs)))
+    (setq iy (sd:floor (/ y0 cs)))
+    (while (<= iy (sd:floor (/ y1 cs)))
+      (foreach c (eval (read (strcat "SDWD_G" (itoa ix) "_" (itoa iy))))
+        (if (and (> (distance c a) tol) (> (distance c b) tol))
+          (progn (setq pr (sd:dm-proj c a b))
+                 (if (and (> (car pr) 0.0) (< (car pr) 1.0) (<= (cdr pr) tol))
+                     (setq r (cons (list (car pr) (car c) (cadr c)) r))))))
+      (setq iy (1+ iy)))
+    (setq ix (1+ ix)))
+  (sd:sort r '(lambda (p q) (< (car p) (car q)))))
+
+(defun c:SDHANDINH (/ ss i e ed sp recs allp cn k tol tdinh nodes keys cs cell nweld nins nfail nent new vs nv res dn nxt v2 ons a b c1 cnt)
+  (sd:begin)
+  (if (sd:dlg "Han dinh polyline (SDHANDINH)"
+              (list (list "note" "Gop cac dinh sinh ra tu cung 1 diem giao cat ve 1 toa do, chen dinh nut chu T vao canh ke ben" 'note nil)
+                    (list "tol" "Dung sai han dinh (mm)" 'real (sd:cfg "WD-TOL" 0.5))
+                    (list "tdinh" "Chen dinh vao canh polyline ke ben (nut chu T)" 'tog t)))
+    (progn
+      (setq tol (sd:cfg-put "WD-TOL" (sd:v "tol")) tdinh (sd:v "tdinh") cs 500.0)
+      (princ "\nQuet chon polyline can han dinh <Enter = tat ca polyline tren ban ve>: ")
+      (if (not (setq ss (ssget '((0 . "LWPOLYLINE")))))
+        (setq ss (ssget "_X" '((0 . "LWPOLYLINE") (410 . "Model")))))
+      (if (null ss)
+        (princ "\n[SD] Khong co polyline.")
+        (progn
+          ;; doc tat ca polyline
+          (setq i 0)
+          (repeat (sslength ss)
+            (setq e (ssname ss i) ed (entget e) sp (sd:wd-split ed) i (1+ i))
+            (setq recs (cons (cons e sp) recs)))
+          (setq recs (reverse recs) allp nil)
+          (foreach r recs (foreach v (cadr (cdr r)) (setq allp (cons (car v) allp))))
+          (setq allp (reverse allp) cn (sd:wd-cluster allp tol))
+          ;; gan toa do nut moi cho tung dinh, dem so dinh bi doi
+          (setq nweld 0 nodes nil)
+          (setq new nil)
+          (foreach r recs
+            (setq vs nil)
+            (foreach v (cadr (cdr r))
+              (setq c1 (car cn) cn (cdr cn))
+              (if (> (distance c1 (car v)) 1e-9) (setq nweld (1+ nweld)))
+              (setq vs (cons (cons c1 (cdr v)) vs)))
+            (setq new (cons (list (car r) (cadr r) (reverse vs) (cadddr r)) new)
+                  nodes (append (mapcar 'car vs) nodes)))
+          (setq new (reverse new))
+          ;; luoi o de tra nut tren canh
+          (setq keys nil nins 0)
+          (if tdinh
+            (progn
+              (foreach c nodes
+                (setq cell (sd:wd-cell (car c) (cadr c) cs))
+                (if (not (member cell keys)) (setq keys (cons cell keys)))
+                (set (read cell) (if (member c (eval (read cell))) (eval (read cell)) (cons c (eval (read cell))))))
+              (setq new
+                (mapcar
+                  '(lambda (r / vs n k out a b ons own)
+                     (setq vs (nth 2 r) n (length vs) k 0 out nil own (mapcar 'car vs))
+                     (while (< k n)
+                       (setq a (nth k vs) out (cons a out))
+                       (if (or (< k (1- n)) (= 1 (logand 1 (cond ((cdr (assoc 70 (nth 1 r)))) (0)))))
+                         (progn
+                           (setq b (nth (rem (1+ k) n) vs))
+                           (if (and (< (abs (cond ((cdr (assoc 42 (cdr a)))) (0.0))) 1e-9) (> (distance (car a) (car b)) 1e-9))
+                             (foreach o (sd:wd-onedge (car a) (car b) tol cs)
+                               (if (not (member (cdr o) own))
+                                 (setq out (cons (list (cdr o)) out) nins (1+ nins)))))))
+                       (setq k (1+ k)))
+                     (list (car r) (nth 1 r) (reverse out) (nth 3 r)))
+                  new))
+              (foreach cell keys (set (read cell) nil))))
+          ;; ghi lai
+          (setq nent 0 nfail 0)
+          (foreach r new
+            (setq res (sd:wd-join (nth 1 r) (nth 2 r) (nth 3 r)))
+            (if (not (equal res (entget (car r))))
+              (if (vl-catch-all-error-p (vl-catch-all-apply 'entmod (list res)))
+                (setq nfail (1+ nfail))
+                (setq nent (1+ nent)))))
+          (princ (strcat "\n[SD] SDHANDINH: " (itoa (length recs)) " polyline, da han " (itoa nweld) " dinh lech toa do, chen " (itoa nins)
+                         " dinh nut T, sua " (itoa nent) " polyline" (if (> nfail 0) (strcat ", " (itoa nfail) " polyline khong sua duoc (layer khoa?)") "") "."))))))
+  (sd:finish))
+
 (defun c:SDDOCDA (/ che)
   (sd:begin)
   (if (sd:dlg "Doc mat bang op lat da (SDDOCDA)"
@@ -17123,6 +17271,7 @@
     ("Gian giao" "SDGIAOTK" "Thong ke gian giao theo tang + dinh muc" "GTK" "GGK")
     ("Tien ich" "SDIN" "In hang loat theo khung ten (block / layer), hang / cot, ra may in hoac PDF" "PLT" "INH")
     ("Tien ich" "SDPURGE" "Don rac ban ve sau: DGN, RegApps, purge lap, scale list" "PRG" "DPU")
+    ("Tien ich" "SDHANDINH" "Han dinh: gop dinh polyline lech nhau o cung diem giao cat, chen dinh nut chu T" "WLD" "HDI")
     ("Tien ich" "SDSOSANH" "So sanh 2 ban ve DWG: to mau them / xoa / dich chuyen" "CMP" "SSD")
     ("Tien ich" "SDLAYOUT" "Quan ly Layout: mo, sap xep, them, chep, doi ten (hang loat), xoa" "LO" "QLL")
     ("Tien ich" "SDTAOLAYOUT" "Tao Layout hang loat tu khung ten + danh so to vao khung ten" "LAY" "TLO")

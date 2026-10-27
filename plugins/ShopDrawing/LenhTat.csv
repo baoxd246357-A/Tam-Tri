@@ -117,3 +117,4 @@ Tiện ích;AUL;SDTUNAP;Tự nạp ShopDrawing mỗi khi mở AutoCAD;Làm cho S
 Tiện ích;CMN;SDMENU;Cài menu + toolbar + Ribbon;Cài menu + 6 toolbar + tab Ribbon ShopDrawing, thêm Support Path và Trusted Locations, tự nạp LISP mỗi bản vẽ
 Tiện ích;HTN;SDDLG;Bật / tắt hộp thoại;Bật / tắt hộp thoại nhập liệu của các lệnh
 Tiện ích;;SDMENUXOA;Gỡ menu;Gỡ menu, toolbar và Ribbon ShopDrawing khỏi AutoCAD
+Tiện ích;HDI;SDHANDINH;Hàn đỉnh polyline;Gộp đỉnh lệch nhau và chèn đỉnh nút chữ T cho polyline sinh từ cùng điểm giao cắt
