@@ -1,0 +1,7 @@
+;;; ShopDrawing.mnl - AutoCAD nap file nay cung menu SHOPDRAWING
+;;; -> tu nap ShopDrawing.lsp (cung thu muc, da nam trong Support Path) cho moi ban ve
+(if (not c:SDHELP)
+  (if (findfile "ShopDrawing.lsp")
+    (load (findfile "ShopDrawing.lsp"))
+    (princ "\n[SD] Khong tim thay ShopDrawing.lsp - them thu muc dist vao Support Path (lenh SDMENU tu lam).")))
+(princ)

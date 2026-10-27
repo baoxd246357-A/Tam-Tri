@@ -1,0 +1,511 @@
+//
+//  ShopDrawing Tools v2.57.0 - menu + toolbars (sinh tu dong boi build_menu.py)
+//  Nap: lenh SDMENU, hoac CUILOAD -> chon file nay (AutoCAD tu chuyen sang .cuix)
+//
+***MENUGROUP=SHOPDRAWING
+
+***POP1
+**SD_POP
+ID_SD_POP [&ShopDrawing]
+ID_SD_G1 [->Thiet lap va ban ve]
+ID_SD_SDSET [Thiet lap ty le, layer, text style, dimstyle (SDSET / TYLE)]^C^CSDSET
+ID_SD_SDKHUNG [Khung ban ve A0-A4 + khung ten (SDKHUNG / KHG)]^C^CSDKHUNG
+ID_SD_SDTRUC [Luoi truc + bong truc + kich thuoc (SDTRUC / TRUC)]^C^CSDTRUC
+ID_SD_SDCAODO [Ky hieu cao do (SDCAODO / CAO)]^C^CSDCAODO
+ID_SD_SDMC [Ky hieu mat cat (SDMC / MCT)]^C^CSDMC
+ID_SD_SDSO [Danh so tu dong (SDSO / DSO)]^C^CSDSO
+ID_SD_SDLEN [Tong chieu dai doi tuong theo layer (SDLEN / TDAI)]^C^CSDLEN
+ID_SD_SDDIENTICH [Dem + tong dien tich theo layer (polyline, tron, hatch...), nhan FIELD (SDDIENTICH / TDT)]^C^CSDDIENTICH
+ID_SD_SDCHUGIUA [Tao / can chu 1 dong giua 2 diem, xoay theo 2 diem (SDCHUGIUA / CGI)]^C^CSDCHUGIUA
+ID_SD_SDDIMTAY [Kich thuoc ghi tay: to mau, khoi phuc gia tri do, xoa (SDDIMTAY / DMT)]^C^CSDDIMTAY
+ID_SD_SDTHUTU [Thu tu ve (draworder) theo layer (SDTHUTU / TTL)]^C^CSDTHUTU
+ID_SD_SDREV [Ky hieu lan sua doi + dam may (SDREV / SUA)]^C^CSDREV
+ID_SD_SDCHUAN [Chuan layer / style / dimstyle: kiem tra, ap dung, xuat file mau .dwt (SDCHUAN / CHN)]^C^CSDCHUAN
+ID_SD_SDTKBLOCK [Thong ke block dong + thuoc tinh (bang, CSV), gan gia tri hang loat (SDTKBLOCK / TKB)]^C^CSDTKBLOCK
+ID_SD_SDXREF [Quan ly Xref: trang thai, duong dan tuong doi, tim lai, nap lai (SDXREF / XRF)]^C^CSDXREF
+ID_SD_SDDMBV [Danh muc ban ve (Sheet List) tu Layout / khung ten + CSV (SDDMBV / DMB)]^C^CSDDMBV
+ID_SD_SDLOC [Loc / tim doi tuong theo bieu thuc: layer, thuoc tinh, tham so, du lieu SD, VA / HOAC (SDLOC / LOC)]^C^CSDLOC
+ID_SD_SDKIEMTRA [<-Tac tu kiem tra ban ve: thep, mat bang, chuan, dim ghi tay, Xref; xep uu tien + goi y lenh (SDKIEMTRA / KTA)]^C^CSDKIEMTRA
+ID_SD_G2 [->BTCT va ket cau thep]
+ID_SD_SDDAM [Mat cat dam BTCT (SDDAM / MCD)]^C^CSDDAM
+ID_SD_SDCOT [Mat cat cot BTCT (SDCOT / MCC)]^C^CSDCOT
+ID_SD_SDNOITHEP [Toi uu cat noi thep trong vung cho phep noi, so le, coupler (SDNOITHEP / CNT)]^C^CSDNOITHEP
+ID_SD_SDTHEPSET [Cai dat thep: cay, be tong, noi chong, moc (SDTHEPSET / CDT)]^C^CSDTHEPSET
+ID_SD_SDTHEP [Ghi chu thanh thep: hinh dang, noi chong (SDTHEP / THP)]^C^CSDTHEP
+ID_SD_SDTHEPTM [Thep thong minh tu polyline: tu cap nhat L, SL, bang (SDTHEPTM / TTM)]^C^CSDTHEPTM
+ID_SD_SDTKTHEP [Bang thong ke cot thep + CSV (SDTKTHEP / TKT)]^C^CSDTKTHEP
+ID_SD_SDBONGTHEP [Danh lai so hieu thep dong bo + kiem tra trung / lech so hieu (SDBONGTHEP / DSH)]^C^CSDBONGTHEP
+ID_SD_SDTOIUU [Toi uu cat thep tu cay thuong pham (SDTOIUU / TUT)]^C^CSDTOIUU
+ID_SD_SDBANMA [Ban ma / ban de co lo bulong (SDBANMA / BMA)]^C^CSDBANMA
+ID_SD_SDIH [<-Tiet dien thep hinh I/H (SDIH / THH)]^C^CSDIH
+ID_SD_G3 [->Khai trien BTCT]
+ID_SD_SDMONGTHEP [Khai trien thep mong don: mat bang + 2 mat cat (SDMONGTHEP / KTM)]^C^CSDMONGTHEP
+ID_SD_SDMONGBANG [Khai trien thep mong bang (ban + suon), mat bang + mat cat (SDMONGBANG / KMB)]^C^CSDMONGBANG
+ID_SD_SDDAICOC [Khai trien thep dai coc: luoi coc, luoi thep, thep cho (SDDAICOC / KDC)]^C^CSDDAICOC
+ID_SD_SDCOTTHEP [Khai trien thep cot 1 tang: mat dung + mat cat (SDCOTTHEP / KTC)]^C^CSDCOTTHEP
+ID_SD_SDDAMDUNG [Mat dung thep dam lien tuc: thep suot, mu goi, dai L/4 (SDDAMDUNG / MDD)]^C^CSDDAMDUNG
+ID_SD_SDSANTHEP [Khai trien thep o san: thep duoi 2 phuong, thep mu (SDSANTHEP / KTS)]^C^CSDSANTHEP
+ID_SD_SDTHANGTHEP [Khai trien thep ve cau thang (mat cat) (SDTHANGTHEP / KTT)]^C^CSDTHANGTHEP
+ID_SD_SDNHAPBANG [Nhap bang cau kien CSV / Excel -> ve khai trien hang loat (dam, cot, mong, san, thang) (SDNHAPBANG / NBG)]^C^CSDNHAPBANG
+ID_SD_SDCK [Khai bao khoi luong cau kien (kich thuoc / polyline) (SDCK / CKL)]^C^CSDCK
+ID_SD_SDKL [<-Xuat khoi luong be tong, van khuon, thep sang Excel (SDKL / KLX)]^C^CSDKL
+ID_SD_G4 [->Op lat da granite / gach]
+ID_SD_SDGACH [Chia vien: thang/so le/xuong ca/chevron, vien, khe (SDGACH / CHV)]^C^CSDGACH
+ID_SD_SDCHANTUONG [Len chan tuong + trien khai mat dung (SDCHANTUONG / LCT)]^C^CSDCHANTUONG
+ID_SD_SDRAITAM [Rai panel / da lat theo kho: tam lon tu goc, tam di hinh mep bien, go bu, huong van (SDRAITAM / RTA)]^C^CSDRAITAM
+ID_SD_SDVANDA [Hatch van da (file .pat) len vien: tiep noi / doi guong / xoay 4 chieu (SDVANDA / VDA)]^C^CSDVANDA
+ID_SD_SDQUYTRINH [Hop thoai quy trinh da lat: goi y buoc tiep theo, chay tung buoc hoac lien hoan (SDQUYTRINH / QTR)]^C^CSDQUYTRINH
+ID_SD_SDDOCDA [Doc mat bang op lat: dung lai o kin tu net roi, ghi bang CSV de soat / bo sung, ve polyline kin, chay SDANHDA (SDDOCDA / DOD)]^C^CSDDOCDA
+ID_SD_SDMOANH [Mo bien anh da: bien vien moi vuot anh nhung tam con du kho thi tu dich anh va cat lai (SDMOANH / MOA)]^C^CSDMOANH
+ID_SD_SDRON [Doi ron giua cac vien: thu phong polyline vien, cap nhat hatch lien ket va cat lai anh, khong sua tay (SDRON / DRN)]^C^CSDRON
+ID_SD_SDVAN [Kiem tra van da lien tuc giua cac vien ke nhau (dua vao vi tri cat tren tam), khoanh moi noi dut van (SDVAN / LTV)]^C^CSDVAN
+ID_SD_SDKTLAT [Kiem tra ban ve lat: vien cat hep / nho, ron khong deu, o thieu ma vat lieu (SDKTLAT / KLT)]^C^CSDKTLAT
+ID_SD_SDDIEMBD [So sanh diem bat dau rai luoi vien: so vien cat, vien cat hep, hao hut; goi y diem tot nhat (SDDIEMBD / DBT)]^C^CSDDIEMBD
+ID_SD_SDKHEGIAN [Khe co gian: khe sat tuong va khe phan vung vung lat, chong chiu dai toi da giua cac khe (SDKHEGIAN / KCG)]^C^CSDKHEGIAN
+ID_SD_SDTHOATNUOC [Pheu thu nuoc + doc san: chenh cao den cac goc, khoanh vung vien cat quanh pheu (SDTHOATNUOC / PTN)]^C^CSDTHOATNUOC
+ID_SD_SDTUDONG [Bat / tat tu dong: sua bien vien (grip, stretch...) thi anh IMAGECLIP tu cat lai theo bien moi (SDTUDONG / TDO)]^C^CSDTUDONG
+ID_SD_SDLOT [Chay lo nhieu phong: rai vien cho tung khu vuc, diem bat dau tot nhat, thong ke tung vung + tong, tuy chon cat anh / hatch (SDLOT / NPH)]^C^CSDLOT
+ID_SD_SDRONIN [Cho ron / duong vien hien ra khi in: doi mau trang + net, dua duong vien len tren anh (SDRONIN / IRN)]^C^CSDRONIN
+ID_SD_SDVATLIEU [Danh sach vat lieu da dung (ma, kich thuoc, ron, khe): xem va xoa muc; SDGACH / SDLOT hien danh sach de chon lai nhanh (SDVATLIEU / VLI)]^C^CSDVATLIEU
+ID_SD_SDXOAVIEN [Go bo vien trong vung chon: xoa polyline vien + anh + hatch + so hieu, lo ra chi tiet nam duoi (mat cat mui bac) (SDXOAVIEN / GOV)]^C^CSDXOAVIEN
+ID_SD_SDANHDA [Cat anh tam da (imageclip) vao cac vien da quet chon: chieu van, xep it hao (SDANHDA / ADA)]^C^CSDANHDA
+ID_SD_SDTKDA [Quet polyline vien da cat: bang thong ke theo nhom kich thuoc, chi tiet tung vien, CSV (SDTKDA / TKD)]^C^CSDTKDA
+ID_SD_SDDOCDATK [Thong ke vien da sau SDDOCDA: bang nhom kich thuoc, dat tam da, CSV (SDDOCDATK / DTK)]^C^CSDDOCDATK
+ID_SD_SDANHDATK [Thong ke tam da sau SDANHDA: so vien, hao hut tung tam, dat tam, CSV (SDANHDATK / ATK)]^C^CSDANHDATK
+ID_SD_SDGACHTK [Thong ke vien + du tru dat hang (SDGACHTK / TKV)]^C^CSDGACHTK
+ID_SD_SDKHODA [Kho da tho nhieu kich thuoc (SDKHODA / KHO)]^C^CSDKHODA
+ID_SD_SDDATHO [Cat vien tu da tho: so do cat, hieu suat (SDDATHO / DTH)]^C^CSDDATHO
+ID_SD_SDTHANGDA [Cau thang da: mat bac, co bac, mui bac (thang / vat 45 / roi / CNC), khe LED, len, ra da kieu ABF (SDTHANGDA / TDA)]^C^CSDTHANGDA
+ID_SD_SDGIACONG [Ban ve gia cong tung ma vien (SDGIACONG / GCV)]^C^CSDGIACONG
+ID_SD_SDLOP [Chi tiet cau tao lop op / lat (SDLOP / CTL)]^C^CSDLOP
+ID_SD_SDBLOCKDA [Block chi tiet da: tao block mat cat mui bac tu mau, quet hinh tao block, chen file .dwg, luu ra .dwg, mo Block Editor them thong so dong (SDBLOCKDA / KCD)]^C^CSDBLOCKDA
+ID_SD_SDTRINH [Ban trinh khach: bang chu thich vat lieu co o mau anh da (A1 1:50) va che do trinh khach lam mo nen kien truc, an layer nhan (SDTRINH / BTK)]^C^CSDTRINH
+ID_SD_SDKHUNGIN [Khung in A1 / A3 tu dung: khung ten, huong Bac, thuoc ty le, dat san cai dat in cho SDIN / SDTAOLAYOUT (SDKHUNGIN / KIN)]^C^CSDKHUNGIN
+ID_SD_SDKHAOSAT [Dung phong tu file so do khao sat (room,ab,bc,cd,da,ac,bd): 4 canh + cheo, xep hang tin cay A / B / C / X / D, ve polyline phong lam bien cho SDGACH / SDLOT (SDKHAOSAT / KSH)]^C^CSDKHAOSAT
+ID_SD_SDCHIABAC [Chia bac thang tu cao do (so voi +-0.000): chieu cao bac, lam tron don phan lech, bang cao do hoan thien / ket cau tung bac va chieu nghi, dat san SDTHANGDA (SDCHIABAC / CHB)]^C^CSDCHIABAC
+ID_SD_SDMAVIEN [Ma vien theo hinh dang: cung vat lieu va hinh dang cung ma (VD G1-01), nho trong ban ve, ghi len vien, bang + CSV (SDMAVIEN / SMV)]^C^CSDMAVIEN
+ID_SD_SDKIEMTONG [Luot kiem tong: ho so so lieu, vien hep / nho, ron khong deu, luoi ron lech, chuoi cao do; bao cao + CSV (SDKIEMTONG / KTO)]^C^CSDKIEMTONG
+ID_SD_SDHOSO [Ho so so lieu du an: ron, cao do, doc, du...; danh dau da xac nhan / chua xac nhan, canh bao khi lenh dung so chua xac nhan, bang ra ban ve (SDHOSO / SLD)]^C^CSDHOSO
+ID_SD_SDDIMVIEN [Dim tu dong theo hang vien: chuoi tung vien + tong, ngang / dung, ngoai phong hoac trong phong (SDDIMVIEN / DVI)]^C^CSDDIMVIEN
+ID_SD_SDOPTUONG [Op tuong trung ron san: mat dung trai phang, ron dung theo ron san, kiem tra trung ron (SDOPTUONG / OPTU)]^C^CSDOPTUONG
+ID_SD_SDTRUNGRON [Kiem tra luoi ron lien tuc xuyen cac phong: nhom vien lech luoi chinh, khoanh may, goi y dich (SDTRUNGRON / RLE)]^C^CSDTRUNGRON
+ID_SD_SDBACCAODO [Cho doi cao do (nguong WC, mep ho, chan thanh): gan du mm, SDCATDU tu nhan (SDBACCAODO / CDB)]^C^CSDBACCAODO
+ID_SD_SDLIENCAODO [Chuoi cao do: san chinh, san WC (ha cot, doc ve pheu thu), san ho, muc nuoc, day ho; chenh cao tung muc, canh bao, so do (SDLIENCAODO / LKD)]^C^CSDLIENCAODO
+ID_SD_SDHOBOI [Ho boi: doc day dau nong - dau sau, duong dong muc day, khe co gian, mat cat doc + bang cao do day theo vien, doi chieu TCVN 4260:2012 / ISPSC 2015 (SDHOBOI / HOB)]^C^CSDHOBOI
+ID_SD_SDMAP [Thu vien map (anh) da granite co san: chen anh tam da dung kich thuoc that de SDANHDA cat vao vien; tha them .jpg / .png vao thu muc Maps (SDMAP / TVM)]^C^CSDMAP
+ID_SD_SDDICHVAN [Dich van da tung buoc: nhich anh tam da duoi bien vien (trai / phai / len / xuong, buoc mm), bien dung yen, co hoan buoc (SDDICHVAN / DCV)]^C^CSDDICHVAN
+ID_SD_SDCATDU [Cat du sat tuong: vien cat nao, canh nao phai cat dai ra (+du mm) de be lai khi thi cong; gach do tren ban ve, bang kich thuoc cat, CSV (SDCATDU / CTD)]^C^CSDCATDU
+ID_SD_SDDUTOAN [Du toan tien da theo don gia m2 tung ma vat lieu (nho lai), hao hut, cong lat, VAT; bang + CSV (SDDUTOAN / DTD)]^C^CSDDUTOAN
+ID_SD_SDPHUONGAN [Phuong an lat A / B tren mot to: nhan + bang ngan (so vien, nguyen / cat, hao hut) + khung in bao ca hai (SDPHUONGAN / PHA)]^C^CSDPHUONGAN
+ID_SD_SDLENH [<-Ra lenh bang cau tieng Viet cho cac o da: gop o 25+36 thanh 1, xoa o 12 13 (hoi xac nhan, UNDO duoc) (SDLENH / AIA)]^C^CSDLENH
+ID_SD_G5 [->Coffa]
+ID_SD_SDCOFFASET [Thong so coffa, ap luc be tong (SDCOFFASET / CFT)]^C^CSDCOFFASET
+ID_SD_SDCOFFAMONG [Coffa mong don / mong bang / dai coc (SDCOFFAMONG / CFM)]^C^CSDCOFFAMONG
+ID_SD_SDCOFFACOT [Coffa cot (SDCOFFACOT / CFC)]^C^CSDCOFFACOT
+ID_SD_SDCOFFAVACH [Coffa vach / vach ham (SDCOFFAVACH / CFV)]^C^CSDCOFFAVACH
+ID_SD_SDCOFFATM [Coffa loi thang may (SDCOFFATM / CTM)]^C^CSDCOFFATM
+ID_SD_SDCOFFATHANG [Coffa thang bo (SDCOFFATHANG / CTB)]^C^CSDCOFFATHANG
+ID_SD_SDCOFFADAM [Coffa dam + giao duoi dam (SDCOFFADAM / CFD)]^C^CSDCOFFADAM
+ID_SD_SDCOFFASAN [Coffa san + gian giao + giang (SDCOFFASAN / CFS)]^C^CSDCOFFASAN
+ID_SD_SDNHOMSET [Coffa nhom: catalogue tam (W, IC, EC, SC, tam san, dam do, chong) (SDNHOMSET / NHS)]^C^CSDNHOMSET
+ID_SD_SDNHOMVACH [Coffa nhom vach / cot / loi: chia tam theo mat be tong chon (SDNHOMVACH / NHV)]^C^CSDNHOMVACH
+ID_SD_SDNHOMSAN [Coffa nhom san: goc san, dam do san, dau chong, tam san (SDNHOMSAN / NHN)]^C^CSDNHOMSAN
+ID_SD_SDNHOMDAM [Coffa nhom dam: thanh, day, goc ngoai, cay chong (SDNHOMDAM / NHD)]^C^CSDNHOMDAM
+ID_SD_SDNHOMKHO [<-Coffa nhom: tong hop cong trinh + doi chieu kho (thieu / gia cong) (SDNHOMKHO / NHK)]^C^CSDNHOMKHO
+ID_SD_G6 [->Gian giao]
+ID_SD_SDGIAOSET [Thong so gian giao, on dinh, giang (SDGIAOSET / GGS)]^C^CSDGIAOSET
+ID_SD_SDGIAOTANG [Mat bang gian giao ca tang (tu nhan dam, o san) (SDGIAOTANG / GGT)]^C^CSDGIAOTANG
+ID_SD_SDGIAOH [Giao khung H ca tang: dam san, giao H, giang cheo, mat cat, khoi luong (SDGIAOH / GKH)]^C^CSDGIAOH
+ID_SD_SDGIAOTK [<-Thong ke gian giao theo tang + dinh muc (SDGIAOTK / GGK)]^C^CSDGIAOTK
+ID_SD_G7 [->Tien ich]
+ID_SD_SDIN [In hang loat theo khung ten (block / layer), hang / cot, ra may in hoac PDF (SDIN / INH)]^C^CSDIN
+ID_SD_SDPURGE [Don rac ban ve sau: DGN, RegApps, purge lap, scale list (SDPURGE / DPU)]^C^CSDPURGE
+ID_SD_SDSOSANH [So sanh 2 ban ve DWG: to mau them / xoa / dich chuyen (SDSOSANH / SSD)]^C^CSDSOSANH
+ID_SD_SDLAYOUT [Quan ly Layout: mo, sap xep, them, chep, doi ten (hang loat), xoa (SDLAYOUT / QLL)]^C^CSDLAYOUT
+ID_SD_SDTAOLAYOUT [Tao Layout hang loat tu khung ten + danh so to vao khung ten (SDTAOLAYOUT / TLO)]^C^CSDTAOLAYOUT
+ID_SD_SDNHANLK [Nhan lien ket doi tuong (chieu dai / dien tich) tu cap nhat bang FIELD (SDNHANLK / NLK)]^C^CSDNHANLK
+ID_SD_SDLIENKET [Kiem tra mat bang <-> khai trien: cau kien thieu / thua (SDLIENKET / LKT)]^C^CSDLIENKET
+ID_SD_SDCDE [Phat hanh len CDE theo ISO 19650: ma so hieu, trang thai, phien ban, luu tru (SDCDE / CDE)]^C^CSDCDE
+ID_SD_SDPANEL [Bang lenh ShopDrawing (hop thoai) (SDPANEL / BLN)]^C^CSDPANEL
+ID_SD_SDHELP [Danh sach lenh (SDHELP / HDL)]^C^CSDHELP
+ID_SD_SDTUNAP [Bat / tat tu nap ShopDrawing moi khi mo AutoCAD (khong can APPLOAD lai) (SDTUNAP / AUL)]^C^CSDTUNAP
+ID_SD_SDMENU [Cai menu + toolbar + Ribbon (SDMENU / CMN)]^C^CSDMENU
+ID_SD_SDDLG [<-Bat / tat hop thoai nhap lieu (SDDLG / HTN)]^C^CSDDLG
+[--]
+ID_SD_POP_PANEL [Bang lenh (SDPANEL)]^C^CSDPANEL
+ID_SD_POP_UNLOAD [Go menu ShopDrawing (SDMENUXOA)]^C^CSDMENUXOA
+
+***TOOLBARS
+**SD_TB1
+ID_SD_TB1 [_Toolbar("SD Thiet lap", _Floating, _Show, 150, 120, 1)]
+ID_SD_TB_SDSET [_Button("Thiet lap ty le, layer, text style, dimstyle (TYLE)", "SD_SDSET_16.bmp", "SD_SDSET_32.bmp")]^C^CSDSET
+ID_SD_TB_SDKHUNG [_Button("Khung ban ve A0-A4 + khung ten (KHG)", "SD_SDKHUNG_16.bmp", "SD_SDKHUNG_32.bmp")]^C^CSDKHUNG
+ID_SD_TB_SDTRUC [_Button("Luoi truc + bong truc + kich thuoc (TRUC)", "SD_SDTRUC_16.bmp", "SD_SDTRUC_32.bmp")]^C^CSDTRUC
+ID_SD_TB_SDCAODO [_Button("Ky hieu cao do (CAO)", "SD_SDCAODO_16.bmp", "SD_SDCAODO_32.bmp")]^C^CSDCAODO
+ID_SD_TB_SDMC [_Button("Ky hieu mat cat (MCT)", "SD_SDMC_16.bmp", "SD_SDMC_32.bmp")]^C^CSDMC
+ID_SD_TB_SDSO [_Button("Danh so tu dong (DSO)", "SD_SDSO_16.bmp", "SD_SDSO_32.bmp")]^C^CSDSO
+ID_SD_TB_SDLEN [_Button("Tong chieu dai doi tuong theo layer (TDAI)", "SD_SDLEN_16.bmp", "SD_SDLEN_32.bmp")]^C^CSDLEN
+ID_SD_TB_SDDIENTICH [_Button("Dem + tong dien tich theo layer (polyline, tron, hatch...), nhan FIELD (TDT)", "SD_SDDIENTICH_16.bmp", "SD_SDDIENTICH_32.bmp")]^C^CSDDIENTICH
+ID_SD_TB_SDCHUGIUA [_Button("Tao / can chu 1 dong giua 2 diem, xoay theo 2 diem (CGI)", "SD_SDCHUGIUA_16.bmp", "SD_SDCHUGIUA_32.bmp")]^C^CSDCHUGIUA
+ID_SD_TB_SDDIMTAY [_Button("Kich thuoc ghi tay: to mau, khoi phuc gia tri do, xoa (DMT)", "SD_SDDIMTAY_16.bmp", "SD_SDDIMTAY_32.bmp")]^C^CSDDIMTAY
+ID_SD_TB_SDTHUTU [_Button("Thu tu ve (draworder) theo layer (TTL)", "SD_SDTHUTU_16.bmp", "SD_SDTHUTU_32.bmp")]^C^CSDTHUTU
+ID_SD_TB_SDREV [_Button("Ky hieu lan sua doi + dam may (SUA)", "SD_SDREV_16.bmp", "SD_SDREV_32.bmp")]^C^CSDREV
+ID_SD_TB_SDCHUAN [_Button("Chuan layer / style / dimstyle: kiem tra, ap dung, xuat file mau .dwt (CHN)", "SD_SDCHUAN_16.bmp", "SD_SDCHUAN_32.bmp")]^C^CSDCHUAN
+ID_SD_TB_SDTKBLOCK [_Button("Thong ke block dong + thuoc tinh (bang, CSV), gan gia tri hang loat (TKB)", "SD_SDTKBLOCK_16.bmp", "SD_SDTKBLOCK_32.bmp")]^C^CSDTKBLOCK
+ID_SD_TB_SDXREF [_Button("Quan ly Xref: trang thai, duong dan tuong doi, tim lai, nap lai (XRF)", "SD_SDXREF_16.bmp", "SD_SDXREF_32.bmp")]^C^CSDXREF
+ID_SD_TB_SDDMBV [_Button("Danh muc ban ve (Sheet List) tu Layout / khung ten + CSV (DMB)", "SD_SDDMBV_16.bmp", "SD_SDDMBV_32.bmp")]^C^CSDDMBV
+ID_SD_TB_SDLOC [_Button("Loc / tim doi tuong theo bieu thuc: layer, thuoc tinh, tham so, du lieu SD, VA / HOAC (LOC)", "SD_SDLOC_16.bmp", "SD_SDLOC_32.bmp")]^C^CSDLOC
+ID_SD_TB_SDKIEMTRA [_Button("Tac tu kiem tra ban ve: thep, mat bang, chuan, dim ghi tay, Xref; xep uu tien + goi y lenh (KTA)", "SD_SDKIEMTRA_16.bmp", "SD_SDKIEMTRA_32.bmp")]^C^CSDKIEMTRA
+
+**SD_TB2
+ID_SD_TB2 [_Toolbar("SD BTCT - Thep", _Floating, _Show, 190, 160, 1)]
+ID_SD_TB_SDDAM [_Button("Mat cat dam BTCT (MCD)", "SD_SDDAM_16.bmp", "SD_SDDAM_32.bmp")]^C^CSDDAM
+ID_SD_TB_SDCOT [_Button("Mat cat cot BTCT (MCC)", "SD_SDCOT_16.bmp", "SD_SDCOT_32.bmp")]^C^CSDCOT
+ID_SD_TB_SDNOITHEP [_Button("Toi uu cat noi thep trong vung cho phep noi, so le, coupler (CNT)", "SD_SDNOITHEP_16.bmp", "SD_SDNOITHEP_32.bmp")]^C^CSDNOITHEP
+ID_SD_TB_SDTHEPSET [_Button("Cai dat thep: cay, be tong, noi chong, moc (CDT)", "SD_SDTHEPSET_16.bmp", "SD_SDTHEPSET_32.bmp")]^C^CSDTHEPSET
+ID_SD_TB_SDTHEP [_Button("Ghi chu thanh thep: hinh dang, noi chong (THP)", "SD_SDTHEP_16.bmp", "SD_SDTHEP_32.bmp")]^C^CSDTHEP
+ID_SD_TB_SDTHEPTM [_Button("Thep thong minh tu polyline: tu cap nhat L, SL, bang (TTM)", "SD_SDTHEPTM_16.bmp", "SD_SDTHEPTM_32.bmp")]^C^CSDTHEPTM
+ID_SD_TB_SDTKTHEP [_Button("Bang thong ke cot thep + CSV (TKT)", "SD_SDTKTHEP_16.bmp", "SD_SDTKTHEP_32.bmp")]^C^CSDTKTHEP
+ID_SD_TB_SDBONGTHEP [_Button("Danh lai so hieu thep dong bo + kiem tra trung / lech so hieu (DSH)", "SD_SDBONGTHEP_16.bmp", "SD_SDBONGTHEP_32.bmp")]^C^CSDBONGTHEP
+ID_SD_TB_SDTOIUU [_Button("Toi uu cat thep tu cay thuong pham (TUT)", "SD_SDTOIUU_16.bmp", "SD_SDTOIUU_32.bmp")]^C^CSDTOIUU
+ID_SD_TB_SDBANMA [_Button("Ban ma / ban de co lo bulong (BMA)", "SD_SDBANMA_16.bmp", "SD_SDBANMA_32.bmp")]^C^CSDBANMA
+ID_SD_TB_SDIH [_Button("Tiet dien thep hinh I/H (THH)", "SD_SDIH_16.bmp", "SD_SDIH_32.bmp")]^C^CSDIH
+
+**SD_TB3
+ID_SD_TB3 [_Toolbar("SD Khai trien BTCT", _Floating, _Show, 230, 200, 1)]
+ID_SD_TB_SDMONGTHEP [_Button("Khai trien thep mong don: mat bang + 2 mat cat (KTM)", "SD_SDMONGTHEP_16.bmp", "SD_SDMONGTHEP_32.bmp")]^C^CSDMONGTHEP
+ID_SD_TB_SDMONGBANG [_Button("Khai trien thep mong bang (ban + suon), mat bang + mat cat (KMB)", "SD_SDMONGBANG_16.bmp", "SD_SDMONGBANG_32.bmp")]^C^CSDMONGBANG
+ID_SD_TB_SDDAICOC [_Button("Khai trien thep dai coc: luoi coc, luoi thep, thep cho (KDC)", "SD_SDDAICOC_16.bmp", "SD_SDDAICOC_32.bmp")]^C^CSDDAICOC
+ID_SD_TB_SDCOTTHEP [_Button("Khai trien thep cot 1 tang: mat dung + mat cat (KTC)", "SD_SDCOTTHEP_16.bmp", "SD_SDCOTTHEP_32.bmp")]^C^CSDCOTTHEP
+ID_SD_TB_SDDAMDUNG [_Button("Mat dung thep dam lien tuc: thep suot, mu goi, dai L/4 (MDD)", "SD_SDDAMDUNG_16.bmp", "SD_SDDAMDUNG_32.bmp")]^C^CSDDAMDUNG
+ID_SD_TB_SDSANTHEP [_Button("Khai trien thep o san: thep duoi 2 phuong, thep mu (KTS)", "SD_SDSANTHEP_16.bmp", "SD_SDSANTHEP_32.bmp")]^C^CSDSANTHEP
+ID_SD_TB_SDTHANGTHEP [_Button("Khai trien thep ve cau thang (mat cat) (KTT)", "SD_SDTHANGTHEP_16.bmp", "SD_SDTHANGTHEP_32.bmp")]^C^CSDTHANGTHEP
+ID_SD_TB_SDNHAPBANG [_Button("Nhap bang cau kien CSV / Excel -> ve khai trien hang loat (dam, cot, mong, san, thang) (NBG)", "SD_SDNHAPBANG_16.bmp", "SD_SDNHAPBANG_32.bmp")]^C^CSDNHAPBANG
+ID_SD_TB_SDCK [_Button("Khai bao khoi luong cau kien (kich thuoc / polyline) (CKL)", "SD_SDCK_16.bmp", "SD_SDCK_32.bmp")]^C^CSDCK
+ID_SD_TB_SDKL [_Button("Xuat khoi luong be tong, van khuon, thep sang Excel (KLX)", "SD_SDKL_16.bmp", "SD_SDKL_32.bmp")]^C^CSDKL
+
+**SD_TB4
+ID_SD_TB4 [_Toolbar("SD Op lat da", _Floating, _Show, 270, 240, 1)]
+ID_SD_TB_SDGACH [_Button("Chia vien: thang/so le/xuong ca/chevron, vien, khe (CHV)", "SD_SDGACH_16.bmp", "SD_SDGACH_32.bmp")]^C^CSDGACH
+ID_SD_TB_SDCHANTUONG [_Button("Len chan tuong + trien khai mat dung (LCT)", "SD_SDCHANTUONG_16.bmp", "SD_SDCHANTUONG_32.bmp")]^C^CSDCHANTUONG
+ID_SD_TB_SDRAITAM [_Button("Rai panel / da lat theo kho: tam lon tu goc, tam di hinh mep bien, go bu, huong van (RTA)", "SD_SDRAITAM_16.bmp", "SD_SDRAITAM_32.bmp")]^C^CSDRAITAM
+ID_SD_TB_SDVANDA [_Button("Hatch van da (file .pat) len vien: tiep noi / doi guong / xoay 4 chieu (VDA)", "SD_SDVANDA_16.bmp", "SD_SDVANDA_32.bmp")]^C^CSDVANDA
+ID_SD_TB_SDQUYTRINH [_Button("Hop thoai quy trinh da lat: goi y buoc tiep theo, chay tung buoc hoac lien hoan (QTR)", "SD_SDQUYTRINH_16.bmp", "SD_SDQUYTRINH_32.bmp")]^C^CSDQUYTRINH
+ID_SD_TB_SDDOCDA [_Button("Doc mat bang op lat: dung lai o kin tu net roi, ghi bang CSV de soat / bo sung, ve polyline kin, chay SDANHDA (DOD)", "SD_SDDOCDA_16.bmp", "SD_SDDOCDA_32.bmp")]^C^CSDDOCDA
+ID_SD_TB_SDMOANH [_Button("Mo bien anh da: bien vien moi vuot anh nhung tam con du kho thi tu dich anh va cat lai (MOA)", "SD_SDMOANH_16.bmp", "SD_SDMOANH_32.bmp")]^C^CSDMOANH
+ID_SD_TB_SDRON [_Button("Doi ron giua cac vien: thu phong polyline vien, cap nhat hatch lien ket va cat lai anh, khong sua tay (DRN)", "SD_SDRON_16.bmp", "SD_SDRON_32.bmp")]^C^CSDRON
+ID_SD_TB_SDVAN [_Button("Kiem tra van da lien tuc giua cac vien ke nhau (dua vao vi tri cat tren tam), khoanh moi noi dut van (LTV)", "SD_SDVAN_16.bmp", "SD_SDVAN_32.bmp")]^C^CSDVAN
+ID_SD_TB_SDKTLAT [_Button("Kiem tra ban ve lat: vien cat hep / nho, ron khong deu, o thieu ma vat lieu (KLT)", "SD_SDKTLAT_16.bmp", "SD_SDKTLAT_32.bmp")]^C^CSDKTLAT
+ID_SD_TB_SDDIEMBD [_Button("So sanh diem bat dau rai luoi vien: so vien cat, vien cat hep, hao hut; goi y diem tot nhat (DBT)", "SD_SDDIEMBD_16.bmp", "SD_SDDIEMBD_32.bmp")]^C^CSDDIEMBD
+ID_SD_TB_SDKHEGIAN [_Button("Khe co gian: khe sat tuong va khe phan vung vung lat, chong chiu dai toi da giua cac khe (KCG)", "SD_SDKHEGIAN_16.bmp", "SD_SDKHEGIAN_32.bmp")]^C^CSDKHEGIAN
+ID_SD_TB_SDTHOATNUOC [_Button("Pheu thu nuoc + doc san: chenh cao den cac goc, khoanh vung vien cat quanh pheu (PTN)", "SD_SDTHOATNUOC_16.bmp", "SD_SDTHOATNUOC_32.bmp")]^C^CSDTHOATNUOC
+ID_SD_TB_SDTUDONG [_Button("Bat / tat tu dong: sua bien vien (grip, stretch...) thi anh IMAGECLIP tu cat lai theo bien moi (TDO)", "SD_SDTUDONG_16.bmp", "SD_SDTUDONG_32.bmp")]^C^CSDTUDONG
+ID_SD_TB_SDLOT [_Button("Chay lo nhieu phong: rai vien cho tung khu vuc, diem bat dau tot nhat, thong ke tung vung + tong, tuy chon cat anh / hatch (NPH)", "SD_SDLOT_16.bmp", "SD_SDLOT_32.bmp")]^C^CSDLOT
+ID_SD_TB_SDRONIN [_Button("Cho ron / duong vien hien ra khi in: doi mau trang + net, dua duong vien len tren anh (IRN)", "SD_SDRONIN_16.bmp", "SD_SDRONIN_32.bmp")]^C^CSDRONIN
+ID_SD_TB_SDVATLIEU [_Button("Danh sach vat lieu da dung (ma, kich thuoc, ron, khe): xem va xoa muc; SDGACH / SDLOT hien danh sach de chon lai nhanh (VLI)", "SD_SDVATLIEU_16.bmp", "SD_SDVATLIEU_32.bmp")]^C^CSDVATLIEU
+ID_SD_TB_SDXOAVIEN [_Button("Go bo vien trong vung chon: xoa polyline vien + anh + hatch + so hieu, lo ra chi tiet nam duoi (mat cat mui bac) (GOV)", "SD_SDXOAVIEN_16.bmp", "SD_SDXOAVIEN_32.bmp")]^C^CSDXOAVIEN
+ID_SD_TB_SDANHDA [_Button("Cat anh tam da (imageclip) vao cac vien da quet chon: chieu van, xep it hao (ADA)", "SD_SDANHDA_16.bmp", "SD_SDANHDA_32.bmp")]^C^CSDANHDA
+ID_SD_TB_SDTKDA [_Button("Quet polyline vien da cat: bang thong ke theo nhom kich thuoc, chi tiet tung vien, CSV (TKD)", "SD_SDTKDA_16.bmp", "SD_SDTKDA_32.bmp")]^C^CSDTKDA
+ID_SD_TB_SDDOCDATK [_Button("Thong ke vien da sau SDDOCDA: bang nhom kich thuoc, dat tam da, CSV (DTK)", "SD_SDDOCDATK_16.bmp", "SD_SDDOCDATK_32.bmp")]^C^CSDDOCDATK
+ID_SD_TB_SDANHDATK [_Button("Thong ke tam da sau SDANHDA: so vien, hao hut tung tam, dat tam, CSV (ATK)", "SD_SDANHDATK_16.bmp", "SD_SDANHDATK_32.bmp")]^C^CSDANHDATK
+ID_SD_TB_SDGACHTK [_Button("Thong ke vien + du tru dat hang (TKV)", "SD_SDGACHTK_16.bmp", "SD_SDGACHTK_32.bmp")]^C^CSDGACHTK
+ID_SD_TB_SDKHODA [_Button("Kho da tho nhieu kich thuoc (KHO)", "SD_SDKHODA_16.bmp", "SD_SDKHODA_32.bmp")]^C^CSDKHODA
+ID_SD_TB_SDDATHO [_Button("Cat vien tu da tho: so do cat, hieu suat (DTH)", "SD_SDDATHO_16.bmp", "SD_SDDATHO_32.bmp")]^C^CSDDATHO
+ID_SD_TB_SDTHANGDA [_Button("Cau thang da: mat bac, co bac, mui bac (thang / vat 45 / roi / CNC), khe LED, len, ra da kieu ABF (TDA)", "SD_SDTHANGDA_16.bmp", "SD_SDTHANGDA_32.bmp")]^C^CSDTHANGDA
+ID_SD_TB_SDGIACONG [_Button("Ban ve gia cong tung ma vien (GCV)", "SD_SDGIACONG_16.bmp", "SD_SDGIACONG_32.bmp")]^C^CSDGIACONG
+ID_SD_TB_SDLOP [_Button("Chi tiet cau tao lop op / lat (CTL)", "SD_SDLOP_16.bmp", "SD_SDLOP_32.bmp")]^C^CSDLOP
+ID_SD_TB_SDBLOCKDA [_Button("Block chi tiet da: tao block mat cat mui bac tu mau, quet hinh tao block, chen file .dwg, luu ra .dwg, mo Block Editor them thong so dong (KCD)", "SD_SDBLOCKDA_16.bmp", "SD_SDBLOCKDA_32.bmp")]^C^CSDBLOCKDA
+ID_SD_TB_SDTRINH [_Button("Ban trinh khach: bang chu thich vat lieu co o mau anh da (A1 1:50) va che do trinh khach lam mo nen kien truc, an layer nhan (BTK)", "SD_SDTRINH_16.bmp", "SD_SDTRINH_32.bmp")]^C^CSDTRINH
+ID_SD_TB_SDKHUNGIN [_Button("Khung in A1 / A3 tu dung: khung ten, huong Bac, thuoc ty le, dat san cai dat in cho SDIN / SDTAOLAYOUT (KIN)", "SD_SDKHUNGIN_16.bmp", "SD_SDKHUNGIN_32.bmp")]^C^CSDKHUNGIN
+ID_SD_TB_SDKHAOSAT [_Button("Dung phong tu file so do khao sat (room,ab,bc,cd,da,ac,bd): 4 canh + cheo, xep hang tin cay A / B / C / X / D, ve polyline phong lam bien cho SDGACH / SDLOT (KSH)", "SD_SDKHAOSAT_16.bmp", "SD_SDKHAOSAT_32.bmp")]^C^CSDKHAOSAT
+ID_SD_TB_SDCHIABAC [_Button("Chia bac thang tu cao do (so voi +-0.000): chieu cao bac, lam tron don phan lech, bang cao do hoan thien / ket cau tung bac va chieu nghi, dat san SDTHANGDA (CHB)", "SD_SDCHIABAC_16.bmp", "SD_SDCHIABAC_32.bmp")]^C^CSDCHIABAC
+ID_SD_TB_SDMAVIEN [_Button("Ma vien theo hinh dang: cung vat lieu va hinh dang cung ma (VD G1-01), nho trong ban ve, ghi len vien, bang + CSV (SMV)", "SD_SDMAVIEN_16.bmp", "SD_SDMAVIEN_32.bmp")]^C^CSDMAVIEN
+ID_SD_TB_SDKIEMTONG [_Button("Luot kiem tong: ho so so lieu, vien hep / nho, ron khong deu, luoi ron lech, chuoi cao do; bao cao + CSV (KTO)", "SD_SDKIEMTONG_16.bmp", "SD_SDKIEMTONG_32.bmp")]^C^CSDKIEMTONG
+ID_SD_TB_SDHOSO [_Button("Ho so so lieu du an: ron, cao do, doc, du...; danh dau da xac nhan / chua xac nhan, canh bao khi lenh dung so chua xac nhan, bang ra ban ve (SLD)", "SD_SDHOSO_16.bmp", "SD_SDHOSO_32.bmp")]^C^CSDHOSO
+ID_SD_TB_SDDIMVIEN [_Button("Dim tu dong theo hang vien: chuoi tung vien + tong, ngang / dung, ngoai phong hoac trong phong (DVI)", "SD_SDDIMVIEN_16.bmp", "SD_SDDIMVIEN_32.bmp")]^C^CSDDIMVIEN
+ID_SD_TB_SDOPTUONG [_Button("Op tuong trung ron san: mat dung trai phang, ron dung theo ron san, kiem tra trung ron (OPTU)", "SD_SDOPTUONG_16.bmp", "SD_SDOPTUONG_32.bmp")]^C^CSDOPTUONG
+ID_SD_TB_SDTRUNGRON [_Button("Kiem tra luoi ron lien tuc xuyen cac phong: nhom vien lech luoi chinh, khoanh may, goi y dich (RLE)", "SD_SDTRUNGRON_16.bmp", "SD_SDTRUNGRON_32.bmp")]^C^CSDTRUNGRON
+ID_SD_TB_SDBACCAODO [_Button("Cho doi cao do (nguong WC, mep ho, chan thanh): gan du mm, SDCATDU tu nhan (CDB)", "SD_SDBACCAODO_16.bmp", "SD_SDBACCAODO_32.bmp")]^C^CSDBACCAODO
+ID_SD_TB_SDLIENCAODO [_Button("Chuoi cao do: san chinh, san WC (ha cot, doc ve pheu thu), san ho, muc nuoc, day ho; chenh cao tung muc, canh bao, so do (LKD)", "SD_SDLIENCAODO_16.bmp", "SD_SDLIENCAODO_32.bmp")]^C^CSDLIENCAODO
+ID_SD_TB_SDHOBOI [_Button("Ho boi: doc day dau nong - dau sau, duong dong muc day, khe co gian, mat cat doc + bang cao do day theo vien, doi chieu TCVN 4260:2012 / ISPSC 2015 (HOB)", "SD_SDHOBOI_16.bmp", "SD_SDHOBOI_32.bmp")]^C^CSDHOBOI
+ID_SD_TB_SDMAP [_Button("Thu vien map (anh) da granite co san: chen anh tam da dung kich thuoc that de SDANHDA cat vao vien; tha them .jpg / .png vao thu muc Maps (TVM)", "SD_SDMAP_16.bmp", "SD_SDMAP_32.bmp")]^C^CSDMAP
+ID_SD_TB_SDDICHVAN [_Button("Dich van da tung buoc: nhich anh tam da duoi bien vien (trai / phai / len / xuong, buoc mm), bien dung yen, co hoan buoc (DCV)", "SD_SDDICHVAN_16.bmp", "SD_SDDICHVAN_32.bmp")]^C^CSDDICHVAN
+ID_SD_TB_SDCATDU [_Button("Cat du sat tuong: vien cat nao, canh nao phai cat dai ra (+du mm) de be lai khi thi cong; gach do tren ban ve, bang kich thuoc cat, CSV (CTD)", "SD_SDCATDU_16.bmp", "SD_SDCATDU_32.bmp")]^C^CSDCATDU
+ID_SD_TB_SDDUTOAN [_Button("Du toan tien da theo don gia m2 tung ma vat lieu (nho lai), hao hut, cong lat, VAT; bang + CSV (DTD)", "SD_SDDUTOAN_16.bmp", "SD_SDDUTOAN_32.bmp")]^C^CSDDUTOAN
+ID_SD_TB_SDPHUONGAN [_Button("Phuong an lat A / B tren mot to: nhan + bang ngan (so vien, nguyen / cat, hao hut) + khung in bao ca hai (PHA)", "SD_SDPHUONGAN_16.bmp", "SD_SDPHUONGAN_32.bmp")]^C^CSDPHUONGAN
+ID_SD_TB_SDLENH [_Button("Ra lenh bang cau tieng Viet cho cac o da: gop o 25+36 thanh 1, xoa o 12 13 (hoi xac nhan, UNDO duoc) (AIA)", "SD_SDLENH_16.bmp", "SD_SDLENH_32.bmp")]^C^CSDLENH
+
+**SD_TB5
+ID_SD_TB5 [_Toolbar("SD Coffa", _Floating, _Show, 310, 280, 1)]
+ID_SD_TB_SDCOFFASET [_Button("Thong so coffa, ap luc be tong (CFT)", "SD_SDCOFFASET_16.bmp", "SD_SDCOFFASET_32.bmp")]^C^CSDCOFFASET
+ID_SD_TB_SDCOFFAMONG [_Button("Coffa mong don / mong bang / dai coc (CFM)", "SD_SDCOFFAMONG_16.bmp", "SD_SDCOFFAMONG_32.bmp")]^C^CSDCOFFAMONG
+ID_SD_TB_SDCOFFACOT [_Button("Coffa cot (CFC)", "SD_SDCOFFACOT_16.bmp", "SD_SDCOFFACOT_32.bmp")]^C^CSDCOFFACOT
+ID_SD_TB_SDCOFFAVACH [_Button("Coffa vach / vach ham (CFV)", "SD_SDCOFFAVACH_16.bmp", "SD_SDCOFFAVACH_32.bmp")]^C^CSDCOFFAVACH
+ID_SD_TB_SDCOFFATM [_Button("Coffa loi thang may (CTM)", "SD_SDCOFFATM_16.bmp", "SD_SDCOFFATM_32.bmp")]^C^CSDCOFFATM
+ID_SD_TB_SDCOFFATHANG [_Button("Coffa thang bo (CTB)", "SD_SDCOFFATHANG_16.bmp", "SD_SDCOFFATHANG_32.bmp")]^C^CSDCOFFATHANG
+ID_SD_TB_SDCOFFADAM [_Button("Coffa dam + giao duoi dam (CFD)", "SD_SDCOFFADAM_16.bmp", "SD_SDCOFFADAM_32.bmp")]^C^CSDCOFFADAM
+ID_SD_TB_SDCOFFASAN [_Button("Coffa san + gian giao + giang (CFS)", "SD_SDCOFFASAN_16.bmp", "SD_SDCOFFASAN_32.bmp")]^C^CSDCOFFASAN
+ID_SD_TB_SDNHOMSET [_Button("Coffa nhom: catalogue tam (W, IC, EC, SC, tam san, dam do, chong) (NHS)", "SD_SDNHOMSET_16.bmp", "SD_SDNHOMSET_32.bmp")]^C^CSDNHOMSET
+ID_SD_TB_SDNHOMVACH [_Button("Coffa nhom vach / cot / loi: chia tam theo mat be tong chon (NHV)", "SD_SDNHOMVACH_16.bmp", "SD_SDNHOMVACH_32.bmp")]^C^CSDNHOMVACH
+ID_SD_TB_SDNHOMSAN [_Button("Coffa nhom san: goc san, dam do san, dau chong, tam san (NHN)", "SD_SDNHOMSAN_16.bmp", "SD_SDNHOMSAN_32.bmp")]^C^CSDNHOMSAN
+ID_SD_TB_SDNHOMDAM [_Button("Coffa nhom dam: thanh, day, goc ngoai, cay chong (NHD)", "SD_SDNHOMDAM_16.bmp", "SD_SDNHOMDAM_32.bmp")]^C^CSDNHOMDAM
+ID_SD_TB_SDNHOMKHO [_Button("Coffa nhom: tong hop cong trinh + doi chieu kho (thieu / gia cong) (NHK)", "SD_SDNHOMKHO_16.bmp", "SD_SDNHOMKHO_32.bmp")]^C^CSDNHOMKHO
+
+**SD_TB6
+ID_SD_TB6 [_Toolbar("SD Gian giao", _Floating, _Show, 350, 320, 1)]
+ID_SD_TB_SDGIAOSET [_Button("Thong so gian giao, on dinh, giang (GGS)", "SD_SDGIAOSET_16.bmp", "SD_SDGIAOSET_32.bmp")]^C^CSDGIAOSET
+ID_SD_TB_SDGIAOTANG [_Button("Mat bang gian giao ca tang (tu nhan dam, o san) (GGT)", "SD_SDGIAOTANG_16.bmp", "SD_SDGIAOTANG_32.bmp")]^C^CSDGIAOTANG
+ID_SD_TB_SDGIAOH [_Button("Giao khung H ca tang: dam san, giao H, giang cheo, mat cat, khoi luong (GKH)", "SD_SDGIAOH_16.bmp", "SD_SDGIAOH_32.bmp")]^C^CSDGIAOH
+ID_SD_TB_SDGIAOTK [_Button("Thong ke gian giao theo tang + dinh muc (GGK)", "SD_SDGIAOTK_16.bmp", "SD_SDGIAOTK_32.bmp")]^C^CSDGIAOTK
+
+**SD_TB7
+ID_SD_TB7 [_Toolbar("SD Tien ich", _Floating, _Show, 390, 360, 1)]
+ID_SD_TB_SDIN [_Button("In hang loat theo khung ten (block / layer), hang / cot, ra may in hoac PDF (INH)", "SD_SDIN_16.bmp", "SD_SDIN_32.bmp")]^C^CSDIN
+ID_SD_TB_SDPURGE [_Button("Don rac ban ve sau: DGN, RegApps, purge lap, scale list (DPU)", "SD_SDPURGE_16.bmp", "SD_SDPURGE_32.bmp")]^C^CSDPURGE
+ID_SD_TB_SDSOSANH [_Button("So sanh 2 ban ve DWG: to mau them / xoa / dich chuyen (SSD)", "SD_SDSOSANH_16.bmp", "SD_SDSOSANH_32.bmp")]^C^CSDSOSANH
+ID_SD_TB_SDLAYOUT [_Button("Quan ly Layout: mo, sap xep, them, chep, doi ten (hang loat), xoa (QLL)", "SD_SDLAYOUT_16.bmp", "SD_SDLAYOUT_32.bmp")]^C^CSDLAYOUT
+ID_SD_TB_SDTAOLAYOUT [_Button("Tao Layout hang loat tu khung ten + danh so to vao khung ten (TLO)", "SD_SDTAOLAYOUT_16.bmp", "SD_SDTAOLAYOUT_32.bmp")]^C^CSDTAOLAYOUT
+ID_SD_TB_SDNHANLK [_Button("Nhan lien ket doi tuong (chieu dai / dien tich) tu cap nhat bang FIELD (NLK)", "SD_SDNHANLK_16.bmp", "SD_SDNHANLK_32.bmp")]^C^CSDNHANLK
+ID_SD_TB_SDLIENKET [_Button("Kiem tra mat bang <-> khai trien: cau kien thieu / thua (LKT)", "SD_SDLIENKET_16.bmp", "SD_SDLIENKET_32.bmp")]^C^CSDLIENKET
+ID_SD_TB_SDCDE [_Button("Phat hanh len CDE theo ISO 19650: ma so hieu, trang thai, phien ban, luu tru (CDE)", "SD_SDCDE_16.bmp", "SD_SDCDE_32.bmp")]^C^CSDCDE
+ID_SD_TB_SDPANEL [_Button("Bang lenh ShopDrawing (hop thoai) (BLN)", "SD_SDPANEL_16.bmp", "SD_SDPANEL_32.bmp")]^C^CSDPANEL
+ID_SD_TB_SDHELP [_Button("Danh sach lenh (HDL)", "SD_SDHELP_16.bmp", "SD_SDHELP_32.bmp")]^C^CSDHELP
+ID_SD_TB_SDTUNAP [_Button("Bat / tat tu nap ShopDrawing moi khi mo AutoCAD (khong can APPLOAD lai) (AUL)", "SD_SDTUNAP_16.bmp", "SD_SDTUNAP_32.bmp")]^C^CSDTUNAP
+ID_SD_TB_SDMENU [_Button("Cai menu + toolbar + Ribbon (CMN)", "SD_SDMENU_16.bmp", "SD_SDMENU_32.bmp")]^C^CSDMENU
+ID_SD_TB_SDDLG [_Button("Bat / tat hop thoai nhap lieu (HTN)", "SD_SDDLG_16.bmp", "SD_SDDLG_32.bmp")]^C^CSDDLG
+
+***HELPSTRINGS
+ID_SD_SDSET [SDSET (lenh tat TYLE): Thiet lap ty le, layer, text style, dimstyle]
+ID_SD_TB_SDSET [SDSET (lenh tat TYLE): Thiet lap ty le, layer, text style, dimstyle]
+ID_SD_SDKHUNG [SDKHUNG (lenh tat KHG): Khung ban ve A0-A4 + khung ten]
+ID_SD_TB_SDKHUNG [SDKHUNG (lenh tat KHG): Khung ban ve A0-A4 + khung ten]
+ID_SD_SDTRUC [SDTRUC (lenh tat TRUC): Luoi truc + bong truc + kich thuoc]
+ID_SD_TB_SDTRUC [SDTRUC (lenh tat TRUC): Luoi truc + bong truc + kich thuoc]
+ID_SD_SDCAODO [SDCAODO (lenh tat CAO): Ky hieu cao do]
+ID_SD_TB_SDCAODO [SDCAODO (lenh tat CAO): Ky hieu cao do]
+ID_SD_SDMC [SDMC (lenh tat MCT): Ky hieu mat cat]
+ID_SD_TB_SDMC [SDMC (lenh tat MCT): Ky hieu mat cat]
+ID_SD_SDSO [SDSO (lenh tat DSO): Danh so tu dong]
+ID_SD_TB_SDSO [SDSO (lenh tat DSO): Danh so tu dong]
+ID_SD_SDLEN [SDLEN (lenh tat TDAI): Tong chieu dai doi tuong theo layer]
+ID_SD_TB_SDLEN [SDLEN (lenh tat TDAI): Tong chieu dai doi tuong theo layer]
+ID_SD_SDDIENTICH [SDDIENTICH (lenh tat TDT): Dem + tong dien tich theo layer (polyline, tron, hatch...), nhan FIELD]
+ID_SD_TB_SDDIENTICH [SDDIENTICH (lenh tat TDT): Dem + tong dien tich theo layer (polyline, tron, hatch...), nhan FIELD]
+ID_SD_SDCHUGIUA [SDCHUGIUA (lenh tat CGI): Tao / can chu 1 dong giua 2 diem, xoay theo 2 diem]
+ID_SD_TB_SDCHUGIUA [SDCHUGIUA (lenh tat CGI): Tao / can chu 1 dong giua 2 diem, xoay theo 2 diem]
+ID_SD_SDDIMTAY [SDDIMTAY (lenh tat DMT): Kich thuoc ghi tay: to mau, khoi phuc gia tri do, xoa]
+ID_SD_TB_SDDIMTAY [SDDIMTAY (lenh tat DMT): Kich thuoc ghi tay: to mau, khoi phuc gia tri do, xoa]
+ID_SD_SDTHUTU [SDTHUTU (lenh tat TTL): Thu tu ve (draworder) theo layer]
+ID_SD_TB_SDTHUTU [SDTHUTU (lenh tat TTL): Thu tu ve (draworder) theo layer]
+ID_SD_SDREV [SDREV (lenh tat SUA): Ky hieu lan sua doi + dam may]
+ID_SD_TB_SDREV [SDREV (lenh tat SUA): Ky hieu lan sua doi + dam may]
+ID_SD_SDCHUAN [SDCHUAN (lenh tat CHN): Chuan layer / style / dimstyle: kiem tra, ap dung, xuat file mau .dwt]
+ID_SD_TB_SDCHUAN [SDCHUAN (lenh tat CHN): Chuan layer / style / dimstyle: kiem tra, ap dung, xuat file mau .dwt]
+ID_SD_SDTKBLOCK [SDTKBLOCK (lenh tat TKB): Thong ke block dong + thuoc tinh (bang, CSV), gan gia tri hang loat]
+ID_SD_TB_SDTKBLOCK [SDTKBLOCK (lenh tat TKB): Thong ke block dong + thuoc tinh (bang, CSV), gan gia tri hang loat]
+ID_SD_SDXREF [SDXREF (lenh tat XRF): Quan ly Xref: trang thai, duong dan tuong doi, tim lai, nap lai]
+ID_SD_TB_SDXREF [SDXREF (lenh tat XRF): Quan ly Xref: trang thai, duong dan tuong doi, tim lai, nap lai]
+ID_SD_SDDMBV [SDDMBV (lenh tat DMB): Danh muc ban ve (Sheet List) tu Layout / khung ten + CSV]
+ID_SD_TB_SDDMBV [SDDMBV (lenh tat DMB): Danh muc ban ve (Sheet List) tu Layout / khung ten + CSV]
+ID_SD_SDLOC [SDLOC (lenh tat LOC): Loc / tim doi tuong theo bieu thuc: layer, thuoc tinh, tham so, du lieu SD, VA / HOAC]
+ID_SD_TB_SDLOC [SDLOC (lenh tat LOC): Loc / tim doi tuong theo bieu thuc: layer, thuoc tinh, tham so, du lieu SD, VA / HOAC]
+ID_SD_SDDAM [SDDAM (lenh tat MCD): Mat cat dam BTCT]
+ID_SD_TB_SDDAM [SDDAM (lenh tat MCD): Mat cat dam BTCT]
+ID_SD_SDCOT [SDCOT (lenh tat MCC): Mat cat cot BTCT]
+ID_SD_TB_SDCOT [SDCOT (lenh tat MCC): Mat cat cot BTCT]
+ID_SD_SDNOITHEP [SDNOITHEP (lenh tat CNT): Toi uu cat noi thep trong vung cho phep noi, so le, coupler]
+ID_SD_TB_SDNOITHEP [SDNOITHEP (lenh tat CNT): Toi uu cat noi thep trong vung cho phep noi, so le, coupler]
+ID_SD_SDTHEPSET [SDTHEPSET (lenh tat CDT): Cai dat thep: cay, be tong, noi chong, moc]
+ID_SD_TB_SDTHEPSET [SDTHEPSET (lenh tat CDT): Cai dat thep: cay, be tong, noi chong, moc]
+ID_SD_SDTHEP [SDTHEP (lenh tat THP): Ghi chu thanh thep: hinh dang, noi chong]
+ID_SD_TB_SDTHEP [SDTHEP (lenh tat THP): Ghi chu thanh thep: hinh dang, noi chong]
+ID_SD_SDTHEPTM [SDTHEPTM (lenh tat TTM): Thep thong minh tu polyline: tu cap nhat L, SL, bang]
+ID_SD_TB_SDTHEPTM [SDTHEPTM (lenh tat TTM): Thep thong minh tu polyline: tu cap nhat L, SL, bang]
+ID_SD_SDTKTHEP [SDTKTHEP (lenh tat TKT): Bang thong ke cot thep + CSV]
+ID_SD_TB_SDTKTHEP [SDTKTHEP (lenh tat TKT): Bang thong ke cot thep + CSV]
+ID_SD_SDBONGTHEP [SDBONGTHEP (lenh tat DSH): Danh lai so hieu thep dong bo + kiem tra trung / lech so hieu]
+ID_SD_TB_SDBONGTHEP [SDBONGTHEP (lenh tat DSH): Danh lai so hieu thep dong bo + kiem tra trung / lech so hieu]
+ID_SD_SDTOIUU [SDTOIUU (lenh tat TUT): Toi uu cat thep tu cay thuong pham]
+ID_SD_TB_SDTOIUU [SDTOIUU (lenh tat TUT): Toi uu cat thep tu cay thuong pham]
+ID_SD_SDBANMA [SDBANMA (lenh tat BMA): Ban ma / ban de co lo bulong]
+ID_SD_TB_SDBANMA [SDBANMA (lenh tat BMA): Ban ma / ban de co lo bulong]
+ID_SD_SDIH [SDIH (lenh tat THH): Tiet dien thep hinh I/H]
+ID_SD_TB_SDIH [SDIH (lenh tat THH): Tiet dien thep hinh I/H]
+ID_SD_SDMONGTHEP [SDMONGTHEP (lenh tat KTM): Khai trien thep mong don: mat bang + 2 mat cat]
+ID_SD_TB_SDMONGTHEP [SDMONGTHEP (lenh tat KTM): Khai trien thep mong don: mat bang + 2 mat cat]
+ID_SD_SDMONGBANG [SDMONGBANG (lenh tat KMB): Khai trien thep mong bang (ban + suon), mat bang + mat cat]
+ID_SD_TB_SDMONGBANG [SDMONGBANG (lenh tat KMB): Khai trien thep mong bang (ban + suon), mat bang + mat cat]
+ID_SD_SDDAICOC [SDDAICOC (lenh tat KDC): Khai trien thep dai coc: luoi coc, luoi thep, thep cho]
+ID_SD_TB_SDDAICOC [SDDAICOC (lenh tat KDC): Khai trien thep dai coc: luoi coc, luoi thep, thep cho]
+ID_SD_SDCOTTHEP [SDCOTTHEP (lenh tat KTC): Khai trien thep cot 1 tang: mat dung + mat cat]
+ID_SD_TB_SDCOTTHEP [SDCOTTHEP (lenh tat KTC): Khai trien thep cot 1 tang: mat dung + mat cat]
+ID_SD_SDDAMDUNG [SDDAMDUNG (lenh tat MDD): Mat dung thep dam lien tuc: thep suot, mu goi, dai L/4]
+ID_SD_TB_SDDAMDUNG [SDDAMDUNG (lenh tat MDD): Mat dung thep dam lien tuc: thep suot, mu goi, dai L/4]
+ID_SD_SDSANTHEP [SDSANTHEP (lenh tat KTS): Khai trien thep o san: thep duoi 2 phuong, thep mu]
+ID_SD_TB_SDSANTHEP [SDSANTHEP (lenh tat KTS): Khai trien thep o san: thep duoi 2 phuong, thep mu]
+ID_SD_SDTHANGTHEP [SDTHANGTHEP (lenh tat KTT): Khai trien thep ve cau thang (mat cat)]
+ID_SD_TB_SDTHANGTHEP [SDTHANGTHEP (lenh tat KTT): Khai trien thep ve cau thang (mat cat)]
+ID_SD_SDNHAPBANG [SDNHAPBANG (lenh tat NBG): Nhap bang cau kien CSV / Excel -> ve khai trien hang loat (dam, cot, mong, san, thang)]
+ID_SD_TB_SDNHAPBANG [SDNHAPBANG (lenh tat NBG): Nhap bang cau kien CSV / Excel -> ve khai trien hang loat (dam, cot, mong, san, thang)]
+ID_SD_SDCK [SDCK (lenh tat CKL): Khai bao khoi luong cau kien (kich thuoc / polyline)]
+ID_SD_TB_SDCK [SDCK (lenh tat CKL): Khai bao khoi luong cau kien (kich thuoc / polyline)]
+ID_SD_SDKL [SDKL (lenh tat KLX): Xuat khoi luong be tong, van khuon, thep sang Excel]
+ID_SD_TB_SDKL [SDKL (lenh tat KLX): Xuat khoi luong be tong, van khuon, thep sang Excel]
+ID_SD_SDGACH [SDGACH (lenh tat CHV): Chia vien: thang/so le/xuong ca/chevron, vien, khe]
+ID_SD_TB_SDGACH [SDGACH (lenh tat CHV): Chia vien: thang/so le/xuong ca/chevron, vien, khe]
+ID_SD_SDCHANTUONG [SDCHANTUONG (lenh tat LCT): Len chan tuong + trien khai mat dung]
+ID_SD_TB_SDCHANTUONG [SDCHANTUONG (lenh tat LCT): Len chan tuong + trien khai mat dung]
+ID_SD_SDRAITAM [SDRAITAM (lenh tat RTA): Rai panel / da lat theo kho: tam lon tu goc, tam di hinh mep bien, go bu, huong van]
+ID_SD_TB_SDRAITAM [SDRAITAM (lenh tat RTA): Rai panel / da lat theo kho: tam lon tu goc, tam di hinh mep bien, go bu, huong van]
+ID_SD_SDVANDA [SDVANDA (lenh tat VDA): Hatch van da (file .pat) len vien: tiep noi / doi guong / xoay 4 chieu]
+ID_SD_TB_SDVANDA [SDVANDA (lenh tat VDA): Hatch van da (file .pat) len vien: tiep noi / doi guong / xoay 4 chieu]
+ID_SD_SDKIEMTRA [SDKIEMTRA (lenh tat KTA): Tac tu kiem tra ban ve: thep, mat bang, chuan, dim ghi tay, Xref; xep uu tien + goi y lenh]
+ID_SD_TB_SDKIEMTRA [SDKIEMTRA (lenh tat KTA): Tac tu kiem tra ban ve: thep, mat bang, chuan, dim ghi tay, Xref; xep uu tien + goi y lenh]
+ID_SD_SDQUYTRINH [SDQUYTRINH (lenh tat QTR): Hop thoai quy trinh da lat: goi y buoc tiep theo, chay tung buoc hoac lien hoan]
+ID_SD_TB_SDQUYTRINH [SDQUYTRINH (lenh tat QTR): Hop thoai quy trinh da lat: goi y buoc tiep theo, chay tung buoc hoac lien hoan]
+ID_SD_SDDOCDA [SDDOCDA (lenh tat DOD): Doc mat bang op lat: dung lai o kin tu net roi, ghi bang CSV de soat / bo sung, ve polyline kin, chay SDANHDA]
+ID_SD_TB_SDDOCDA [SDDOCDA (lenh tat DOD): Doc mat bang op lat: dung lai o kin tu net roi, ghi bang CSV de soat / bo sung, ve polyline kin, chay SDANHDA]
+ID_SD_SDMOANH [SDMOANH (lenh tat MOA): Mo bien anh da: bien vien moi vuot anh nhung tam con du kho thi tu dich anh va cat lai]
+ID_SD_TB_SDMOANH [SDMOANH (lenh tat MOA): Mo bien anh da: bien vien moi vuot anh nhung tam con du kho thi tu dich anh va cat lai]
+ID_SD_SDRON [SDRON (lenh tat DRN): Doi ron giua cac vien: thu phong polyline vien, cap nhat hatch lien ket va cat lai anh, khong sua tay]
+ID_SD_TB_SDRON [SDRON (lenh tat DRN): Doi ron giua cac vien: thu phong polyline vien, cap nhat hatch lien ket va cat lai anh, khong sua tay]
+ID_SD_SDVAN [SDVAN (lenh tat LTV): Kiem tra van da lien tuc giua cac vien ke nhau (dua vao vi tri cat tren tam), khoanh moi noi dut van]
+ID_SD_TB_SDVAN [SDVAN (lenh tat LTV): Kiem tra van da lien tuc giua cac vien ke nhau (dua vao vi tri cat tren tam), khoanh moi noi dut van]
+ID_SD_SDKTLAT [SDKTLAT (lenh tat KLT): Kiem tra ban ve lat: vien cat hep / nho, ron khong deu, o thieu ma vat lieu]
+ID_SD_TB_SDKTLAT [SDKTLAT (lenh tat KLT): Kiem tra ban ve lat: vien cat hep / nho, ron khong deu, o thieu ma vat lieu]
+ID_SD_SDDIEMBD [SDDIEMBD (lenh tat DBT): So sanh diem bat dau rai luoi vien: so vien cat, vien cat hep, hao hut; goi y diem tot nhat]
+ID_SD_TB_SDDIEMBD [SDDIEMBD (lenh tat DBT): So sanh diem bat dau rai luoi vien: so vien cat, vien cat hep, hao hut; goi y diem tot nhat]
+ID_SD_SDKHEGIAN [SDKHEGIAN (lenh tat KCG): Khe co gian: khe sat tuong va khe phan vung vung lat, chong chiu dai toi da giua cac khe]
+ID_SD_TB_SDKHEGIAN [SDKHEGIAN (lenh tat KCG): Khe co gian: khe sat tuong va khe phan vung vung lat, chong chiu dai toi da giua cac khe]
+ID_SD_SDTHOATNUOC [SDTHOATNUOC (lenh tat PTN): Pheu thu nuoc + doc san: chenh cao den cac goc, khoanh vung vien cat quanh pheu]
+ID_SD_TB_SDTHOATNUOC [SDTHOATNUOC (lenh tat PTN): Pheu thu nuoc + doc san: chenh cao den cac goc, khoanh vung vien cat quanh pheu]
+ID_SD_SDTUDONG [SDTUDONG (lenh tat TDO): Bat / tat tu dong: sua bien vien (grip, stretch...) thi anh IMAGECLIP tu cat lai theo bien moi]
+ID_SD_TB_SDTUDONG [SDTUDONG (lenh tat TDO): Bat / tat tu dong: sua bien vien (grip, stretch...) thi anh IMAGECLIP tu cat lai theo bien moi]
+ID_SD_SDLOT [SDLOT (lenh tat NPH): Chay lo nhieu phong: rai vien cho tung khu vuc, diem bat dau tot nhat, thong ke tung vung + tong, tuy chon cat anh / hatch]
+ID_SD_TB_SDLOT [SDLOT (lenh tat NPH): Chay lo nhieu phong: rai vien cho tung khu vuc, diem bat dau tot nhat, thong ke tung vung + tong, tuy chon cat anh / hatch]
+ID_SD_SDRONIN [SDRONIN (lenh tat IRN): Cho ron / duong vien hien ra khi in: doi mau trang + net, dua duong vien len tren anh]
+ID_SD_TB_SDRONIN [SDRONIN (lenh tat IRN): Cho ron / duong vien hien ra khi in: doi mau trang + net, dua duong vien len tren anh]
+ID_SD_SDVATLIEU [SDVATLIEU (lenh tat VLI): Danh sach vat lieu da dung (ma, kich thuoc, ron, khe): xem va xoa muc; SDGACH / SDLOT hien danh sach de chon lai nhanh]
+ID_SD_TB_SDVATLIEU [SDVATLIEU (lenh tat VLI): Danh sach vat lieu da dung (ma, kich thuoc, ron, khe): xem va xoa muc; SDGACH / SDLOT hien danh sach de chon lai nhanh]
+ID_SD_SDXOAVIEN [SDXOAVIEN (lenh tat GOV): Go bo vien trong vung chon: xoa polyline vien + anh + hatch + so hieu, lo ra chi tiet nam duoi (mat cat mui bac)]
+ID_SD_TB_SDXOAVIEN [SDXOAVIEN (lenh tat GOV): Go bo vien trong vung chon: xoa polyline vien + anh + hatch + so hieu, lo ra chi tiet nam duoi (mat cat mui bac)]
+ID_SD_SDANHDA [SDANHDA (lenh tat ADA): Cat anh tam da (imageclip) vao cac vien da quet chon: chieu van, xep it hao]
+ID_SD_TB_SDANHDA [SDANHDA (lenh tat ADA): Cat anh tam da (imageclip) vao cac vien da quet chon: chieu van, xep it hao]
+ID_SD_SDTKDA [SDTKDA (lenh tat TKD): Quet polyline vien da cat: bang thong ke theo nhom kich thuoc, chi tiet tung vien, CSV]
+ID_SD_TB_SDTKDA [SDTKDA (lenh tat TKD): Quet polyline vien da cat: bang thong ke theo nhom kich thuoc, chi tiet tung vien, CSV]
+ID_SD_SDDOCDATK [SDDOCDATK (lenh tat DTK): Thong ke vien da sau SDDOCDA: bang nhom kich thuoc, dat tam da, CSV]
+ID_SD_TB_SDDOCDATK [SDDOCDATK (lenh tat DTK): Thong ke vien da sau SDDOCDA: bang nhom kich thuoc, dat tam da, CSV]
+ID_SD_SDANHDATK [SDANHDATK (lenh tat ATK): Thong ke tam da sau SDANHDA: so vien, hao hut tung tam, dat tam, CSV]
+ID_SD_TB_SDANHDATK [SDANHDATK (lenh tat ATK): Thong ke tam da sau SDANHDA: so vien, hao hut tung tam, dat tam, CSV]
+ID_SD_SDGACHTK [SDGACHTK (lenh tat TKV): Thong ke vien + du tru dat hang]
+ID_SD_TB_SDGACHTK [SDGACHTK (lenh tat TKV): Thong ke vien + du tru dat hang]
+ID_SD_SDKHODA [SDKHODA (lenh tat KHO): Kho da tho nhieu kich thuoc]
+ID_SD_TB_SDKHODA [SDKHODA (lenh tat KHO): Kho da tho nhieu kich thuoc]
+ID_SD_SDDATHO [SDDATHO (lenh tat DTH): Cat vien tu da tho: so do cat, hieu suat]
+ID_SD_TB_SDDATHO [SDDATHO (lenh tat DTH): Cat vien tu da tho: so do cat, hieu suat]
+ID_SD_SDTHANGDA [SDTHANGDA (lenh tat TDA): Cau thang da: mat bac, co bac, mui bac (thang / vat 45 / roi / CNC), khe LED, len, ra da kieu ABF]
+ID_SD_TB_SDTHANGDA [SDTHANGDA (lenh tat TDA): Cau thang da: mat bac, co bac, mui bac (thang / vat 45 / roi / CNC), khe LED, len, ra da kieu ABF]
+ID_SD_SDGIACONG [SDGIACONG (lenh tat GCV): Ban ve gia cong tung ma vien]
+ID_SD_TB_SDGIACONG [SDGIACONG (lenh tat GCV): Ban ve gia cong tung ma vien]
+ID_SD_SDLOP [SDLOP (lenh tat CTL): Chi tiet cau tao lop op / lat]
+ID_SD_TB_SDLOP [SDLOP (lenh tat CTL): Chi tiet cau tao lop op / lat]
+ID_SD_SDCOFFASET [SDCOFFASET (lenh tat CFT): Thong so coffa, ap luc be tong]
+ID_SD_TB_SDCOFFASET [SDCOFFASET (lenh tat CFT): Thong so coffa, ap luc be tong]
+ID_SD_SDCOFFAMONG [SDCOFFAMONG (lenh tat CFM): Coffa mong don / mong bang / dai coc]
+ID_SD_TB_SDCOFFAMONG [SDCOFFAMONG (lenh tat CFM): Coffa mong don / mong bang / dai coc]
+ID_SD_SDCOFFACOT [SDCOFFACOT (lenh tat CFC): Coffa cot]
+ID_SD_TB_SDCOFFACOT [SDCOFFACOT (lenh tat CFC): Coffa cot]
+ID_SD_SDCOFFAVACH [SDCOFFAVACH (lenh tat CFV): Coffa vach / vach ham]
+ID_SD_TB_SDCOFFAVACH [SDCOFFAVACH (lenh tat CFV): Coffa vach / vach ham]
+ID_SD_SDCOFFATM [SDCOFFATM (lenh tat CTM): Coffa loi thang may]
+ID_SD_TB_SDCOFFATM [SDCOFFATM (lenh tat CTM): Coffa loi thang may]
+ID_SD_SDCOFFATHANG [SDCOFFATHANG (lenh tat CTB): Coffa thang bo]
+ID_SD_TB_SDCOFFATHANG [SDCOFFATHANG (lenh tat CTB): Coffa thang bo]
+ID_SD_SDCOFFADAM [SDCOFFADAM (lenh tat CFD): Coffa dam + giao duoi dam]
+ID_SD_TB_SDCOFFADAM [SDCOFFADAM (lenh tat CFD): Coffa dam + giao duoi dam]
+ID_SD_SDCOFFASAN [SDCOFFASAN (lenh tat CFS): Coffa san + gian giao + giang]
+ID_SD_TB_SDCOFFASAN [SDCOFFASAN (lenh tat CFS): Coffa san + gian giao + giang]
+ID_SD_SDNHOMSET [SDNHOMSET (lenh tat NHS): Coffa nhom: catalogue tam (W, IC, EC, SC, tam san, dam do, chong)]
+ID_SD_TB_SDNHOMSET [SDNHOMSET (lenh tat NHS): Coffa nhom: catalogue tam (W, IC, EC, SC, tam san, dam do, chong)]
+ID_SD_SDNHOMVACH [SDNHOMVACH (lenh tat NHV): Coffa nhom vach / cot / loi: chia tam theo mat be tong chon]
+ID_SD_TB_SDNHOMVACH [SDNHOMVACH (lenh tat NHV): Coffa nhom vach / cot / loi: chia tam theo mat be tong chon]
+ID_SD_SDNHOMSAN [SDNHOMSAN (lenh tat NHN): Coffa nhom san: goc san, dam do san, dau chong, tam san]
+ID_SD_TB_SDNHOMSAN [SDNHOMSAN (lenh tat NHN): Coffa nhom san: goc san, dam do san, dau chong, tam san]
+ID_SD_SDNHOMDAM [SDNHOMDAM (lenh tat NHD): Coffa nhom dam: thanh, day, goc ngoai, cay chong]
+ID_SD_TB_SDNHOMDAM [SDNHOMDAM (lenh tat NHD): Coffa nhom dam: thanh, day, goc ngoai, cay chong]
+ID_SD_SDNHOMKHO [SDNHOMKHO (lenh tat NHK): Coffa nhom: tong hop cong trinh + doi chieu kho (thieu / gia cong)]
+ID_SD_TB_SDNHOMKHO [SDNHOMKHO (lenh tat NHK): Coffa nhom: tong hop cong trinh + doi chieu kho (thieu / gia cong)]
+ID_SD_SDGIAOSET [SDGIAOSET (lenh tat GGS): Thong so gian giao, on dinh, giang]
+ID_SD_TB_SDGIAOSET [SDGIAOSET (lenh tat GGS): Thong so gian giao, on dinh, giang]
+ID_SD_SDGIAOTANG [SDGIAOTANG (lenh tat GGT): Mat bang gian giao ca tang (tu nhan dam, o san)]
+ID_SD_TB_SDGIAOTANG [SDGIAOTANG (lenh tat GGT): Mat bang gian giao ca tang (tu nhan dam, o san)]
+ID_SD_SDGIAOH [SDGIAOH (lenh tat GKH): Giao khung H ca tang: dam san, giao H, giang cheo, mat cat, khoi luong]
+ID_SD_TB_SDGIAOH [SDGIAOH (lenh tat GKH): Giao khung H ca tang: dam san, giao H, giang cheo, mat cat, khoi luong]
+ID_SD_SDGIAOTK [SDGIAOTK (lenh tat GGK): Thong ke gian giao theo tang + dinh muc]
+ID_SD_TB_SDGIAOTK [SDGIAOTK (lenh tat GGK): Thong ke gian giao theo tang + dinh muc]
+ID_SD_SDIN [SDIN (lenh tat INH): In hang loat theo khung ten (block / layer), hang / cot, ra may in hoac PDF]
+ID_SD_TB_SDIN [SDIN (lenh tat INH): In hang loat theo khung ten (block / layer), hang / cot, ra may in hoac PDF]
+ID_SD_SDPURGE [SDPURGE (lenh tat DPU): Don rac ban ve sau: DGN, RegApps, purge lap, scale list]
+ID_SD_TB_SDPURGE [SDPURGE (lenh tat DPU): Don rac ban ve sau: DGN, RegApps, purge lap, scale list]
+ID_SD_SDSOSANH [SDSOSANH (lenh tat SSD): So sanh 2 ban ve DWG: to mau them / xoa / dich chuyen]
+ID_SD_TB_SDSOSANH [SDSOSANH (lenh tat SSD): So sanh 2 ban ve DWG: to mau them / xoa / dich chuyen]
+ID_SD_SDLAYOUT [SDLAYOUT (lenh tat QLL): Quan ly Layout: mo, sap xep, them, chep, doi ten (hang loat), xoa]
+ID_SD_TB_SDLAYOUT [SDLAYOUT (lenh tat QLL): Quan ly Layout: mo, sap xep, them, chep, doi ten (hang loat), xoa]
+ID_SD_SDTAOLAYOUT [SDTAOLAYOUT (lenh tat TLO): Tao Layout hang loat tu khung ten + danh so to vao khung ten]
+ID_SD_TB_SDTAOLAYOUT [SDTAOLAYOUT (lenh tat TLO): Tao Layout hang loat tu khung ten + danh so to vao khung ten]
+ID_SD_SDNHANLK [SDNHANLK (lenh tat NLK): Nhan lien ket doi tuong (chieu dai / dien tich) tu cap nhat bang FIELD]
+ID_SD_TB_SDNHANLK [SDNHANLK (lenh tat NLK): Nhan lien ket doi tuong (chieu dai / dien tich) tu cap nhat bang FIELD]
+ID_SD_SDLIENKET [SDLIENKET (lenh tat LKT): Kiem tra mat bang <-> khai trien: cau kien thieu / thua]
+ID_SD_TB_SDLIENKET [SDLIENKET (lenh tat LKT): Kiem tra mat bang <-> khai trien: cau kien thieu / thua]
+ID_SD_SDCDE [SDCDE (lenh tat CDE): Phat hanh len CDE theo ISO 19650: ma so hieu, trang thai, phien ban, luu tru]
+ID_SD_TB_SDCDE [SDCDE (lenh tat CDE): Phat hanh len CDE theo ISO 19650: ma so hieu, trang thai, phien ban, luu tru]
+ID_SD_SDPANEL [SDPANEL (lenh tat BLN): Bang lenh ShopDrawing (hop thoai)]
+ID_SD_TB_SDPANEL [SDPANEL (lenh tat BLN): Bang lenh ShopDrawing (hop thoai)]
+ID_SD_SDHELP [SDHELP (lenh tat HDL): Danh sach lenh]
+ID_SD_TB_SDHELP [SDHELP (lenh tat HDL): Danh sach lenh]
+ID_SD_SDBLOCKDA [SDBLOCKDA (lenh tat KCD): Block chi tiet da: tao block mat cat mui bac tu mau, quet hinh tao block, chen file .dwg, luu ra .dwg, mo Block Editor them thong so dong]
+ID_SD_TB_SDBLOCKDA [SDBLOCKDA (lenh tat KCD): Block chi tiet da: tao block mat cat mui bac tu mau, quet hinh tao block, chen file .dwg, luu ra .dwg, mo Block Editor them thong so dong]
+ID_SD_SDTRINH [SDTRINH (lenh tat BTK): Ban trinh khach: bang chu thich vat lieu co o mau anh da (A1 1:50) va che do trinh khach lam mo nen kien truc, an layer nhan]
+ID_SD_TB_SDTRINH [SDTRINH (lenh tat BTK): Ban trinh khach: bang chu thich vat lieu co o mau anh da (A1 1:50) va che do trinh khach lam mo nen kien truc, an layer nhan]
+ID_SD_SDKHUNGIN [SDKHUNGIN (lenh tat KIN): Khung in A1 / A3 tu dung: khung ten, huong Bac, thuoc ty le, dat san cai dat in cho SDIN / SDTAOLAYOUT]
+ID_SD_TB_SDKHUNGIN [SDKHUNGIN (lenh tat KIN): Khung in A1 / A3 tu dung: khung ten, huong Bac, thuoc ty le, dat san cai dat in cho SDIN / SDTAOLAYOUT]
+ID_SD_SDKHAOSAT [SDKHAOSAT (lenh tat KSH): Dung phong tu file so do khao sat (room,ab,bc,cd,da,ac,bd): 4 canh + cheo, xep hang tin cay A / B / C / X / D, ve polyline phong lam bien cho SDGACH / SDLOT]
+ID_SD_TB_SDKHAOSAT [SDKHAOSAT (lenh tat KSH): Dung phong tu file so do khao sat (room,ab,bc,cd,da,ac,bd): 4 canh + cheo, xep hang tin cay A / B / C / X / D, ve polyline phong lam bien cho SDGACH / SDLOT]
+ID_SD_SDCHIABAC [SDCHIABAC (lenh tat CHB): Chia bac thang tu cao do (so voi +-0.000): chieu cao bac, lam tron don phan lech, bang cao do hoan thien / ket cau tung bac va chieu nghi, dat san SDTHANGDA]
+ID_SD_TB_SDCHIABAC [SDCHIABAC (lenh tat CHB): Chia bac thang tu cao do (so voi +-0.000): chieu cao bac, lam tron don phan lech, bang cao do hoan thien / ket cau tung bac va chieu nghi, dat san SDTHANGDA]
+ID_SD_SDMAVIEN [SDMAVIEN (lenh tat SMV): Ma vien theo hinh dang: cung vat lieu va hinh dang cung ma (VD G1-01), nho trong ban ve, ghi len vien, bang + CSV]
+ID_SD_TB_SDMAVIEN [SDMAVIEN (lenh tat SMV): Ma vien theo hinh dang: cung vat lieu va hinh dang cung ma (VD G1-01), nho trong ban ve, ghi len vien, bang + CSV]
+ID_SD_SDKIEMTONG [SDKIEMTONG (lenh tat KTO): Luot kiem tong: ho so so lieu, vien hep / nho, ron khong deu, luoi ron lech, chuoi cao do; bao cao + CSV]
+ID_SD_TB_SDKIEMTONG [SDKIEMTONG (lenh tat KTO): Luot kiem tong: ho so so lieu, vien hep / nho, ron khong deu, luoi ron lech, chuoi cao do; bao cao + CSV]
+ID_SD_SDHOSO [SDHOSO (lenh tat SLD): Ho so so lieu du an: ron, cao do, doc, du...; danh dau da xac nhan / chua xac nhan, canh bao khi lenh dung so chua xac nhan, bang ra ban ve]
+ID_SD_TB_SDHOSO [SDHOSO (lenh tat SLD): Ho so so lieu du an: ron, cao do, doc, du...; danh dau da xac nhan / chua xac nhan, canh bao khi lenh dung so chua xac nhan, bang ra ban ve]
+ID_SD_SDDIMVIEN [SDDIMVIEN (lenh tat DVI): Dim tu dong theo hang vien: chuoi tung vien + tong, ngang / dung, ngoai phong hoac trong phong]
+ID_SD_TB_SDDIMVIEN [SDDIMVIEN (lenh tat DVI): Dim tu dong theo hang vien: chuoi tung vien + tong, ngang / dung, ngoai phong hoac trong phong]
+ID_SD_SDOPTUONG [SDOPTUONG (lenh tat OPTU): Op tuong trung ron san: mat dung trai phang, ron dung theo ron san, kiem tra trung ron]
+ID_SD_TB_SDOPTUONG [SDOPTUONG (lenh tat OPTU): Op tuong trung ron san: mat dung trai phang, ron dung theo ron san, kiem tra trung ron]
+ID_SD_SDTRUNGRON [SDTRUNGRON (lenh tat RLE): Kiem tra luoi ron lien tuc xuyen cac phong: nhom vien lech luoi chinh, khoanh may, goi y dich]
+ID_SD_TB_SDTRUNGRON [SDTRUNGRON (lenh tat RLE): Kiem tra luoi ron lien tuc xuyen cac phong: nhom vien lech luoi chinh, khoanh may, goi y dich]
+ID_SD_SDBACCAODO [SDBACCAODO (lenh tat CDB): Cho doi cao do (nguong WC, mep ho, chan thanh): gan du mm, SDCATDU tu nhan]
+ID_SD_TB_SDBACCAODO [SDBACCAODO (lenh tat CDB): Cho doi cao do (nguong WC, mep ho, chan thanh): gan du mm, SDCATDU tu nhan]
+ID_SD_SDLIENCAODO [SDLIENCAODO (lenh tat LKD): Chuoi cao do: san chinh, san WC (ha cot, doc ve pheu thu), san ho, muc nuoc, day ho; chenh cao tung muc, canh bao, so do]
+ID_SD_TB_SDLIENCAODO [SDLIENCAODO (lenh tat LKD): Chuoi cao do: san chinh, san WC (ha cot, doc ve pheu thu), san ho, muc nuoc, day ho; chenh cao tung muc, canh bao, so do]
+ID_SD_SDHOBOI [SDHOBOI (lenh tat HOB): Ho boi: doc day dau nong - dau sau, duong dong muc day, khe co gian, mat cat doc + bang cao do day theo vien, doi chieu TCVN 4260:2012 / ISPSC 2015]
+ID_SD_TB_SDHOBOI [SDHOBOI (lenh tat HOB): Ho boi: doc day dau nong - dau sau, duong dong muc day, khe co gian, mat cat doc + bang cao do day theo vien, doi chieu TCVN 4260:2012 / ISPSC 2015]
+ID_SD_SDMAP [SDMAP (lenh tat TVM): Thu vien map (anh) da granite co san: chen anh tam da dung kich thuoc that de SDANHDA cat vao vien; tha them .jpg / .png vao thu muc Maps]
+ID_SD_TB_SDMAP [SDMAP (lenh tat TVM): Thu vien map (anh) da granite co san: chen anh tam da dung kich thuoc that de SDANHDA cat vao vien; tha them .jpg / .png vao thu muc Maps]
+ID_SD_SDDICHVAN [SDDICHVAN (lenh tat DCV): Dich van da tung buoc: nhich anh tam da duoi bien vien (trai / phai / len / xuong, buoc mm), bien dung yen, co hoan buoc]
+ID_SD_TB_SDDICHVAN [SDDICHVAN (lenh tat DCV): Dich van da tung buoc: nhich anh tam da duoi bien vien (trai / phai / len / xuong, buoc mm), bien dung yen, co hoan buoc]
+ID_SD_SDCATDU [SDCATDU (lenh tat CTD): Cat du sat tuong: vien cat nao, canh nao phai cat dai ra (+du mm) de be lai khi thi cong; gach do tren ban ve, bang kich thuoc cat, CSV]
+ID_SD_TB_SDCATDU [SDCATDU (lenh tat CTD): Cat du sat tuong: vien cat nao, canh nao phai cat dai ra (+du mm) de be lai khi thi cong; gach do tren ban ve, bang kich thuoc cat, CSV]
+ID_SD_SDDUTOAN [SDDUTOAN (lenh tat DTD): Du toan tien da theo don gia m2 tung ma vat lieu (nho lai), hao hut, cong lat, VAT; bang + CSV]
+ID_SD_TB_SDDUTOAN [SDDUTOAN (lenh tat DTD): Du toan tien da theo don gia m2 tung ma vat lieu (nho lai), hao hut, cong lat, VAT; bang + CSV]
+ID_SD_SDPHUONGAN [SDPHUONGAN (lenh tat PHA): Phuong an lat A / B tren mot to: nhan + bang ngan (so vien, nguyen / cat, hao hut) + khung in bao ca hai]
+ID_SD_TB_SDPHUONGAN [SDPHUONGAN (lenh tat PHA): Phuong an lat A / B tren mot to: nhan + bang ngan (so vien, nguyen / cat, hao hut) + khung in bao ca hai]
+ID_SD_SDLENH [SDLENH (lenh tat AIA): Ra lenh bang cau tieng Viet cho cac o da: gop o 25+36 thanh 1, xoa o 12 13 (hoi xac nhan, UNDO duoc)]
+ID_SD_TB_SDLENH [SDLENH (lenh tat AIA): Ra lenh bang cau tieng Viet cho cac o da: gop o 25+36 thanh 1, xoa o 12 13 (hoi xac nhan, UNDO duoc)]
+ID_SD_SDTUNAP [SDTUNAP (lenh tat AUL): Bat / tat tu nap ShopDrawing moi khi mo AutoCAD (khong can APPLOAD lai)]
+ID_SD_TB_SDTUNAP [SDTUNAP (lenh tat AUL): Bat / tat tu nap ShopDrawing moi khi mo AutoCAD (khong can APPLOAD lai)]
+ID_SD_SDMENU [SDMENU (lenh tat CMN): Cai menu + toolbar + Ribbon]
+ID_SD_TB_SDMENU [SDMENU (lenh tat CMN): Cai menu + toolbar + Ribbon]
+ID_SD_SDDLG [SDDLG (lenh tat HTN): Bat / tat hop thoai nhap lieu]
+ID_SD_TB_SDDLG [SDDLG (lenh tat HTN): Bat / tat hop thoai nhap lieu]
