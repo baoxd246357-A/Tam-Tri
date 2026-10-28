@@ -3,19 +3,6 @@
 ;;;  Nap: APPLOAD -> SDOpLat.lsp, roi go SDMENU (menu + toolbar) hoac SDPANEL.
 ;;;  File sinh tu dong tu ShopDrawing 2.58.0 boi tools/build_oplat.py - khong sua tay.
 ;;; ==========================================================================
-;;; ==========================================================================
-;;;  SDOPLAT TOOLS for AutoCAD  (AutoLISP / Visual LISP)
-;;;  Bo cong cu ve shop drawing: ket cau BTCT + ket cau thep
-;;;
-;;;  Nap:   APPLOAD -> chon dist/SDOpLat.lsp  (hoac them vao Startup Suite)
-;;;  Lenh:  go SDHELP de xem danh sach lenh
-;;;
-;;;  LUU Y: day la file NGUON (UTF-8, co dau tieng Viet trong chuoi ghi len
-;;;  ban ve). Chay "python3 build.py" de sinh dist/SDOpLat.lsp (ASCII,
-;;;  ky tu co dau duoc doi thanh ma \U+XXXX ma AutoCAD hieu duoc).
-;;;  Chuoi nhac lenh (prompt) viet KHONG DAU de hien thi dung o moi phien ban.
-;;; ==========================================================================
-
 (vl-load-com)
 (setq *SD:VER* "1.0.0")
 

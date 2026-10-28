@@ -124,6 +124,7 @@ header = (";;; =================================================================
           ";;;  Nap: APPLOAD -> SDOpLat.lsp, roi go SDMENU (menu + toolbar) hoac SDPANEL.\r\n"
           ";;;  File sinh tu dong tu ShopDrawing 2.58.0 boi tools/build_oplat.py - khong sua tay.\r\n"
           ";;; ==========================================================================\r\n") % (PRODUCT, PRODUCT_VER)
+body = body[body.index('(vl-load-com)'):]  # bo comment dau file cu (noi dung BTCT / thep)
 os.makedirs(OUT, exist_ok=True)
 open(f'{OUT}/SDOpLat.lsp', 'w', encoding='latin-1', newline='').write(header + body)
 
@@ -253,7 +254,7 @@ CAI DAT
 4. Nang cap: giai nen ban moi vao thu muc MOI, dong han AutoCAD, mo lai, APPLOAD roi SDMENU.
 5. Go: lenh SDMENUXOA.
 
-CACH NHANH (chi LISP, chay duoc ca ZWCAD / GstarCAD / BricsCAD)
+CACH NHANH (khong cai menu)
 - APPLOAD > SDOpLat.lsp > Load, roi go SDPANEL de mo bang lenh.
 
 BAT DAU
@@ -264,7 +265,8 @@ BAT DAU
 - Chay TYLE (SDSET) dau tien cho ban ve moi de dat ty le, layer, dimstyle.
 
 LUU Y
-- Chay tren AutoCAD (Windows) 2018 tro len. Bang Excel, hop thoai can Windows.
+- Can AutoCAD ban day du tren Windows (cac lenh xuat Excel dung Excel/COM). Chua kiem tra tren moi phien ban AutoCAD hay phan mem CAD khac.
+- SDMENU / SDTUNAP them thu muc cai dat vao Support File Search Path va Trusted Locations (TRUSTEDPATHS) va co the ghi khoi tu nap vao acaddoc.lsp cua nguoi dung; go bang SDMENUXOA va chay lai SDTUNAP.
 - Moi lenh gom vao mot lan Undo: go U de hoan tac ca lenh.
 - Bao loi kem phien ban AutoCAD, ten lenh va cac dong lenh hien ra.
 """ % PRODUCT_VER
