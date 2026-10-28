@@ -12,6 +12,7 @@ button{font:inherit;padding:8px 14px;border:1px solid var(--acc);background:var(
 <h1>Tạo mã kích hoạt SDOpLat</h1>
 <p class="mut">Công cụ của <b>người bán</b>, không gửi cho khách. Chạy hoàn toàn trên máy bạn (không gửi dữ liệu đi đâu). Secret phải đúng bằng secret đã dùng khi build gói.</p>
 <label for="sec">Secret của bạn (ASCII, ≥ 16 ký tự)</label><input id="sec" type="password" autocomplete="off">
+<div class="mut" id="fp">Dấu vân secret: (chưa nhập). Phải khớp với dấu vân ghi trong file bí mật của bạn.</div>
 <label for="mid">Mã máy khách gửi (XXXX-XXXX-XXXX)</label><input id="mid" placeholder="ABCD-EFGH-JKLM" autocapitalize="characters">
 <label for="cus">Tên khách (ghi vào nhật ký)</label><input id="cus">
 <button id="go">Tạo mã</button><button class="g" id="csv">Xuất nhật ký CSV</button><button class="g" id="clr">Xóa nhật ký</button>
@@ -27,6 +28,7 @@ const norm=s=>s.toUpperCase().replace(/[^A-Z0-9]/g,'');
 const KEY='sdoplat-keygen-log';let L=[];try{L=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){}
 const $=id=>document.getElementById(id);
 function draw(){$('log').innerHTML='<tr><th>Ngày</th><th>Khách</th><th>Mã máy</th><th>Mã kích hoạt</th></tr>'+L.map(r=>'<tr>'+r.map(x=>'<td>'+String(x).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</td>').join('')+'</tr>').join('')}
+$('sec').oninput=()=>{const v=$('sec').value;$('fp').textContent=v?`Dấu vân secret: ${code('FP|'+v).slice(0,5)} · ${v.length} ký tự. Phải khớp với dấu vân ghi trong file bí mật của bạn.`:'Dấu vân secret: (chưa nhập). Phải khớp với dấu vân ghi trong file bí mật của bạn.'};
 $('go').onclick=()=>{const sec=$('sec').value,mid=norm($('mid').value);const res=$('res');
  if(sec.length<16||/[^\x00-\x7f]/.test(sec)){res.innerHTML='<p class="warn">Secret phải ASCII và dài ít nhất 16 ký tự.</p>';return}
  if(mid.length!==12){res.innerHTML='<p class="warn">Mã máy phải có 12 ký tự.</p>';return}

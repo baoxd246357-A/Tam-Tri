@@ -14,6 +14,10 @@ TRIAL = int(next((a.split('=')[1] for a in sys.argv if a.startswith('--trial='))
 FAS = '--fas' in sys.argv  # goi chi co .fas (da bienpile): doi ten file nap .lsp -> .fas
 if LICENSED and (len(SECRET) < 16 or not SECRET.isascii()):
     sys.exit('Ban co khoa: dat bien moi truong SDOPLAT_SECRET (>= 16 ky tu ASCII, bi mat cua ban) truoc khi build.')
+if LICENSED:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import sdoplat_lic as _l
+    print('Dau van secret:', _l.lic_code('FP|' + SECRET)[:5], '-', len(SECRET), 'ky tu  (ghi lai de doi chieu khi tao ma)')
 FREE = {'SDKICHHOAT', 'SDHELP', 'SDPANEL', 'SDMENU', 'SDMENUXOA', 'SDTUNAP', 'SDDLG'}
 NL = '\r\n'
 PRODUCT = 'Op Lat Tools'

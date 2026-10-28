@@ -9,11 +9,12 @@ Neu ma may da cap truoc do, lenh bao lai de tranh cap trung.
 """
 import sys, os, csv, datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sdoplat_lic import activation_code, norm
+from sdoplat_lic import activation_code, norm, lic_code
 
 secret = os.environ.get('SDOPLAT_SECRET')
 if not secret or not secret.isascii() or len(sys.argv) < 2:
     sys.exit(__doc__)
+print('Dau van secret:', lic_code('FP|' + secret)[:5], '-', len(secret), 'ky tu (phai khop dau van ghi khi build)')
 mid = sys.argv[1].strip().upper()
 if len(norm(mid)) != 12:
     sys.exit('Ma may phai co 12 ky tu (dang XXXX-XXXX-XXXX).')
