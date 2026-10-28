@@ -1,0 +1,10 @@
+﻿BAN QUYEN VA DIEU KHOAN SU DUNG (MAU - NGUOI BAN TU DIEN VA THAM KHAO Y KIEN PHAP LY)
+Op Lat Tools v1.0.0
+(c) [TEN CONG TY / CA NHAN] - Bao luu moi quyen.
+
+1. Phan mem cap phep su dung, khong chuyen nhuong quyen so huu.
+2. Gioi han: [SO MAY / SO NGUOI DUNG].
+3. Khong duoc sao chep de phan phoi, ban lai, cho thue hoac go bo thong tin ban quyen.
+4. Phan mem cung cap nguyen trang, khong bao dam phu hop moi muc dich; trach nhiem toi da
+   gioi han trong muc phi da thu. Nguoi dung tu kiem tra ket qua truoc khi thi cong / dat hang.
+5. Lien he ho tro: [EMAIL / DIEN THOAI].
