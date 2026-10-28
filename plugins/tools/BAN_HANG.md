@@ -51,4 +51,4 @@ Tôi không biên dịch được ngoài AutoCAD. Cách làm:
 Nếu `BIENDICH` báo lỗi, dùng `VLIDE` biên dịch thủ công, hoặc gửi lại thông báo lỗi cho tôi.
 
 ## Lệnh tích hợp từ module ngoài
-`SDDIMGD` (lệnh tắt `DGD`) lấy từ DimGiaoDiem v2 theo yêu cầu khách hàng: mã nằm ở `plugins/tools/modules/dgd.lsp`, `build_oplat.py` tự chèn vào mọi bản build (bị khóa như các lệnh khác khi build `--licensed`). Logic giữ nguyên bản gốc; chỉ đổi tên lệnh, bỏ dấu trong dòng nhắc và thêm tiền tố `[SD]`. **Kiểm tra bạn có quyền tích hợp và bán kèm mã này** trước khi phát hành.
+`SDDIMGD` (lệnh tắt `DGD`) lấy từ DimGiaoDiem v2 theo yêu cầu khách hàng: mã nằm ở `plugins/tools/modules/dgd.lsp`, `build_oplat.py` tự chèn vào mọi bản build (bị khóa như các lệnh khác khi build `--licensed`). Logic giữ nguyên bản gốc; chỉ đổi tên lệnh, bỏ dấu trong dòng nhắc và thêm tiền tố `[SD]`. Mã do chủ sở hữu sản phẩm tự phát triển (có hỗ trợ công cụ AI), nên không cần xin phép bên thứ ba.
