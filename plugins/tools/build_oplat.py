@@ -26,10 +26,12 @@ rows_all = re.findall(r'^\s*\("([^"]+)" "(SD[A-Z0-9]+)" "([^"]*)" "([A-Z0-9]+)" 
 TILING = [r[1] for r in rows_all if r[0] == 'Op lat da granite / gach' and r[1] != 'SDLENH']
 EXTRA = ['SDSET', 'SDHANDINH', 'SDHELP', 'SDPANEL', 'SDMENU', 'SDMENUXOA', 'SDTUNAP', 'SDDLG']
 CMDS = TILING + [e for e in EXTRA if e not in TILING]
-CMDSET = set(CMDS)
+MODCMDS = ['SDDIMGD']                     # lenh tich hop tu module ngoai (tools/modules/*.lsp), khong co trong ShopDrawing.lsp
+CMDSET = set(CMDS) | set(MODCMDS)
+DGD_ROW = '    ("Thiet lap va ban ve" "SDDIMGD" "Dim giao diem: ve 1 duong cat, tu dong dim tung doan giua cac giao diem + dim tong" "DGD" "DGD")'
 BASIC = ['SDSET', 'SDGACH', 'SDRAITAM', 'SDDOCDA', 'SDANHDA', 'SDVANDA', 'SDGACHTK', 'SDKTLAT', 'SDQUYTRINH']
 BASIC_MENU = '--menu=basic' in sys.argv   # menu / toolbar chi hien 9 lenh co ban; cac lenh con lai van chay, mo bang SDPANEL
-MENUSET = (set(BASIC) | {'SDKICHHOAT', 'SDPANEL', 'SDHELP', 'SDMENUXOA'}) if BASIC_MENU else CMDSET
+MENUSET = (set(BASIC) | {'SDDIMGD', 'SDKICHHOAT', 'SDPANEL', 'SDHELP', 'SDMENUXOA'}) if BASIC_MENU else CMDSET
 
 # ---------------------------------------------------------------- tach nguon thanh cac form cap cao nhat
 def strip(s):
@@ -81,6 +83,7 @@ def patch(text):
                 m = re.match(r'\s*\("[^"]+" "(SD[A-Z0-9]+)"', ln)
                 if m and m.group(1) in CMDSET:
                     keep.append(ln.rstrip('\r').rstrip(')').rstrip() + ')')
+            keep.append(DGD_ROW)
             if LICENSED:
                 keep.append('    ("Tien ich" "SDKICHHOAT" "Kich hoat ban quyen tren may nay bang Ma kich hoat" "KH" "KHB")')
             seg = head + NL.join(keep).lstrip() + '))' + NL
@@ -128,6 +131,13 @@ for k in sorted(keep):
     parts.append(seg)
 body = ''.join(parts) + tail
 
+# ---------------------------------------------------------------- module ngoai (DGD)
+_anchor = '(princ (strcat "\\n[SD] ShopDrawing Tools v"'
+assert body.count(_anchor) == 1
+_mod = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules', 'dgd.lsp'), encoding='utf-8').read()
+assert _mod.isascii()
+body = body.replace(_anchor, _mod.replace('\r\n', '\n').replace('\n', '\r\n') + '\r\n' + _anchor)
+
 # ---------------------------------------------------------------- khoa ban quyen theo may
 if LICENSED:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -135,7 +145,7 @@ if LICENSED:
     vec_mid = lic.lic_mid_of('G:TEST-MACHINE')
     mod = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'license_module.lsp'), encoding='utf-8').read()
     mod = mod.replace('@@SECRET@@', SECRET.replace('\\', '\\\\').replace('"', '\\"')).replace('@@TRIAL@@', str(TRIAL)).replace('@@VEC_MID@@', vec_mid).replace('@@VEC_CODE@@', lic.lic_code(vec_mid + '|TEST'))
-    gated = [c for c in CMDS if c not in FREE]
+    gated = [c for c in CMDS + MODCMDS if c not in FREE]
     for c in gated:
         body, n = re.subn(r'\(defun c:%s(\s*\()' % c, r'(defun sd:cmd-%s\1' % c, body)
         assert n == 1, c
@@ -176,6 +186,8 @@ pre, rest = text.split('***POP1', 1)
 pop, rest = rest.split('***TOOLBARS', 1)
 tbs, hlp = rest.split('***HELPSTRINGS', 1)
 # POP1
+DGD_POP = 'ID_SD_SDDIMGD [Dim giao diem: ve duong cat, tu dong dim tung doan + dim tong (SDDIMGD / DGD)]^C^CSDDIMGD'
+pop = re.sub(r'(ID_SD_SDSET \[[^\n]*\n)', lambda m: m.group(1) + DGD_POP + '\n', pop, count=1)
 pl = [l for l in pop.split('\n')]
 res_pop = []; grp = None; items = []; extra_tail = []
 def flush():
@@ -213,6 +225,8 @@ for b in blocks:
     btn = [l for l in lines[2:] if cmd_of(l) in MENUSET]
     if lines[0].strip() and btn: tbl.append('\n'.join(lines[:2] + btn) + '\n')
 tbt = '\n'.join(tbl)
+DGD_TB = 'ID_SD_TB_SDDIMGD [_Button("Dim giao diem: tu dong dim tung doan + dim tong (DGD)", "SD_SDDIMVIEN_16.bmp", "SD_SDDIMVIEN_32.bmp")]^C^CSDDIMGD'
+tbt = re.sub(r'(ID_SD_TB_SDSET \[[^\n]*\n)', lambda m: m.group(1) + DGD_TB + '\n', tbt, count=1)
 if 'SDHANDINH' not in tbt and not BASIC_MENU:
     hdb = 'ID_SD_TB_SDHANDINH [_Button("Han dinh polyline: gop dinh lech, chen dinh nut chu T (HDI)", "SD_SDPURGE_16.bmp", "SD_SDPURGE_32.bmp")]^C^CSDHANDINH'
     tbt = tbt.replace('ID_SD_TB_SDPANEL [', hdb + '\nID_SD_TB_SDPANEL [', 1)
@@ -222,6 +236,8 @@ for l in hlp.split('\n'):
     m = re.match(r'ID_SD_(?:TB_)?(SD[A-Z0-9]+) \[', l)
     if m and m.group(1) in MENUSET: hl.append(l)
     elif not m and l.strip(): hl.append(l)
+hl.append('ID_SD_SDDIMGD [SDDIMGD (lenh tat DGD): Dim giao diem]')
+hl.append('ID_SD_TB_SDDIMGD [SDDIMGD (lenh tat DGD): Dim giao diem]')
 if LICENSED:
     hl.append('ID_SD_SDKICHHOAT [SDKICHHOAT (lenh tat KHB): Kich hoat ban quyen]')
 if not BASIC_MENU:
@@ -256,6 +272,7 @@ open(f'{OUT}/HuongDanQuyTrinhDa.md', 'w', encoding='utf-8', newline='').write(md
 # ---------------------------------------------------------------- LenhTat.csv
 raw = open(f'{SRC}/LenhTat.csv', 'rb').read().decode('utf-8-sig').split('\r\n')
 keepcsv = [raw[0]] + [l for l in raw[1:] if l and l.split(';')[2] in CMDSET]
+keepcsv.append('Thiết lập và bản vẽ;DGD;SDDIMGD;Dim giao điểm;Vẽ một đường cắt, tự động dim từng đoạn giữa các giao điểm và dim tổng')
 if LICENSED:
     keepcsv.append('Tiện ích;KHB;SDKICHHOAT;Kích hoạt bản quyền;Hiện Mã máy và nhập Mã kích hoạt do nhà cung cấp cấp')
 open(f'{OUT}/LenhTat.csv', 'wb').write(('﻿' + '\r\n'.join(keepcsv) + '\r\n').encode('utf-8'))
@@ -269,6 +286,10 @@ def cmd_block(m):
 h = re.sub(r'<div class="cmd"[^>]*>.*?</div>\n?', cmd_block, h, flags=re.S)
 h = re.sub(r'<tr><td class="a">[^<]*</td><td class="c">(SD[A-Z0-9]+)</td>.*?</tr>\s*', lambda m: m.group(0) if m.group(1) in CMDSET else '', h, flags=re.S)
 h = re.sub(r'<div class="box"><h3[^>]*>[^<]*</h3><table>\s*</table></div>\s*', '', h)
+_dgd = '<div class="cmd" style="--grp:#3465a4"><h4><span class="k">DGD</span> &nbsp;<code>SDDIMGD</code></h4><p>Dim giao điểm: vẽ một đường cắt qua các đối tượng, lệnh tự tìm các giao điểm và dim từng đoạn giữa các giao điểm liên tiếp, cộng thêm một dim tổng. Tích hợp từ DimGiaoDiem v2.</p><ol><li>Chọn điểm bắt đầu và điểm kết thúc của đường cắt.</li><li>Chọn vị trí đặt đường dim chi tiết.</li></ol><p><b>Kết quả:</b> Dim từng đoạn giữa các giao điểm (theo kiểu dim hiện hành) và một dim tổng, đẩy ra phía xa đường cắt hơn dim chi tiết. Dòng lệnh in số đoạn, tổng và độ dài từng đoạn (2 số lẻ) để đối chiếu làm tròn. Đúng cả khi UCS xoay; Esc hoặc lỗi giữa chừng trả lại OSMODE và gỡ đường cắt tạm; U hoàn tác cả lệnh.</p><p class="note"><b>Lưu ý:</b> Cần đường cắt qua ít nhất 2 giao điểm. Dùng dimstyle hiện hành (chạy SDSET để có dimstyle SD-1-&lt;tỷ lệ&gt;). Chưa thử trên AutoCAD thật trong gói này.</p></div>\n'
+_i = h.index('<h2>Hướng dẫn chi tiết từng lệnh</h2>')
+_j = h.index('</h3>', _i) + len('</h3>')
+h = h[:_j] + '\n' + _dgd + h[_j:] if '<code>SDDIMGD</code>' not in h else h
 if LICENSED:
     blk = '<div class="cmd" style="--grp:#5a5a5a"><h4><span class="k">KHB</span> &nbsp;<code>SDKICHHOAT</code></h4><p>Kích hoạt bản quyền trên máy này. Lệnh hiện <b>Mã máy</b>; gửi mã này cho nhà cung cấp để nhận <b>Mã kích hoạt</b>, rồi nhập vào.</p><ol><li>Gõ SDKICHHOAT, ghi lại Mã máy (dạng XXXX-XXXX-XXXX).</li><li>Gửi Mã máy cho nhà cung cấp, nhận Mã kích hoạt (dạng XXXXX-XXXXX-XXXXX).</li><li>Gõ lại SDKICHHOAT và nhập mã.</li></ol><p class="note"><b>Lưu ý:</b> Mã chỉ dùng được trên đúng máy đã gửi Mã máy. Cài lại Windows hoặc đổi máy thì Mã máy đổi, cần xin mã mới theo chính sách của nhà cung cấp.</p></div>\n'
     h = h.replace('<h3><span class="dot"', blk + '<h3><span class="dot"', 1) if False else h

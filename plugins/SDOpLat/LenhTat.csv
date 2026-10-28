@@ -54,3 +54,4 @@ Tiện ích;CMN;SDMENU;Cài menu + toolbar + Ribbon;Cài menu + 6 toolbar + tab 
 Tiện ích;HTN;SDDLG;Bật / tắt hộp thoại;Bật / tắt hộp thoại nhập liệu của các lệnh
 Tiện ích;;SDMENUXOA;Gỡ menu;Gỡ menu, toolbar và Ribbon ShopDrawing khỏi AutoCAD
 Tiện ích;HDI;SDHANDINH;Hàn đỉnh polyline;Gộp đỉnh lệch nhau và chèn đỉnh nút chữ T cho polyline sinh từ cùng điểm giao cắt
+Thiết lập và bản vẽ;DGD;SDDIMGD;Dim giao điểm;Vẽ một đường cắt, tự động dim từng đoạn giữa các giao điểm và dim tổng

@@ -49,3 +49,6 @@ Tôi không biên dịch được ngoài AutoCAD. Cách làm:
 3. **Xóa `SDOpLat.lsp`** khỏi thư mục bán, kiểm tra `APPLOAD` → `SDOpLat.fas` chạy bình thường, `SDKICHHOAT` hoạt động.
 4. Muốn `.vlx` thay vì `.fas`: `VLIDE` → Tools → Make Application → Application Wizard, chọn `SDOpLat.fas`.
 Nếu `BIENDICH` báo lỗi, dùng `VLIDE` biên dịch thủ công, hoặc gửi lại thông báo lỗi cho tôi.
+
+## Lệnh tích hợp từ module ngoài
+`SDDIMGD` (lệnh tắt `DGD`) lấy từ DimGiaoDiem v2 theo yêu cầu khách hàng: mã nằm ở `plugins/tools/modules/dgd.lsp`, `build_oplat.py` tự chèn vào mọi bản build (bị khóa như các lệnh khác khi build `--licensed`). Logic giữ nguyên bản gốc; chỉ đổi tên lệnh, bỏ dấu trong dòng nhắc và thêm tiền tố `[SD]`. **Kiểm tra bạn có quyền tích hợp và bán kèm mã này** trước khi phát hành.

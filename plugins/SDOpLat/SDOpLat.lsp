@@ -8526,7 +8526,8 @@
     ("Op lat da granite / gach" "SDPHUONGAN" "Phuong an lat A / B tren mot to: nhan + bang ngan (so vien, nguyen / cat, hao hut) + khung in bao ca hai" "PAB" "PHA")
     ("Tien ich" "SDTUNAP" "Bat / tat tu nap SDOpLat moi khi mo AutoCAD (khong can APPLOAD lai)" "TNP" "AUL")
     ("Tien ich" "SDMENU" "Cai menu + toolbar + Ribbon" "MNU" "CMN")
-    ("Tien ich" "SDDLG" "Bat / tat hop thoai nhap lieu" "DLG" "HTN")))
+    ("Tien ich" "SDDLG" "Bat / tat hop thoai nhap lieu" "DLG" "HTN")
+    ("Thiet lap va ban ve" "SDDIMGD" "Dim giao diem: ve 1 duong cat, tu dong dim tung doan giua cac giao diem + dim tong" "DGD" "DGD")))
 
 
 ;; Lenh tat: moi muc trong danh muc sinh 1 lenh ngan goi lenh chinh (vd TKT -> SDTKTHEP)
@@ -9337,6 +9338,107 @@
              (princ (strcat "\n[SD] Da go " grp ".")))
       (princ (strcat "\n[SD] " grp " chua duoc nap.")))))
 (vl-catch-all-apply 'sd:ud-autoload nil)
+
+;;; ==========================================================================
+;;;  SDDIMGD (lenh tat DGD) - Dim giao diem: ve 1 duong cat, lenh tu dong dim tung doan giua cac giao diem + dim tong
+;;;  Tich hop tu DimGiaoDiem v2 theo yeu cau khach hang (UCS xoay van dung, tra lai bien he thong khi loi / Esc).
+;;; ==========================================================================
+(defun c:SDDIMGD ( / *error* old_os old_echo undo_on tmp lineobj p1 p2 p3
+                     ss i ent r pts uniq p sorted k s ang1 side dirang sp p4)
+  (defun *error* (msg)
+    (if tmp (progn (entdel tmp) (setq tmp nil)))
+    (if undo_on (progn (command "_.UNDO" "_E") (setq undo_on nil)))
+    (if old_os (setvar "OSMODE" old_os))
+    (if old_echo (setvar "CMDECHO" old_echo))
+    (if (and msg (not (wcmatch (strcase msg) "*CANCEL*,*QUIT*,*EXIT*")))
+      (princ (strcat "\n[SD] Loi: " msg))
+    )
+    (princ)
+  )
+
+  (setq old_os (getvar "OSMODE")
+        old_echo (getvar "CMDECHO"))
+
+  (if (and (setq p1 (getpoint "\nChon diem bat dau cua duong cat: "))
+           (setq p2 (getpoint p1 "\nChon diem ket thuc cua duong cat: "))
+           (setq p3 (getpoint p2 "\nChon vi tri dat duong Dim chi tiet: ")))
+    (progn
+      (setvar "CMDECHO" 0)
+      (command "_.UNDO" "_BE")
+      (setq undo_on T)
+      (setvar "OSMODE" 0)
+
+      ;; Line tam (WCS) de lay giao diem
+      (entmake (list '(0 . "LINE") (cons 10 (trans p1 1 0)) (cons 11 (trans p2 1 0))))
+      (setq tmp (entlast))
+      (setq lineobj (vlax-ename->vla-object tmp))
+
+      ;; Cac doi tuong cat qua duong cat (fence nhan diem UCS)
+      (if (setq ss (ssget "_F" (list p1 p2)))
+        (repeat (setq i (sslength ss))
+          (setq ent (ssname ss (setq i (1- i))))
+          (if (/= ent tmp)
+            (progn
+              (setq r (vl-catch-all-apply 'vlax-invoke
+                        (list (vlax-ename->vla-object ent) 'IntersectWith lineobj 0)))
+              (if (and r (not (vl-catch-all-error-p r)))
+                (while (>= (length r) 3)
+                  (setq pts (cons (trans (list (car r) (cadr r) (caddr r)) 0 1) pts)
+                        r (cdddr r))
+                )
+              )
+            )
+          )
+        )
+      )
+
+      (entdel tmp)
+      (setq tmp nil)
+
+      ;; Loc diem trung (sai so 0.1)
+      (foreach p pts
+        (if (not (vl-some '(lambda (x) (< (distance p x) 0.1)) uniq))
+          (setq uniq (cons p uniq))
+        )
+      )
+      ;; Sap xep doc duong cat
+      (setq sorted (vl-sort uniq '(lambda (a b) (< (distance p1 a) (distance p1 b)))))
+
+      (if (< (length sorted) 2)
+        (princ "\n[SD] Duong cat chi di qua duoi 2 diem, khong du de tao Dim!")
+        (progn
+          ;; 1. Dim chi tiet
+          (setq k 0 s "")
+          (while (< k (1- (length sorted)))
+            (command "_.DIMALIGNED" (nth k sorted) (nth (1+ k) sorted) p3)
+            (setq s (strcat s (rtos (distance (nth k sorted) (nth (1+ k) sorted)) 2 2) "  "))
+            (setq k (1+ k))
+          )
+          ;; 2. Dim tong, day ra phia xa duong cat hon dim chi tiet
+          (setq ang1 (angle p1 p2)
+                side (- (* (- (car p2) (car p1)) (- (cadr p3) (cadr p1)))
+                        (* (- (cadr p2) (cadr p1)) (- (car p3) (car p1))))
+                dirang (if (< side 0) (- ang1 (/ pi 2)) (+ ang1 (/ pi 2)))
+                sp (* 3.5 (getvar "DIMTXT")
+                      (if (> (getvar "DIMSCALE") 0) (getvar "DIMSCALE") 1.0))
+                p4 (polar p3 dirang sp))
+          (command "_.DIMALIGNED" (car sorted) (last sorted) p4)
+
+          (princ (strcat "\n[SD] So doan: " (itoa (1- (length sorted)))
+                         " | Tong: " (rtos (distance (car sorted) (last sorted)) 2 2)))
+          (princ (strcat "\n[SD] Cac doan: " s))
+        )
+      )
+
+      (command "_.UNDO" "_E")
+      (setq undo_on nil)
+      (setvar "OSMODE" old_os)
+      (setvar "CMDECHO" old_echo)
+      (princ "\n[SD] Da hoan thanh!")
+    )
+  )
+  (princ)
+)
 
 (princ (strcat "\n[SD] Op Lat Tools v" *SD:VER* " da nap. Go SDPANEL (bang lenh) hoac SDHELP; SDMENU de cai menu + toolbar."))
 (if (not (vl-catch-all-error-p (vl-catch-all-apply '(lambda () (sd:au-has (sd:au-read (sd:au-file)))) nil)))

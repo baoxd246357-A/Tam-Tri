@@ -59,6 +59,7 @@ footer{margin-top:40px;color:var(--mut);font-size:14px;border-top:1px solid var(
 <tr><td><span class="k">SDVANDA</span></td><td>VDA</td><td>Phủ vân đá (hatch) khi chưa có ảnh tấm đá thật</td></tr>
 <tr><td><span class="k">SDGACHTK</span></td><td>TKV</td><td>Bảng thống kê viên và số lượng đặt hàng</td></tr>
 <tr><td><span class="k">SDKTLAT</span></td><td>KLT</td><td>Kiểm tra: viên cắt quá hẹp, ron không đều, thiếu mã vật liệu</td></tr>
+<tr><td><span class="k">SDDIMGD</span></td><td>DGD</td><td>Vẽ một đường cắt, tự động dim từng đoạn giữa các giao điểm và dim tổng</td></tr>
 <tr><td><span class="k">SDQUYTRINH</span></td><td>QTR</td><td>Hộp thoại gợi ý bước tiếp theo, chạy từng bước hoặc liên hoàn</td></tr>
 </table>
 <p class="mut">Mẹo: nhiều lệnh mở hộp thoại để nhập thông số; bấm Enter để nhận giá trị mặc định trong dấu &lt; &gt;. Mỗi lệnh gom vào một lần Undo: gõ <span class="k">U</span> để hoàn tác cả lệnh.</p>
@@ -118,6 +119,13 @@ footer{margin-top:40px;color:var(--mut);font-size:14px;border-top:1px solid var(
 <li>Muốn kiểm khe giãn nở sát tường: nhập khe tối thiểu lớn hơn 0 rồi chọn polyline biên.</li>
 </ol>
 <p class="res">Kết quả: dòng lệnh báo số viên cắt hẹp, cắt nhỏ, ron không đều, viên thiếu mã vật liệu; khoanh đỏ trên layer <code>SD-KIEMTRA</code> và file <code>_KiemTraLat.csv</code>. Ngưỡng mặc định chỉ là giá trị khởi đầu, hãy đặt theo quy định của dự án.</p></div>
+
+<div class="card"><h3>Tiện ích — <span class="k">DGD</span>: dim theo giao điểm</h3>
+<ol>
+<li>Gõ <span class="k">DGD</span>, chọn điểm bắt đầu và điểm kết thúc của <b>đường cắt</b> đi qua các đối tượng cần dim (ví dụ qua các mạch ron, tường).</li>
+<li>Chọn vị trí đặt đường dim chi tiết.</li>
+</ol>
+<p class="res">Kết quả: lệnh tự tìm các giao điểm trên đường cắt, dim từng đoạn giữa hai giao điểm liên tiếp, rồi thêm một dim tổng ở phía xa hơn. Dòng lệnh in số đoạn, tổng và độ dài từng đoạn (2 số lẻ) để đối chiếu. Cần đường cắt qua ít nhất 2 giao điểm. Dim dùng kiểu kích thước (dimstyle) đang hiện hành; chạy <span class="k">SDSET</span> trước nếu muốn dùng kiểu của bộ lệnh. Bấm Esc giữa chừng thì lệnh tự trả lại cài đặt; <span class="k">U</span> hoàn tác cả lệnh.</p></div>
 
 <div class="card"><h3>Gợi ý — <span class="k">SDQUYTRINH</span></h3>
 <p>Nếu chưa nhớ thứ tự, gõ <span class="k">SDQUYTRINH</span>: hộp thoại cho biết bản vẽ đang có bao nhiêu viên, ảnh, hatch và <b>gợi ý bước tiếp theo</b> (dòng có <code>&lt;== goi y</code>). Chọn một bước rồi <b>Chạy bước chọn</b>, hoặc tích nhiều bước rồi <b>Chạy liên hoàn</b>. Bấm <b>Đóng</b> để thoát.</p></div>

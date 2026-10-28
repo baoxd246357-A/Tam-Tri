@@ -8,7 +8,8 @@
 **SD_POP
 ID_SD_POP [&SDOpLat]
 ID_SD_G1 [->Thiet lap va ban ve]
-ID_SD_SDSET [<-Thiet lap ty le, layer, text style, dimstyle (SDSET / TYLE)]^C^CSDSET
+ID_SD_SDSET [Thiet lap ty le, layer, text style, dimstyle (SDSET / TYLE)]^C^CSDSET
+ID_SD_SDDIMGD [<-Dim giao diem: ve duong cat, tu dong dim tung doan + dim tong (SDDIMGD / DGD)]^C^CSDDIMGD
 ID_SD_G4 [->Op lat da granite / gach]
 ID_SD_SDGACH [Chia vien: thang/so le/xuong ca/chevron, vien, khe (SDGACH / CHV)]^C^CSDGACH
 ID_SD_SDCHANTUONG [Len chan tuong + trien khai mat dung (SDCHANTUONG / LCT)]^C^CSDCHANTUONG
@@ -73,6 +74,7 @@ ID_SD_POP_UNLOAD [Go menu SDOpLat (SDMENUXOA)]^C^CSDMENUXOA
 **SD_TB1
 ID_SD_TB1 [_Toolbar("SD Thiet lap", _Floating, _Show, 150, 120, 1)]
 ID_SD_TB_SDSET [_Button("Thiet lap ty le, layer, text style, dimstyle (TYLE)", "SD_SDSET_16.bmp", "SD_SDSET_32.bmp")]^C^CSDSET
+ID_SD_TB_SDDIMGD [_Button("Dim giao diem: tu dong dim tung doan + dim tong (DGD)", "SD_SDDIMVIEN_16.bmp", "SD_SDDIMVIEN_32.bmp")]^C^CSDDIMGD
 
 **SD_TB4
 ID_SD_TB4 [_Toolbar("SD Op lat da", _Floating, _Show, 270, 240, 1)]
@@ -240,5 +242,7 @@ ID_SD_SDMENU [SDMENU (lenh tat CMN): Cai menu + toolbar + Ribbon]
 ID_SD_TB_SDMENU [SDMENU (lenh tat CMN): Cai menu + toolbar + Ribbon]
 ID_SD_SDDLG [SDDLG (lenh tat HTN): Bat / tat hop thoai nhap lieu]
 ID_SD_TB_SDDLG [SDDLG (lenh tat HTN): Bat / tat hop thoai nhap lieu]
+ID_SD_SDDIMGD [SDDIMGD (lenh tat DGD): Dim giao diem]
+ID_SD_TB_SDDIMGD [SDDIMGD (lenh tat DGD): Dim giao diem]
 ID_SD_SDHANDINH [SDHANDINH (lenh tat HDI): Han dinh polyline]
 ID_SD_TB_SDHANDINH [SDHANDINH (lenh tat HDI): Han dinh polyline]
