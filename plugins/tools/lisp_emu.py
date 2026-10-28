@@ -104,7 +104,7 @@ def ev(x, E):
         '+': lambda *v: I32(sum(v)), '-': lambda a, *v: I32(a - sum(v)) if v else I32(-a),
         '*': lambda *v: I32(__import__('math').prod(v)), 'rem': lambda a, b: I32(int(a - b * int(a / b))),
         '1+': lambda a: I32(a + 1), 'logand': lambda *v: __import__('functools').reduce(lambda p, q: p & q, v),
-        'logxor': lambda *v: __import__('functools').reduce(lambda p, q: p ^ q, v),
+        'logior': lambda *v: __import__('functools').reduce(lambda p, q: p | q, v),
         'lsh': lambda v, n: I32(v << n if n >= 0 else v >> -n), 'ascii': lambda s: ord(s[0]),
         'substr': lambda s, st, ln=None: s[st - 1:] if ln is None else s[st - 1:st - 1 + ln],
         'strlen': len, 'strcat': lambda *s: ''.join(s), 'strcase': lambda s, up=None: s.lower() if up else s.upper(),
@@ -132,7 +132,28 @@ def load(path, repl):
             ev(f, E)
     return E
 
+KNOWN = set('''defun setq if cond while repeat foreach and or quote progn lambda + - * / rem 1+ 1- logand logior lsh ~ ascii substr strlen strcat
+strcase nth list cons car cdr cadr caddr cdddr reverse append itoa atoi atof rtos = /= < > <= >= not null type max min length last member assoc
+vl-string-search vl-registry-read vl-registry-write vl-catch-all-apply vl-catch-all-error-p vl-some vl-sort vl-filename-directory vl-string-translate
+vl-remove-if findfile open close read-line write-line getenv getstring getpoint getvar setvar princ apply entmake entlast entdel trans ssget sslength ssname
+vlax-create-object vlax-invoke-method vlax-get-property vlax-ename->vla-object vlax-invoke distance angle polar command wcmatch'''.split())
+
+def check_known(path):
+    src = open(path).read()
+    defined = set(re.findall(r'\(defun\s+(\S+)', src))
+    heads = set(h.lower() for h in re.findall(r"\((?!\s)([^\s()'\"]+)", re.sub(r';[^\n]*', '', re.sub(r'"(?:\\.|[^"\\])*"', '""', src))))
+    params = set()
+    for m in re.finditer(r'\(defun\s+\S+\s*\(([^)]*)\)', src):
+        params |= set(x.lower() for x in m.group(1).replace('/', ' ').split())
+    bad = sorted(h for h in heads if h not in KNOWN and h not in {d.lower() for d in defined} and h not in params
+                 and not h.startswith('c:') and not re.fullmatch(r'-?\d+', h) and h != 't')
+    return bad
+
 if __name__ == '__main__':
+    here0 = os.path.dirname(os.path.abspath(__file__))
+    bad = check_known(os.path.join(here0, 'license_module.lsp'))
+    assert not bad, 'Ham khong co trong AutoLISP (hoac chua khai bao): %s' % bad
+    print('OK: moi ham trong license_module.lsp la ham AutoLISP that hoac duoc defun')
     here = os.path.dirname(os.path.abspath(__file__))
     E = load(os.path.join(here, 'license_module.lsp'), {'@@SECRET@@': 'S'})
     E.fn.pop('sd:lic-mid', None)

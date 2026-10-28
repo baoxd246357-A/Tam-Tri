@@ -52,3 +52,6 @@ Nếu `BIENDICH` báo lỗi, dùng `VLIDE` biên dịch thủ công, hoặc gử
 
 ## Lệnh tích hợp từ module ngoài
 `SDDIMGD` (lệnh tắt `DGD`) lấy từ DimGiaoDiem v2 theo yêu cầu khách hàng: mã nằm ở `plugins/tools/modules/dgd.lsp`, `build_oplat.py` tự chèn vào mọi bản build (bị khóa như các lệnh khác khi build `--licensed`). Logic giữ nguyên bản gốc; chỉ đổi tên lệnh, bỏ dấu trong dòng nhắc và thêm tiền tố `[SD]`. Mã do chủ sở hữu sản phẩm tự phát triển (có hỗ trợ công cụ AI), nên không cần xin phép bên thứ ba.
+
+## Bài học: kiểm tra tên hàm AutoLISP
+`lisp_emu.py` có thêm bước kiểm tra mọi hàm trong `license_module.lsp` có phải hàm AutoLISP thật không (bắt được lỗi dùng `logxor` — AutoLISP không có hàm này, phải dùng `(logior)` trừ `(logand)`). Chạy lại sau mỗi lần sửa module khóa.

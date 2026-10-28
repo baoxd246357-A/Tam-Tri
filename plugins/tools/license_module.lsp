@@ -8,6 +8,9 @@
 (setq *SD:LICREG* "HKEY_CURRENT_USER\\Software\\SDOpLat")
 (setq *SD:LICOK* nil *SD:LICMID* nil *SD:LICTRIAL* @@TRIAL@@)
 
+;; AutoLISP khong co LOGXOR: a xor b = (a or b) - (a and b) voi so khong am
+(defun sd:lic-xor (a b) (- (logior a b) (logand a b)))
+
 (defun sd:lic-setnth (l k v / i r)
   (setq i 0)
   (foreach x l (setq r (cons (if (= i k) v x) r) i (1+ i)))
@@ -22,7 +25,7 @@
       (setq c (ascii (substr s i 1)) k 0)
       (while (< k 4)
         (setq pv (logand (lsh (nth (rem (+ k 3) 4) h) -5) 255)
-              h  (sd:lic-setnth h k (logand (logxor (+ (* (nth k h) (nth k m)) c pv (rem i 251)) (lsh (nth k h) -9)) 16777215))
+              h  (sd:lic-setnth h k (logand (sd:lic-xor (+ (* (nth k h) (nth k m)) c pv (rem i 251)) (lsh (nth k h) -9)) 16777215))
               k  (1+ k)))
       (setq i (1+ i))))
   h)
