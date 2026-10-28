@@ -6823,15 +6823,15 @@
   (reverse r))
 
 ;; Khoa so sanh: (vien-khong-xep so-tam-mua-moi dien-tich-tam-kho-dung -dien-tich-phe-lieu-giu-lai); nho hon la tot hon
-(defun sd:sp-key (slabs types nof k dumin / nnew raw rem tp)
-  (setq nnew 0 raw 0.0 rem 0.0)
+(defun sd:sp-key (slabs types nof k dumin / nnew raw remv tp)
+  (setq nnew 0 raw 0.0 remv 0.0)
   (foreach s slabs
     (setq tp (assoc (caddr s) types))
     (cond ((= (car tp) "MOI") (setq nnew (1+ nnew)))
           ((nth 6 tp))
           (t (setq raw (+ raw (* (nth 4 tp) (nth 5 tp))))))
-    (foreach f (sd:sp-free s k dumin) (setq rem (+ rem (* (nth 2 f) (nth 3 f))))))
-  (list (length nof) nnew raw (- rem)))
+    (foreach f (sd:sp-free s k dumin) (setq remv (+ remv (* (nth 2 f) (nth 3 f))))))
+  (list (length nof) nnew raw (- remv)))
 (defun sd:sp-less (a b)
   (cond ((/= (car a) (car b)) (< (car a) (car b)))
         ((/= (cadr a) (cadr b)) (< (cadr a) (cadr b)))
@@ -13524,7 +13524,7 @@
   (setq res (car (sd:sort res 'sd:od-less)))
   (list (sd:rot (list (cadr (car res)) (caddr (car res))) ang) (car (car res)) (cadr res)))
 
-(defun c:SDLOT (/ cpt ss rooms rm k outer holes mat name W H thk jt gap pat ang start q hep nhan anh van sc o b last news
+(defun c:SDLOT (/ cpt ss rooms rm k outer holes mat name W H thk jt gap pat ang start q hep nhan anh van sc o b lastv news
                   nf nc ns arr cpa xd rows tn tc tf tarea twaste fn f e r pts lbl allnew)
   (sd:begin)
   (setq sc (sd:sc))
@@ -13575,7 +13575,7 @@
                                          (apply 'min (mapcar 'cadr (mapcar '(lambda (p) (sd:rot p (- (* pi (/ ang 180.0))))) pts))))
                                    (* pi (/ ang 180.0)))
                          lbl "goc")))
-            (setq last (entlast)
+            (setq lastv (entlast)
                   *SD:GBATCH* t *SD:GOUTER* outer *SD:GHOLES* holes *SD:GSTART* o
                   *SD:BATCH* (list (cons "MAT" mat) (cons "NAME" name) (cons "W" (sd:rtos W 3)) (cons "H" (sd:rtos H 3))
                                    (cons "THK" (sd:rtos thk 3)) (cons "JT" (sd:rtos jt 3)) (cons "GAP" (sd:rtos gap 3))
@@ -13586,7 +13586,7 @@
             (if (vl-catch-all-error-p r)
               (princ (strcat "\n[SD] KV" (itoa k) ": khong chia duoc (" (vl-catch-all-error-message r) ")."))
               (progn
-                (setq news (sd:gach-new last) nf 0 nc 0 ns 0 arr 0.0 cpa 0.0)
+                (setq news (sd:gach-new lastv) nf 0 nc 0 ns 0 arr 0.0 cpa 0.0)
                 (foreach e news
                   (setq xd (mapcar 'cdr (cdadr (assoc -3 (entget e '("SD_TILE"))))))
                   (if (and xd (/= (nth 1 xd) "X"))
@@ -18279,7 +18279,7 @@
             (progn (vla-InsertInMenuBar pm (vla-get-Count bar)) "them")))
         "khong-thay-popup"))))
 
-(defun c:SDMENU (/ mnu dir rb ok1 ok2 r cands ver f mb)
+(defun c:SDMENU (/ mnu dir rb ok1 ok2 r cands mver f mb)
   (princ (strcat "\n[SD] SDMENU v" *SD:VER*))
   (sd:rx-off)
   (setq r (vl-catch-all-apply
@@ -18304,9 +18304,9 @@
                    (foreach ext '("cuix" "mns" "mnc" "mnr")
                      (setq f (strcat dir "\\ShopDrawing." ext))
                      (if (findfile f) (vl-catch-all-apply 'vl-file-delete (list f))))
-                   (setq ver (sd:mnu-ver mnu))
-                   (if (/= ver *SD:VER*)
-                     (princ (strcat "\n[!] File menu nap la ban " (cond (ver) ("cu, khong ghi phien ban")) " nhung ShopDrawing.lsp dang chay la ban " *SD:VER*
+                   (setq mver (sd:mnu-ver mnu))
+                   (if (/= mver *SD:VER*)
+                     (princ (strcat "\n[!] File menu nap la ban " (cond (mver) ("cu, khong ghi phien ban")) " nhung ShopDrawing.lsp dang chay la ban " *SD:VER*
                                     ": lenh moi co the thieu tren menu. Giai nen ban moi vao thu muc rieng roi chay lai SDMENU.")))
                    (setq ok1 (sd:mg-load mnu "SHOPDRAWING"))
                    (if ok1
