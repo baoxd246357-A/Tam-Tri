@@ -12,8 +12,8 @@ LICENSED = '--licensed' in sys.argv
 SECRET = os.environ.get('SDOPLAT_SECRET', '')
 TRIAL = int(next((a.split('=')[1] for a in sys.argv if a.startswith('--trial=')), 10))
 FAS = '--fas' in sys.argv  # goi chi co .fas (da bienpile): doi ten file nap .lsp -> .fas
-if LICENSED and len(SECRET) < 16:
-    sys.exit('Ban co khoa: dat bien moi truong SDOPLAT_SECRET (>= 16 ky tu, bi mat cua ban) truoc khi build.')
+if LICENSED and (len(SECRET) < 16 or not SECRET.isascii()):
+    sys.exit('Ban co khoa: dat bien moi truong SDOPLAT_SECRET (>= 16 ky tu ASCII, bi mat cua ban) truoc khi build.')
 FREE = {'SDKICHHOAT', 'SDHELP', 'SDPANEL', 'SDMENU', 'SDMENUXOA', 'SDTUNAP', 'SDDLG'}
 NL = '\r\n'
 PRODUCT = 'Op Lat Tools'
@@ -27,6 +27,9 @@ TILING = [r[1] for r in rows_all if r[0] == 'Op lat da granite / gach' and r[1] 
 EXTRA = ['SDSET', 'SDHANDINH', 'SDHELP', 'SDPANEL', 'SDMENU', 'SDMENUXOA', 'SDTUNAP', 'SDDLG']
 CMDS = TILING + [e for e in EXTRA if e not in TILING]
 CMDSET = set(CMDS)
+BASIC = ['SDSET', 'SDGACH', 'SDRAITAM', 'SDDOCDA', 'SDANHDA', 'SDVANDA', 'SDGACHTK', 'SDKTLAT', 'SDQUYTRINH']
+BASIC_MENU = '--menu=basic' in sys.argv   # menu / toolbar chi hien 9 lenh co ban; cac lenh con lai van chay, mo bang SDPANEL
+MENUSET = (set(BASIC) | {'SDKICHHOAT', 'SDPANEL', 'SDHELP', 'SDMENUXOA'}) if BASIC_MENU else CMDSET
 
 # ---------------------------------------------------------------- tach nguon thanh cac form cap cao nhat
 def strip(s):
@@ -178,7 +181,7 @@ res_pop = []; grp = None; items = []; extra_tail = []
 def flush():
     global grp, items
     if grp is not None:
-        its = [i for i in items if cmd_of(i) in CMDSET]
+        its = [i for i in items if cmd_of(i) in MENUSET]
         if its:
             res_pop.append(grp)
             for n, i in enumerate(its):
@@ -196,7 +199,7 @@ for l in pl:
 flush()
 popt = '\n'.join(res_pop)
 # them SDHANDINH vao nhom Tien ich neu chua co
-if 'SDHANDINH' not in popt:
+if 'SDHANDINH' not in popt and not BASIC_MENU:
     hd = 'ID_SD_SDHANDINH [Han dinh: gop dinh polyline lech nhau, chen dinh nut chu T (SDHANDINH / HDI)]^C^CSDHANDINH'
     popt = popt.replace('ID_SD_SDPANEL [', hd + '\nID_SD_SDPANEL [', 1)
 if LICENSED and 'SDKICHHOAT' not in popt:
@@ -207,22 +210,23 @@ for b in blocks:
     lines = b.split('\n')
     if not lines[0].startswith('**SD_TB'):
         tbl.append(b); continue
-    btn = [l for l in lines[2:] if cmd_of(l) in CMDSET]
+    btn = [l for l in lines[2:] if cmd_of(l) in MENUSET]
     if lines[0].strip() and btn: tbl.append('\n'.join(lines[:2] + btn) + '\n')
 tbt = '\n'.join(tbl)
-if 'SDHANDINH' not in tbt:
+if 'SDHANDINH' not in tbt and not BASIC_MENU:
     hdb = 'ID_SD_TB_SDHANDINH [_Button("Han dinh polyline: gop dinh lech, chen dinh nut chu T (HDI)", "SD_SDPURGE_16.bmp", "SD_SDPURGE_32.bmp")]^C^CSDHANDINH'
     tbt = tbt.replace('ID_SD_TB_SDPANEL [', hdb + '\nID_SD_TB_SDPANEL [', 1)
 # HELPSTRINGS
 hl = []
 for l in hlp.split('\n'):
     m = re.match(r'ID_SD_(?:TB_)?(SD[A-Z0-9]+) \[', l)
-    if m and m.group(1) in CMDSET: hl.append(l)
+    if m and m.group(1) in MENUSET: hl.append(l)
     elif not m and l.strip(): hl.append(l)
 if LICENSED:
     hl.append('ID_SD_SDKICHHOAT [SDKICHHOAT (lenh tat KHB): Kich hoat ban quyen]')
-hl.append('ID_SD_SDHANDINH [SDHANDINH (lenh tat HDI): Han dinh polyline]')
-hl.append('ID_SD_TB_SDHANDINH [SDHANDINH (lenh tat HDI): Han dinh polyline]')
+if not BASIC_MENU:
+    hl.append('ID_SD_SDHANDINH [SDHANDINH (lenh tat HDI): Han dinh polyline]')
+    hl.append('ID_SD_TB_SDHANDINH [SDHANDINH (lenh tat HDI): Han dinh polyline]')
 final = pre + '***POP1' + popt + '\n***TOOLBARS' + tbt + '\n***HELPSTRINGS\n' + '\n'.join(hl) + '\n'
 final = final.replace('ShopDrawing Tools v2.58.0', PRODUCT + ' v' + PRODUCT_VER)
 final = final.replace('ShopDrawing Tools', PRODUCT).replace('SHOPDRAWING', 'SDOPLAT').replace('ShopDrawing', 'SDOpLat')

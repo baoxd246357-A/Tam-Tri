@@ -1,0 +1,40 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tạo mã kích hoạt SDOpLat</title>
+<style>
+:root{--bg:#f7f7f5;--fg:#1d1d1b;--mut:#6b6b66;--card:#fff;--bd:#d9d9d3;--acc:#1f5aa8}
+@media(prefers-color-scheme:dark){:root{--bg:#171715;--fg:#ececE8;--mut:#9a9a93;--card:#222220;--bd:#3a3a36;--acc:#8ab6ff}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:22px}label{display:block;margin:12px 0 4px;font-weight:600}input{width:100%;font:inherit;padding:8px;border:1px solid var(--bd);border-radius:6px;background:var(--card);color:var(--fg)}
+button{font:inherit;padding:8px 14px;border:1px solid var(--acc);background:var(--acc);color:#fff;border-radius:6px;cursor:pointer;margin:12px 8px 0 0}button.g{background:var(--card);color:var(--fg);border-color:var(--bd)}
+.out{margin-top:16px;padding:14px;background:var(--card);border:1px solid var(--bd);border-radius:8px;font:22px Consolas,monospace;letter-spacing:1px;word-break:break-all}
+.mut{color:var(--mut);font-size:14px}.warn{color:#b3261e}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px}td,th{border:1px solid var(--bd);padding:4px 6px;text-align:left}
+</style></head><body><main>
+<h1>Tạo mã kích hoạt SDOpLat</h1>
+<p class="mut">Công cụ của <b>người bán</b>, không gửi cho khách. Chạy hoàn toàn trên máy bạn (không gửi dữ liệu đi đâu). Secret phải đúng bằng secret đã dùng khi build gói.</p>
+<label for="sec">Secret của bạn (ASCII, ≥ 16 ký tự)</label><input id="sec" type="password" autocomplete="off">
+<label for="mid">Mã máy khách gửi (XXXX-XXXX-XXXX)</label><input id="mid" placeholder="ABCD-EFGH-JKLM" autocapitalize="characters">
+<label for="cus">Tên khách (ghi vào nhật ký)</label><input id="cus">
+<button id="go">Tạo mã</button><button class="g" id="csv">Xuất nhật ký CSV</button><button class="g" id="clr">Xóa nhật ký</button>
+<div id="res"></div>
+<table id="log"></table>
+<p class="mut">Nhật ký lưu trong trình duyệt này (không lưu secret). Cùng một Mã máy xin lại sẽ được cảnh báo.</p>
+<script>
+const ABC="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function hash(s){let h=[5381,52711,40503,12289],m=[31,33,37,41];for(let r=0;r<2;r++)for(let i=1;i<=s.length;i++){const c=s.charCodeAt(i-1);for(let k=0;k<4;k++){const pv=(h[(k+3)%4]>>5)&255;h[k]=((h[k]*m[k]+c+pv+(i%251))^(h[k]>>9))&16777215}}return h}
+function chars(h,cs){let r='';cs.forEach((n,i)=>{for(let j=0;j<n;j++)r+=ABC[(h[i]>>(5*j))&31]});return r}
+function code(s){const r=chars(hash(s),[4,4,4,3]);return r.slice(0,5)+'-'+r.slice(5,10)+'-'+r.slice(10,15)}
+const norm=s=>s.toUpperCase().replace(/[^A-Z0-9]/g,'');
+const KEY='sdoplat-keygen-log';let L=[];try{L=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){}
+const $=id=>document.getElementById(id);
+function draw(){$('log').innerHTML='<tr><th>Ngày</th><th>Khách</th><th>Mã máy</th><th>Mã kích hoạt</th></tr>'+L.map(r=>'<tr>'+r.map(x=>'<td>'+String(x).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</td>').join('')+'</tr>').join('')}
+$('go').onclick=()=>{const sec=$('sec').value,mid=norm($('mid').value);const res=$('res');
+ if(sec.length<16||/[^\x00-\x7f]/.test(sec)){res.innerHTML='<p class="warn">Secret phải ASCII và dài ít nhất 16 ký tự.</p>';return}
+ if(mid.length!==12){res.innerHTML='<p class="warn">Mã máy phải có 12 ký tự.</p>';return}
+ const m=mid.slice(0,4)+'-'+mid.slice(4,8)+'-'+mid.slice(8),c=code(m+'|'+sec);
+ const prev=L.filter(r=>norm(r[2])===mid);
+ res.innerHTML=(prev.length?`<p class="warn">Lưu ý: Mã máy này đã được cấp ngày ${prev[prev.length-1][0]} cho ${prev[prev.length-1][1]||'(không tên)'}.</p>`:'')+'<div class="out">'+c+'</div>';
+ L.push([new Date().toISOString().slice(0,10),$('cus').value,m,c]);try{localStorage.setItem(KEY,JSON.stringify(L))}catch(e){}draw()};
+$('csv').onclick=()=>{const t='﻿'+[['Ngay','Khach','Ma may','Ma kich hoat'],...L].map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='licenses.csv';a.click()};
+$('clr').onclick=()=>{if(confirm('Xóa nhật ký?')){L=[];try{localStorage.removeItem(KEY)}catch(e){}draw()}};
+draw();
+</script></main></body></html>

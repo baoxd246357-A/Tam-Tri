@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sdoplat_lic import activation_code, norm
 
 secret = os.environ.get('SDOPLAT_SECRET')
-if not secret or len(sys.argv) < 2:
+if not secret or not secret.isascii() or len(sys.argv) < 2:
     sys.exit(__doc__)
 mid = sys.argv[1].strip().upper()
 if len(norm(mid)) != 12:
