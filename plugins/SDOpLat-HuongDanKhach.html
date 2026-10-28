@@ -9,7 +9,7 @@ main{max-width:820px;margin:0 auto;padding:20px 16px 60px}
 h1{font-size:26px;margin:8px 0 4px}h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--bd)}h3{font-size:17px;margin:0 0 4px}
 .sub{color:var(--mut);margin:0 0 16px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;margin:12px 0;break-inside:avoid}
-code,.k{background:var(--key);padding:1px 7px;border-radius:5px;font-family:Consolas,monospace;font-size:.95em}
+code,.k{overflow-wrap:anywhere;background:var(--key);padding:1px 7px;border-radius:5px;font-family:Consolas,monospace;font-size:.95em}
 .k{font-weight:600}ol,ul{margin:6px 0 6px 22px;padding:0}li{margin:3px 0}
 .tbl{width:100%;border-collapse:collapse;margin:8px 0}.tbl th,.tbl td{border:1px solid var(--bd);padding:7px 9px;text-align:left;vertical-align:top}.tbl th{background:var(--card)}
 .note{border-left:4px solid var(--acc);padding:6px 12px;margin:12px 0;background:var(--card);border-radius:0 8px 8px 0}
@@ -53,6 +53,8 @@ footer{margin-top:40px;color:var(--mut);font-size:14px;border-top:1px solid var(
 <tr><th>Lệnh</th><th>Lệnh tắt</th><th>Dùng để</th></tr>
 <tr><td><span class="k">SDSET</span></td><td>TYLE</td><td>Đặt tỷ lệ, tạo layer và kiểu chữ cho bản vẽ mới</td></tr>
 <tr><td><span class="k">SDGACH</span></td><td>CHV</td><td>Chia viên ốp lát trong một vùng, ra viên nguyên và viên cắt</td></tr>
+<tr><td><span class="k">SDRAITAM</span></td><td>RTA</td><td>Rải tấm / đá theo kho tấm cho nhiều ô, phòng cùng lúc (chế độ Panel hoặc Đá)</td></tr>
+<tr><td><span class="k">SDDOCDA</span></td><td>DOD</td><td>Đọc mặt bằng nét rời, tự dựng ô kín, ghi bảng CSV để soát, không phải vẽ lại polyline</td></tr>
 <tr><td><span class="k">SDANHDA</span></td><td>ADA</td><td>Ghép ảnh tấm đá thật vào từng viên, ra sơ đồ cắt</td></tr>
 <tr><td><span class="k">SDVANDA</span></td><td>VDA</td><td>Phủ vân đá (hatch) khi chưa có ảnh tấm đá thật</td></tr>
 <tr><td><span class="k">SDGACHTK</span></td><td>TKV</td><td>Bảng thống kê viên và số lượng đặt hàng</td></tr>
@@ -67,7 +69,9 @@ footer{margin-top:40px;color:var(--mut);font-size:14px;border-top:1px solid var(
 <ol><li>Nhập tỷ lệ bản vẽ chính 1/… (ví dụ 100).</li><li>Nhập tỷ lệ chi tiết (ví dụ 25).</li></ol>
 <p class="res">Kết quả: layer <code>SD-*</code>, kiểu chữ và kiểu kích thước được tạo; tỷ lệ lưu trong file DWG. Chạy một lần cho mỗi bản vẽ mới.</p></div>
 
-<div class="card"><h3>Bước 2 — <span class="k">SDGACH</span>: chia viên</h3>
+<div class="card"><h3>Bước 2 — chia viên: chọn <b>một</b> trong ba cách</h3>
+<p class="mut">Dùng cách nào tùy bản vẽ của bạn. Cả ba đều ra các viên dùng tiếp được ở bước 3 và 4.</p>
+<p><b>Cách A — <span class="k">SDGACH</span>:</b> một vùng lát đã có polyline kín.</p>
 <ol>
 <li>Chọn đường bao là một <b>polyline kín</b> (vẽ sẵn ranh giới vùng lát).</li>
 <li>Chọn lỗ / cột / cửa bên trong, hoặc Enter nếu không có.</li>
@@ -75,7 +79,23 @@ footer{margin-top:40px;color:var(--mut);font-size:14px;border-top:1px solid var(
 <li>Chọn kiểu lát: <b>Thang</b> (thẳng hàng), <b>Sole</b> (so le), <b>Xuongca</b> (xương cá), <b>Chevron</b>; góc xoay và điểm bắt đầu; viền nếu có.</li>
 <li>Chọn điểm bắt đầu chia (Enter = tâm vùng).</li>
 </ol>
-<p class="res">Kết quả: viên nguyên trên layer <code>SD-GACH</code>, viên cắt có mã G1-C1, G1-C2… trên <code>SD-GACH-CAT</code>, viên viền trên <code>SD-GACH-VIEN</code>. Dữ liệu viên lưu trong bản vẽ cho các lệnh thống kê.</p></div>
+<p class="res">Kết quả: viên nguyên trên layer <code>SD-GACH</code>, viên cắt có mã G1-C1, G1-C2… trên <code>SD-GACH-CAT</code>, viên viền trên <code>SD-GACH-VIEN</code>.</p>
+<p><b>Cách B — <span class="k">SDRAITAM</span>:</b> nhiều ô / phòng, rải theo kho tấm.</p>
+<ol>
+<li>Chọn chế độ <b>Panel</b> (tấm tiêu chuẩn + tấm dị hình + gỗ bù) hoặc <b>Da</b> (viên nguyên + viên cắt ở mép, đánh số theo thứ tự lát).</li>
+<li>Nhập kho tấm dạng <code>RxD:số-lượng</code>, cách nhau dấu phẩy (ví dụ <code>600x1200,450x1200,400x1200:20,300x1200</code>); số lượng 0 hoặc bỏ trống = không hạn chế.</li>
+<li>Chọn hướng cạnh dài, mạch / khe, góc xoay, kiểu rải (Thẳng hàng hoặc So le).</li>
+<li>Chọn các polyline kín là ô / phòng (polyline nằm trong ô khác được hiểu là lỗ, cột); chọn điểm bắt đầu rải (Enter = góc X, Y nhỏ nhất của ô); chọn điểm chèn bảng thống kê (Enter = bỏ qua).</li>
+</ol>
+<p class="res">Kết quả: chế độ Panel ra tấm tô màu theo kích thước (<code>SD-PANEL</code>), gỗ bù (<code>INFILL-TIMBER</code>), bảng mã tấm và file <code>_RaiTam.csv</code>. Chế độ Đá ra viên trên <code>SD-GACH</code>, dùng tiếp được cho thống kê.</p>
+<p><b>Cách C — <span class="k">SDDOCDA</span>:</b> bản vẽ chỉ có các nét rời (LINE, polyline hở…), chưa có polyline kín.</p>
+<ol>
+<li>Chạy ở chế độ <b>Doc</b>: quét chọn các nét mặt bằng ốp lát (hoặc chọn tất cả nét trên một layer), đặt dung sai nối đầu mút hở (mm) và diện tích ô nhỏ nhất bị bỏ.</li>
+<li>Lệnh tự tách nét tại giao điểm, nối đầu mút hở nhỏ, dựng các ô kín, rồi ghi bảng <code>_DocMatBang.csv</code> để bạn soát.</li>
+<li>Mở bảng bằng Excel, sửa kích thước nếu cần, đặt <code>bo = 1</code> cho cột / lỗ / ô thừa, lưu lại CSV.</li>
+<li>Chạy lại <span class="k">SDDOCDA</span> ở chế độ <b>Ve</b>, chọn file bảng để vẽ polyline kín từng viên.</li>
+</ol>
+<p class="res">Kết quả: polyline kín từng viên trên layer <code>SD-GACH-DOC</code>, dùng tiếp được cho <b>SDANHDA</b>, <b>SDVANDA</b> và thống kê. Hở lớn hơn dung sai thì ô không khép kín: tăng dung sai hoặc vẽ thêm nét. Chế độ <b>Kiem</b> khoanh đỏ các chỗ hở, đầu mút treo, ô mảnh vụn trên <code>SD-KIEMTRA</code>.</p></div>
 
 <div class="card"><h3>Bước 3 — <span class="k">SDANHDA</span> (có ảnh tấm đá) hoặc <span class="k">SDVANDA</span> (chưa có ảnh)</h3>
 <p><b>SDANHDA</b> — cắt ảnh tấm đá thô vào từng viên:</p>
