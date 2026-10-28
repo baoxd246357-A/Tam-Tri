@@ -73,6 +73,10 @@ def ev(x, E):
             v = ev(e, E)
             if v not in (None, False): return v
         return None
+    if h == 'progn':
+        r = None
+        for e in x[1:]: r = ev(e, E)
+        return r
     if h == 'while':
         while ev(x[1], E) not in (None, False):
             for e in x[2:]: ev(e, E)
@@ -109,7 +113,10 @@ def ev(x, E):
         '<': lambda a, b: True if a < b else None, '>': lambda a, b: True if a > b else None,
         '<=': lambda a, b: True if a <= b else None, '>=': lambda a, b: True if a >= b else None,
         'append': lambda *l: [i for s in l for i in (s or [])], 'cons': lambda a, l: [a] + (l or []),
-        'itoa': str,
+        'itoa': str, 'atoi': lambda s: int(re.match(r'-?\d*', s).group(0) or 0), 'max': max,
+        'vl-string-search': lambda p, s: (s.find(p) if p in s else None),
+        'type': lambda v: Sym('str') if isinstance(v, str) else Sym('list'),
+        'sd:lic-mid': lambda: 'AAAA-BBBB-CCCC',
     }
     if h in B: return B[h](*a)
     raise NameError(h)
@@ -128,6 +135,7 @@ def load(path, repl):
 if __name__ == '__main__':
     here = os.path.dirname(os.path.abspath(__file__))
     E = load(os.path.join(here, 'license_module.lsp'), {'@@SECRET@@': 'S'})
+    E.fn.pop('sd:lic-mid', None)
     rnd = random.Random(7); n = 0
     for _ in range(300):
         s = ''.join(rnd.choice('ABCDEF0123456789-{}|:GVC') for _ in range(rnd.randint(5, 60)))
@@ -135,4 +143,9 @@ if __name__ == '__main__':
         assert ev([Sym('sd:lic-mid-of'), s], E) == ref.lic_mid_of(s), s
         n += 1
     assert ev([Sym('sd:lic-norm'), ' ab-c1 d!'], E) == 'ABC1D'
+    for k in (0, 1, 9, 10):
+        v = f"{k}:" + ev([Sym('sd:lic-ucheck'), k], E)
+        assert ev([Sym('sd:lic-uparse'), v], E) == k, v
+    assert ev([Sym('sd:lic-uparse'), '3:XXXXX-XXXXX-XXXXX'], E) is None   # bi sua
+    assert ev([Sym('sd:lic-uparse'), 'abc'], E) is None
     print('OK: LISP khop Python tren', n, 'chuoi, khong tran so nguyen 32 bit')

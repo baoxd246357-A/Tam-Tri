@@ -30,3 +30,22 @@ python3 -I plugins/tools/sdoplat_keygen.py ABCD-EFGH-JKLM "Tên khách"
 - "Dùng một lần" ở đây là *một mã gắn một máy*. Chưa có máy chủ nên chưa chặn được việc khách xin mã nhiều lần cho nhiều máy (nhật ký csv chỉ để bạn theo dõi). Muốn khóa thật sự chặt thì cần dịch vụ kích hoạt online.
 - Cài lại Windows có thể đổi MachineGuid → Mã máy mới → bạn cần quyết chính sách cấp lại.
 - Máy không đọc được registry MachineGuid sẽ dùng tên máy + số serial ổ C: (kém ổn định hơn).
+
+## Dùng thử N lần rồi mới kích hoạt
+Build có khóa mặc định cho **10 lần chạy lệnh khóa** trước khi yêu cầu kích hoạt; đổi bằng `--trial=N`:
+```bash
+SDOPLAT_SECRET='...' python3 -I plugins/tools/build_oplat.py plugins/ShopDrawing <thu-muc-ngoai-repo> --licensed --trial=10
+```
+- Mỗi lần chạy một lệnh bị khóa (đếm cả lệnh con do `SDQUYTRINH` gọi) tính là 1 lần; mỗi lần hiện "còn x / N lần".
+- Bộ đếm lưu 2 nơi: registry `HKCU\Software\SDOpLat\Uses` và file `%APPDATA%\SDOpLat.dat`, kèm mã kiểm tra gắn với máy; sửa tay hoặc chép từ máy khác sẽ bị coi là **hết lượt**.
+- Chống lách yếu: xóa cả hai nơi thì bộ đếm về 0. Đây là giới hạn của khóa offline.
+- Đếm theo *lần chạy lệnh*, không theo ngày. Muốn dùng thử theo ngày cần viết thêm.
+
+## Biên dịch thành .fas (bạn làm trong AutoCAD)
+Tôi không biên dịch được ngoài AutoCAD. Cách làm:
+1. Build bản bán với `--licensed --fas` (file nạp và `.mnl` sẽ trỏ tới `SDOpLat.fas`):
+   `... build_oplat.py plugins/ShopDrawing <thu-muc-ban-hang> --licensed --fas`
+2. Trong AutoCAD: `APPLOAD` → `plugins/tools/compile_to_fas.lsp` → gõ `BIENDICH` → chọn `<thu-muc-ban-hang>\SDOpLat.lsp`. Sinh ra `SDOpLat.fas`.
+3. **Xóa `SDOpLat.lsp`** khỏi thư mục bán, kiểm tra `APPLOAD` → `SDOpLat.fas` chạy bình thường, `SDKICHHOAT` hoạt động.
+4. Muốn `.vlx` thay vì `.fas`: `VLIDE` → Tools → Make Application → Application Wizard, chọn `SDOpLat.fas`.
+Nếu `BIENDICH` báo lỗi, dùng `VLIDE` biên dịch thủ công, hoặc gửi lại thông báo lỗi cho tôi.

@@ -6,7 +6,7 @@
 (setq *SD:LICSECRET* "@@SECRET@@")
 (setq *SD:LICABC* "ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
 (setq *SD:LICREG* "HKEY_CURRENT_USER\\Software\\SDOpLat")
-(setq *SD:LICOK* nil *SD:LICMID* nil)
+(setq *SD:LICOK* nil *SD:LICMID* nil *SD:LICTRIAL* @@TRIAL@@)
 
 (defun sd:lic-setnth (l k v / i r)
   (setq i 0)
@@ -80,20 +80,49 @@
         (if (and (= (type st) 'STR) (= (sd:lic-norm st) (sd:lic-norm (sd:lic-expect))))
           (setq *SD:LICOK* t)))))
 
-(defun sd:lic-run (f)
-  (if (sd:lic-ok)
-    (apply f nil)
-    (progn
-      (princ "\n[SD] Chua kich hoat ban quyen. Go SDKICHHOAT, gui Ma may cho nha cung cap de nhan ma kich hoat.")
-      (princ (strcat "\n     Ma may cua ban: " (sd:lic-mid)))
-      (princ))))
+
+;; --- Dung thu: so lan chay lenh khoa truoc khi kich hoat, luu 2 cho (registry + file) kem ma kiem tra gan voi may
+(defun sd:lic-ucheck (n) (sd:lic-code (strcat "U|" (itoa n) "|" (sd:lic-mid) "|" *SD:LICSECRET*)))
+(defun sd:lic-uparse (v / p n)
+  ;; "n:ma" -> n neu hop le, nil neu sai / bi sua
+  (if (and (= (type v) 'STR) (setq p (vl-string-search ":" v)))
+    (progn (setq n (atoi (substr v 1 p)))
+           (if (and (>= n 0) (= (substr v (+ p 2)) (sd:lic-ucheck n))) n))))
+(defun sd:lic-ufile () (strcat (cond ((getenv "APPDATA")) ((getenv "TEMP")) ("C:")) "\\SDOpLat.dat"))
+(defun sd:lic-uread (/ rv fv f a b)
+  (setq rv (vl-catch-all-apply 'vl-registry-read (list *SD:LICREG* "Uses")))
+  (if (vl-catch-all-error-p rv) (setq rv nil))
+  (if (and (findfile (sd:lic-ufile)) (setq f (open (sd:lic-ufile) "r")))
+    (progn (setq fv (read-line f)) (close f)))
+  ;; co du lieu nhung khong hop le (bi sua) -> coi nhu het luot
+  (setq a (if rv (sd:lic-uparse rv)) b (if fv (sd:lic-uparse fv)))
+  (cond ((or (and rv (null a)) (and fv (null b))) *SD:LICTRIAL*)
+        (t (max (cond (a) (0)) (cond (b) (0))))))
+(defun sd:lic-uwrite (n / v f)
+  (setq v (strcat (itoa n) ":" (sd:lic-ucheck n)))
+  (vl-catch-all-apply 'vl-registry-write (list *SD:LICREG* "Uses" v))
+  (if (setq f (vl-catch-all-apply 'open (list (sd:lic-ufile) "w")))
+    (if (not (vl-catch-all-error-p f)) (progn (write-line v f) (close f)))))
+
+(defun sd:lic-run (f / n)
+  (cond
+    ((sd:lic-ok) (apply f nil))
+    ((< (setq n (sd:lic-uread)) *SD:LICTRIAL*)
+     (sd:lic-uwrite (1+ n))
+     (princ (strcat "\n[SD] Ban dung thu: con " (itoa (- *SD:LICTRIAL* n 1)) " / " (itoa *SD:LICTRIAL*)
+                    " lan chay lenh. Go SDKICHHOAT de kich hoat."))
+     (apply f nil))
+    (t
+     (princ (strcat "\n[SD] Het " (itoa *SD:LICTRIAL*) " lan dung thu. Go SDKICHHOAT, gui Ma may cho nha cung cap de nhan ma kich hoat."))
+     (princ (strcat "\n     Ma may cua ban: " (sd:lic-mid)))
+     (princ))))
 
 (defun c:SDKICHHOAT (/ code)
   (princ (strcat "\n[SD] Ma may: " (sd:lic-mid)))
   (cond
     ((sd:lic-ok) (princ "\n[SD] Da kich hoat tren may nay."))
     (t
-     (princ "\n[SD] Chua kich hoat. Gui Ma may o tren cho nha cung cap de nhan Ma kich hoat.")
+     (princ (strcat "\n[SD] Chua kich hoat (dung thu: da dung " (itoa (sd:lic-uread)) " / " (itoa *SD:LICTRIAL*) " lan). Gui Ma may o tren cho nha cung cap de nhan Ma kich hoat."))
      (setq code (getstring T "\nNhap Ma kich hoat <Enter = de sau>: "))
      (cond
        ((= (sd:lic-norm code) "") (princ "\n[SD] Chua nhap ma."))

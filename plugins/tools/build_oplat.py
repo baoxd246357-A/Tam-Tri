@@ -10,6 +10,8 @@ args = [a for a in sys.argv[1:] if not a.startswith('--')]
 SRC, OUT = args[0], args[1]
 LICENSED = '--licensed' in sys.argv
 SECRET = os.environ.get('SDOPLAT_SECRET', '')
+TRIAL = int(next((a.split('=')[1] for a in sys.argv if a.startswith('--trial=')), 10))
+FAS = '--fas' in sys.argv  # goi chi co .fas (da bienpile): doi ten file nap .lsp -> .fas
 if LICENSED and len(SECRET) < 16:
     sys.exit('Ban co khoa: dat bien moi truong SDOPLAT_SECRET (>= 16 ky tu, bi mat cua ban) truoc khi build.')
 FREE = {'SDKICHHOAT', 'SDHELP', 'SDPANEL', 'SDMENU', 'SDMENUXOA', 'SDTUNAP', 'SDDLG'}
@@ -129,7 +131,7 @@ if LICENSED:
     import sdoplat_lic as lic
     vec_mid = lic.lic_mid_of('G:TEST-MACHINE')
     mod = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'license_module.lsp'), encoding='utf-8').read()
-    mod = mod.replace('@@SECRET@@', SECRET.replace('\\', '\\\\').replace('"', '\\"')).replace('@@VEC_MID@@', vec_mid).replace('@@VEC_CODE@@', lic.lic_code(vec_mid + '|TEST'))
+    mod = mod.replace('@@SECRET@@', SECRET.replace('\\', '\\\\').replace('"', '\\"')).replace('@@TRIAL@@', str(TRIAL)).replace('@@VEC_MID@@', vec_mid).replace('@@VEC_CODE@@', lic.lic_code(vec_mid + '|TEST'))
     gated = [c for c in CMDS if c not in FREE]
     for c in gated:
         body, n = re.subn(r'\(defun c:%s(\s*\()' % c, r'(defun sd:cmd-%s\1' % c, body)
@@ -151,6 +153,8 @@ header = (";;; =================================================================
           ";;; ==========================================================================\r\n") % (PRODUCT, PRODUCT_VER)
 body = body[body.index('(vl-load-com)'):]  # bo comment dau file cu (noi dung BTCT / thep)
 os.makedirs(OUT, exist_ok=True)
+if FAS:
+    body = body.replace('SDOpLat.lsp', 'SDOpLat.fas')
 open(f'{OUT}/SDOpLat.lsp', 'w', encoding='latin-1', newline='').write(header + body)
 
 # ---------------------------------------------------------------- menu .mnu
@@ -227,7 +231,7 @@ open(f'{OUT}/SDOpLat.mnu', 'w', encoding='latin-1', newline='').write(final.repl
 
 # ---------------------------------------------------------------- mnl
 open(f'{OUT}/SDOpLat.mnl', 'w', encoding='latin-1', newline='').write(
-    open(f'{SRC}/ShopDrawing.mnl', encoding='latin-1', newline='').read().replace('ShopDrawing', 'SDOpLat'))
+    open(f'{SRC}/ShopDrawing.mnl', encoding='latin-1', newline='').read().replace('ShopDrawing', 'SDOpLat').replace('SDOpLat.lsp', 'SDOpLat.fas' if FAS else 'SDOpLat.lsp'))
 
 # ---------------------------------------------------------------- icon, map, pat, md
 n = 0
@@ -310,10 +314,13 @@ LUU Y
   Co the chay tren cac phan mem CAD tuong tu ho tro AutoLISP / Visual LISP (vi du ZWCAD, GstarCAD, BricsCAD) nhung chua duoc kiem tra.
 - Cac lenh xuat bang sang Excel can Microsoft Excel (hoac phan mem bang tinh tuong tu co ho tro COM - chua kiem tra). Khong co Excel thi cac lenh co xuat file CSV van co the mo bang phan mem khac.
 - Chua kiem tra tren moi phien ban AutoCAD.
-- SDMENU / SDTUNAP them thu muc cai dat vao Support File Search Path va Trusted Locations (TRUSTEDPATHS) va co the ghi khoi tu nap vao acaddoc.lsp cua nguoi dung; go bang SDMENUXOA va chay lai SDTUNAP.
+@@LICNOTE@@- SDMENU / SDTUNAP them thu muc cai dat vao Support File Search Path va Trusted Locations (TRUSTEDPATHS) va co the ghi khoi tu nap vao acaddoc.lsp cua nguoi dung; go bang SDMENUXOA va chay lai SDTUNAP.
 - Moi lenh gom vao mot lan Undo: go U de hoan tac ca lenh.
 - Bao loi kem phien ban AutoCAD, ten lenh va cac dong lenh hien ra.
 """ % PRODUCT_VER
+CAIDAT = CAIDAT.replace('@@LICNOTE@@', ('- Ban quyen: moi may dung thu %d lan chay lenh, sau do go SDKICHHOAT, gui Ma may cho nha cung cap de nhan Ma kich hoat.\n' % TRIAL) if LICENSED else '')
+if FAS:
+    CAIDAT = CAIDAT.replace('SDOpLat.lsp', 'SDOpLat.fas')
 open(f'{OUT}/CaiDat.txt', 'w', encoding='utf-8-sig', newline='').write(CAIDAT.replace('\n', '\r\n'))
 BANQUYEN = """BAN QUYEN VA DIEU KHOAN SU DUNG (MAU - NGUOI BAN TU DIEN VA THAM KHAO Y KIEN PHAP LY)
 Op Lat Tools v%s
