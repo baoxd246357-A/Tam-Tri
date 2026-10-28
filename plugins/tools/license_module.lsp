@@ -71,8 +71,10 @@
                   nil))
       (strcat "C:" comp "|V:" (if (= (type vol) 'STR) vol "")))))
 
+;; Luu y: OR cua AutoLISP chi tra T / nil, khong tra gia tri -> dung COND de tra chuoi
 (defun sd:lic-mid ()
-  (or *SD:LICMID* (setq *SD:LICMID* (sd:lic-mid-of (sd:lic-raw)))))
+  (cond (*SD:LICMID*)
+        (t (setq *SD:LICMID* (sd:lic-mid-of (sd:lic-raw))))))
 
 (defun sd:lic-expect () (sd:lic-code (strcat (sd:lic-mid) "|" *SD:LICSECRET*)))
 

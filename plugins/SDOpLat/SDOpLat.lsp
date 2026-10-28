@@ -5939,7 +5939,7 @@
         ((/= (nth 1 (cadr a)) (nth 1 (cadr b))) (< (nth 1 (cadr a)) (nth 1 (cadr b))))
         (t (< (nth 4 (cadr a)) (nth 4 (cadr b))))))
 
-(defun c:SDDIEMBD (/ r e pts hs holes i W H jt hep q huong ang rp rh cands res best sc ow k kgap o)
+(defun c:SDDIEMBD (/ r e pts hs holes i W H jt hep q huong ang rp rh cands res best sc ow k kgap o ho2)
   (sd:begin)
   (setq *SD:IFRAME* nil)
   (if (sd:dlg "So sanh diem bat dau rai (SDDIEMBD)"
@@ -5973,7 +5973,7 @@
               (progn (setq i 0)
                      (repeat (sslength hs)
                        (if (not (equal (ssname hs i) e))
-                         (setq holes (cons (sd:curve-pts (cond ((and (> kgap 0.0) (sd:offset (ssname hs i) kgap nil))) ((ssname hs i)))) holes)))
+                         (setq holes (cons (sd:curve-pts (if (and (> kgap 0.0) (setq ho2 (sd:offset (ssname hs i) kgap nil))) ho2 (ssname hs i))) holes)))
                        (setq i (1+ i)))))
             ;; goc luoi (rad)
             (setq ang (cond ((= huong "Truc") 0.0)

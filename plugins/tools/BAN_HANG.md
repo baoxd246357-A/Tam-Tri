@@ -55,3 +55,6 @@ Nếu `BIENDICH` báo lỗi, dùng `VLIDE` biên dịch thủ công, hoặc gử
 
 ## Bài học: kiểm tra tên hàm AutoLISP
 `lisp_emu.py` có thêm bước kiểm tra mọi hàm trong `license_module.lsp` có phải hàm AutoLISP thật không (bắt được lỗi dùng `logxor` — AutoLISP không có hàm này, phải dùng `(logior)` trừ `(logand)`). Chạy lại sau mỗi lần sửa module khóa.
+
+## Bài học 2: OR / AND của AutoLISP chỉ trả T hoặc nil
+Khác nhiều ngôn ngữ khác, `(or a b)` trả `T`/`nil`, không trả giá trị của `a`; `(cond ((and x y)))` một mệnh đề cũng trả `T`. Đã gặp 2 lỗi do đây (Mã máy trả `T` thay vì chuỗi; offset lỗ/cột trong SDDIEMBD). `lisp_emu.py` giờ mô phỏng đúng cách này và có test `sd:lic-mid` trả chuỗi.

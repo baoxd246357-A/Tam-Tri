@@ -62,16 +62,13 @@ def ev(x, E):
                 for e in cl[1:]: r = ev(e, E)
                 return r
         return None
-    if h == 'and':
-        v = True
+    if h == 'and':   # AutoLISP: AND / OR chi tra T hoac nil, khong tra gia tri
         for e in x[1:]:
-            v = ev(e, E)
-            if v in (None, False): return None
-        return v
+            if ev(e, E) in (None, False): return None
+        return True
     if h == 'or':
         for e in x[1:]:
-            v = ev(e, E)
-            if v not in (None, False): return v
+            if ev(e, E) not in (None, False): return True
         return None
     if h == 'progn':
         r = None
@@ -146,7 +143,7 @@ def check_known(path):
     for m in re.finditer(r'\(defun\s+\S+\s*\(([^)]*)\)', src):
         params |= set(x.lower() for x in m.group(1).replace('/', ' ').split())
     bad = sorted(h for h in heads if h not in KNOWN and h not in {d.lower() for d in defined} and h not in params
-                 and not h.startswith('c:') and not re.fullmatch(r'-?\d+', h) and h != 't')
+                 and not h.startswith('c:') and not h.startswith('*') and not re.fullmatch(r'-?\d+', h) and h != 't')
     return bad
 
 if __name__ == '__main__':
@@ -156,6 +153,11 @@ if __name__ == '__main__':
     print('OK: moi ham trong license_module.lsp la ham AutoLISP that hoac duoc defun')
     here = os.path.dirname(os.path.abspath(__file__))
     E = load(os.path.join(here, 'license_module.lsp'), {'@@SECRET@@': 'S'})
+    # kiem tra sd:lic-mid tra ve CHUOI (loi that tren AutoCAD: OR tra T)
+    E.fn['sd:lic-raw'] = ([], [parse(tokenize('"G:ABC-123"'))[0]])
+    mid = ev([Sym('sd:lic-mid')], E)
+    assert isinstance(mid, str) and len(mid) == 14, mid
+    assert ev([Sym('sd:lic-mid')], E) == mid
     E.fn.pop('sd:lic-mid', None)
     rnd = random.Random(7); n = 0
     for _ in range(300):
