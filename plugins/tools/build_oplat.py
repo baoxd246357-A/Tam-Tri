@@ -6,7 +6,13 @@ Khong sua nguon. Goi ra: SDOpLat.lsp, SDOpLat.mnu, SDOpLat.mnl, huong dan, icon,
 """
 import re, sys, os, shutil, collections
 
-SRC, OUT = sys.argv[1], sys.argv[2]
+args = [a for a in sys.argv[1:] if not a.startswith('--')]
+SRC, OUT = args[0], args[1]
+LICENSED = '--licensed' in sys.argv
+SECRET = os.environ.get('SDOPLAT_SECRET', '')
+if LICENSED and len(SECRET) < 16:
+    sys.exit('Ban co khoa: dat bien moi truong SDOPLAT_SECRET (>= 16 ky tu, bi mat cua ban) truoc khi build.')
+FREE = {'SDKICHHOAT', 'SDHELP', 'SDPANEL', 'SDMENU', 'SDMENUXOA', 'SDTUNAP', 'SDDLG'}
 NL = '\r\n'
 PRODUCT = 'Op Lat Tools'
 PRODUCT_VER = '1.0.0'
@@ -70,6 +76,8 @@ def patch(text):
                 m = re.match(r'\s*\("[^"]+" "(SD[A-Z0-9]+)"', ln)
                 if m and m.group(1) in CMDSET:
                     keep.append(ln.rstrip('\r').rstrip(')').rstrip() + ')')
+            if LICENSED:
+                keep.append('    ("Tien ich" "SDKICHHOAT" "Kich hoat ban quyen tren may nay bang Ma kich hoat" "KH" "KHB")')
             seg = head + NL.join(keep).lstrip() + '))' + NL
             seg = seg.replace(head + '(', head + '(', 1)
         elif f['name'] == '*SD:PICS*':
@@ -114,6 +122,23 @@ for k in sorted(keep):
     if forms[k]['kind'] == 'other' and any(d in seg for d in DROP_OTHER): continue
     parts.append(seg)
 body = ''.join(parts) + tail
+
+# ---------------------------------------------------------------- khoa ban quyen theo may
+if LICENSED:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import sdoplat_lic as lic
+    vec_mid = lic.lic_mid_of('G:TEST-MACHINE')
+    mod = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'license_module.lsp'), encoding='utf-8').read()
+    mod = mod.replace('@@SECRET@@', SECRET.replace('\\', '\\\\').replace('"', '\\"')).replace('@@VEC_MID@@', vec_mid).replace('@@VEC_CODE@@', lic.lic_code(vec_mid + '|TEST'))
+    gated = [c for c in CMDS if c not in FREE]
+    for c in gated:
+        body, n = re.subn(r'\(defun c:%s(\s*\()' % c, r'(defun sd:cmd-%s\1' % c, body)
+        assert n == 1, c
+    wr = ''.join('(defun c:%s () (sd:lic-run (quote sd:cmd-%s)))\r\n' % (c, c) for c in gated)
+    mod += '\r\n;; Cac lenh duoc khoa\r\n' + wr + "(vl-catch-all-apply (quote (lambda () (if (not (sd:lic-ok)) (princ (strcat \"\\n[SD] Chua kich hoat: go SDKICHHOAT. Ma may: \" (sd:lic-mid)))))) nil)\r\n"
+    anchor = '(princ (strcat "\\n[SD] ShopDrawing Tools v"'
+    assert body.count(anchor) == 1
+    body = body.replace(anchor, mod.replace('\r\n', '\n').replace('\n', '\r\n') + anchor)
 
 # ---------------------------------------------------------------- doi ten san pham
 body = body.replace('(setq *SD:VER* "2.58.0")', '(setq *SD:VER* "%s")' % PRODUCT_VER)
@@ -170,6 +195,8 @@ popt = '\n'.join(res_pop)
 if 'SDHANDINH' not in popt:
     hd = 'ID_SD_SDHANDINH [Han dinh: gop dinh polyline lech nhau, chen dinh nut chu T (SDHANDINH / HDI)]^C^CSDHANDINH'
     popt = popt.replace('ID_SD_SDPANEL [', hd + '\nID_SD_SDPANEL [', 1)
+if LICENSED and 'SDKICHHOAT' not in popt:
+    popt = popt.replace('ID_SD_SDPANEL [', 'ID_SD_SDKICHHOAT [Kich hoat ban quyen tren may nay (SDKICHHOAT / KHB)]^C^CSDKICHHOAT\nID_SD_SDPANEL [', 1)
 # TOOLBARS
 tbl = []; blocks = re.split(r'\n(?=\*\*SD_TB\d+)', tbs)
 for b in blocks:
@@ -188,6 +215,8 @@ for l in hlp.split('\n'):
     m = re.match(r'ID_SD_(?:TB_)?(SD[A-Z0-9]+) \[', l)
     if m and m.group(1) in CMDSET: hl.append(l)
     elif not m and l.strip(): hl.append(l)
+if LICENSED:
+    hl.append('ID_SD_SDKICHHOAT [SDKICHHOAT (lenh tat KHB): Kich hoat ban quyen]')
 hl.append('ID_SD_SDHANDINH [SDHANDINH (lenh tat HDI): Han dinh polyline]')
 hl.append('ID_SD_TB_SDHANDINH [SDHANDINH (lenh tat HDI): Han dinh polyline]')
 final = pre + '***POP1' + popt + '\n***TOOLBARS' + tbt + '\n***HELPSTRINGS\n' + '\n'.join(hl) + '\n'
@@ -219,6 +248,8 @@ open(f'{OUT}/HuongDanQuyTrinhDa.md', 'w', encoding='utf-8', newline='').write(md
 # ---------------------------------------------------------------- LenhTat.csv
 raw = open(f'{SRC}/LenhTat.csv', 'rb').read().decode('utf-8-sig').split('\r\n')
 keepcsv = [raw[0]] + [l for l in raw[1:] if l and l.split(';')[2] in CMDSET]
+if LICENSED:
+    keepcsv.append('Tiện ích;KHB;SDKICHHOAT;Kích hoạt bản quyền;Hiện Mã máy và nhập Mã kích hoạt do nhà cung cấp cấp')
 open(f'{OUT}/LenhTat.csv', 'wb').write(('﻿' + '\r\n'.join(keepcsv) + '\r\n').encode('utf-8'))
 
 # ---------------------------------------------------------------- HuongDanLenh.html
@@ -230,6 +261,10 @@ def cmd_block(m):
 h = re.sub(r'<div class="cmd"[^>]*>.*?</div>\n?', cmd_block, h, flags=re.S)
 h = re.sub(r'<tr><td class="a">[^<]*</td><td class="c">(SD[A-Z0-9]+)</td>.*?</tr>\s*', lambda m: m.group(0) if m.group(1) in CMDSET else '', h, flags=re.S)
 h = re.sub(r'<div class="box"><h3[^>]*>[^<]*</h3><table>\s*</table></div>\s*', '', h)
+if LICENSED:
+    blk = '<div class="cmd" style="--grp:#5a5a5a"><h4><span class="k">KHB</span> &nbsp;<code>SDKICHHOAT</code></h4><p>Kích hoạt bản quyền trên máy này. Lệnh hiện <b>Mã máy</b>; gửi mã này cho nhà cung cấp để nhận <b>Mã kích hoạt</b>, rồi nhập vào.</p><ol><li>Gõ SDKICHHOAT, ghi lại Mã máy (dạng XXXX-XXXX-XXXX).</li><li>Gửi Mã máy cho nhà cung cấp, nhận Mã kích hoạt (dạng XXXXX-XXXXX-XXXXX).</li><li>Gõ lại SDKICHHOAT và nhập mã.</li></ol><p class="note"><b>Lưu ý:</b> Mã chỉ dùng được trên đúng máy đã gửi Mã máy. Cài lại Windows hoặc đổi máy thì Mã máy đổi, cần xin mã mới theo chính sách của nhà cung cấp.</p></div>\n'
+    h = h.replace('<h3><span class="dot"', blk + '<h3><span class="dot"', 1) if False else h
+    h = re.sub(r'(<h2>Hướng dẫn chi tiết từng lệnh</h2>)', r'\1\n' + blk.replace('\\', '\\\\'), h, count=1)
 def flow(m):
     ks = re.findall(r'<span class="k">([^<]*)</span>', m.group(0))
     return m.group(0) if all(k in alias for k in ks) else ''
