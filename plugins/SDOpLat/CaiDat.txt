@@ -20,8 +20,16 @@ BAT DAU
 - Thu muc Maps: map da granite cho SDMAP / SDANHDA; file .pat: van da cho SDVANDA.
 - Chay TYLE (SDSET) dau tien cho ban ve moi de dat ty le, layer, dimstyle.
 
+LUU Y VE TIEU CHUAN VA TRACH NHIEM
+- Cac so lieu, tieu chuan (TCVN, ISPSC, quy dinh xay dung nuoc ngoai...) va goi y trong plugin chi de THAM KHAO.
+  Nguoi dung tu kiem tra, doi chieu ho so thiet ke / tieu chuan ap dung va chiu trach nhiem ve ban ve, khoi luong, dat hang, thi cong.
+
 LUU Y
-- Can AutoCAD ban day du tren Windows (cac lenh xuat Excel dung Excel/COM). Chua kiem tra tren moi phien ban AutoCAD hay phan mem CAD khac.
+- He dieu hanh: Windows (plugin dung COM / Visual LISP nen khong dung cho Mac). Phan mem CAD: AutoCAD ban day du; AutoCAD LT chua duoc kiem tra
+  (LT khong ho tro COM / Visual LISP day du nen nhieu lenh co the khong chay).
+  Co the chay tren cac phan mem CAD tuong tu ho tro AutoLISP / Visual LISP (vi du ZWCAD, GstarCAD, BricsCAD) nhung chua duoc kiem tra.
+- Cac lenh xuat bang sang Excel can Microsoft Excel (hoac phan mem bang tinh tuong tu co ho tro COM - chua kiem tra). Khong co Excel thi cac lenh co xuat file CSV van co the mo bang phan mem khac.
+- Chua kiem tra tren moi phien ban AutoCAD.
 - SDMENU / SDTUNAP them thu muc cai dat vao Support File Search Path va Trusted Locations (TRUSTEDPATHS) va co the ghi khoi tu nap vao acaddoc.lsp cua nguoi dung; go bang SDMENUXOA va chay lai SDTUNAP.
 - Moi lenh gom vao mot lan Undo: go U de hoan tac ca lenh.
 - Bao loi kem phien ban AutoCAD, ten lenh va cac dong lenh hien ra.

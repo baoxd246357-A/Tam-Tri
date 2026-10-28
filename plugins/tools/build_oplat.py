@@ -237,6 +237,7 @@ h = h.replace('<span class="k">KTA</span>', '<span class="k">KLT</span>')
 h = re.sub(r'<p class="flow">.*?</p>\n?', flow, h, flags=re.S)
 h = re.sub(r'<h3><span class="dot"[^>]*></span>[^<]*</h3>\s*(?=<h3>|<p class="note">|</main>)', '', h)
 h = re.sub(r'<p class="note">Sinh t[^<]*</p>', '', h)
+h = re.sub(r'(<p class="sub">.*?</p>)', r'\1<p class="note"><b>Luu y:</b> Cac so lieu, tieu chuan va goi y trong huong dan chi de tham khao; nguoi dung tu kiem tra va chiu trach nhiem ve ban ve, khoi luong, dat hang va thi cong. Can Windows; lenh xuat Excel can Microsoft Excel (hoac phan mem tuong tu co ho tro COM, chua kiem tra).</p>', h, count=1, flags=re.S)
 h = h.replace('ShopDrawing Tools', PRODUCT).replace('SDKIEMTRA', 'SDKTLAT')
 open(f'{OUT}/HuongDanLenh.html', 'w', encoding='utf-8', newline='').write(h)
 print('cmds', len(CMDS), 'lsp bytes', os.path.getsize(f'{OUT}/SDOpLat.lsp'), 'icons', n)
@@ -264,8 +265,16 @@ BAT DAU
 - Thu muc Maps: map da granite cho SDMAP / SDANHDA; file .pat: van da cho SDVANDA.
 - Chay TYLE (SDSET) dau tien cho ban ve moi de dat ty le, layer, dimstyle.
 
+LUU Y VE TIEU CHUAN VA TRACH NHIEM
+- Cac so lieu, tieu chuan (TCVN, ISPSC, quy dinh xay dung nuoc ngoai...) va goi y trong plugin chi de THAM KHAO.
+  Nguoi dung tu kiem tra, doi chieu ho so thiet ke / tieu chuan ap dung va chiu trach nhiem ve ban ve, khoi luong, dat hang, thi cong.
+
 LUU Y
-- Can AutoCAD ban day du tren Windows (cac lenh xuat Excel dung Excel/COM). Chua kiem tra tren moi phien ban AutoCAD hay phan mem CAD khac.
+- He dieu hanh: Windows (plugin dung COM / Visual LISP nen khong dung cho Mac). Phan mem CAD: AutoCAD ban day du; AutoCAD LT chua duoc kiem tra
+  (LT khong ho tro COM / Visual LISP day du nen nhieu lenh co the khong chay).
+  Co the chay tren cac phan mem CAD tuong tu ho tro AutoLISP / Visual LISP (vi du ZWCAD, GstarCAD, BricsCAD) nhung chua duoc kiem tra.
+- Cac lenh xuat bang sang Excel can Microsoft Excel (hoac phan mem bang tinh tuong tu co ho tro COM - chua kiem tra). Khong co Excel thi cac lenh co xuat file CSV van co the mo bang phan mem khac.
+- Chua kiem tra tren moi phien ban AutoCAD.
 - SDMENU / SDTUNAP them thu muc cai dat vao Support File Search Path va Trusted Locations (TRUSTEDPATHS) va co the ghi khoi tu nap vao acaddoc.lsp cua nguoi dung; go bang SDMENUXOA va chay lai SDTUNAP.
 - Moi lenh gom vao mot lan Undo: go U de hoan tac ca lenh.
 - Bao loi kem phien ban AutoCAD, ten lenh va cac dong lenh hien ra.
@@ -278,8 +287,9 @@ Op Lat Tools v%s
 1. Phan mem cap phep su dung, khong chuyen nhuong quyen so huu.
 2. Gioi han: [SO MAY / SO NGUOI DUNG].
 3. Khong duoc sao chep de phan phoi, ban lai, cho thue hoac go bo thong tin ban quyen.
-4. Phan mem cung cap nguyen trang, khong bao dam phu hop moi muc dich; trach nhiem toi da
+4. Cac so lieu, tieu chuan va goi y trong phan mem chi de tham khao; nguoi dung tu kiem tra va chiu trach nhiem ve ban ve, khoi luong, dat hang va thi cong.
+5. Phan mem cung cap nguyen trang, khong bao dam phu hop moi muc dich; trach nhiem toi da
    gioi han trong muc phi da thu. Nguoi dung tu kiem tra ket qua truoc khi thi cong / dat hang.
-5. Lien he ho tro: [EMAIL / DIEN THOAI].
+6. Lien he ho tro: [EMAIL / DIEN THOAI].
 """ % PRODUCT_VER
 open(f'{OUT}/BanQuyen.txt', 'w', encoding='utf-8-sig', newline='').write(BANQUYEN.replace('\n', '\r\n'))
