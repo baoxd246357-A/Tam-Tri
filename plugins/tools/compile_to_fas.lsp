@@ -6,10 +6,10 @@
   (if (setq f (getfiled "Chon SDOpLat.lsp can bien dich" "" "lsp" 4))
     (progn
       (setq out (strcat (vl-filename-directory f) "\\SDOpLat.fas"))
-      ;; thu che do toi uu + noi ('lsa); loi thi thu che do chuan ('st)
-      (setq ok (vl-catch-all-apply 'vlisp-compile (list 'lsa f out)))
+      ;; che do chuan 'st truoc (on dinh nhat); loi thi thu 'lsa (toi uu + noi)
+      (setq ok (vl-catch-all-apply 'vlisp-compile (list 'st f out)))
       (if (or (vl-catch-all-error-p ok) (not ok) (not (findfile out)))
-        (setq ok (vl-catch-all-apply 'vlisp-compile (list 'st f out))))
+        (setq ok (vl-catch-all-apply 'vlisp-compile (list 'lsa f out))))
       (princ (if (and ok (not (vl-catch-all-error-p ok)) (findfile out))
                (strcat "\nDa tao: " out "\nThu: (load \"" (vl-string-translate "\\" "/" out) "\") roi go SDKICHHOAT.")
                "\nBien dich that bai. Thu mo VLIDE (go VLIDE), nap SDOpLat.lsp, dung Tools > Make Application."))))
