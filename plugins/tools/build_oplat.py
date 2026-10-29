@@ -332,6 +332,8 @@ BAT DAU
 - LenhTat.csv: danh sach lenh tat.
 - Thu muc Maps: map da granite cho SDMAP / SDANHDA; file .pat: van da cho SDVANDA.
 - Chay TYLE (SDSET) dau tien cho ban ve moi de dat ty le, layer, dimstyle.
+- TroLyOpLat.html: tro ly hoi dap OFFLINE (mo bang trinh duyet, khong can mang): hoi cach dung lenh, cai dat, kich hoat, xu ly su co.
+- SDOpLat-HuongDanKhach.html: huong dan nhanh cac lenh co ban.
 
 LUU Y VE TIEU CHUAN VA TRACH NHIEM
 - Cac so lieu, tieu chuan (TCVN, ISPSC, quy dinh xay dung nuoc ngoai...) va goi y trong plugin chi de THAM KHAO.
@@ -364,3 +366,10 @@ Op Lat Tools v%s
 6. Lien he ho tro: [EMAIL / DIEN THOAI].
 """ % PRODUCT_VER
 open(f'{OUT}/BanQuyen.txt', 'w', encoding='utf-8-sig', newline='').write(BANQUYEN.replace('\n', '\r\n'))
+
+# ---------------------------------------------------------------- tro ly offline (hoi dap tu tai lieu cua goi)
+_guide = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'SDOpLat-HuongDanKhach.html')
+if os.path.exists(_guide):
+    import subprocess
+    subprocess.check_call([sys.executable, '-I', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'build_assistant.py'), OUT, _guide, f'{OUT}/TroLyOpLat.html'])
+    shutil.copy(_guide, f'{OUT}/SDOpLat-HuongDanKhach.html')

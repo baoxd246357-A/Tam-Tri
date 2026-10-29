@@ -19,6 +19,8 @@ BAT DAU
 - LenhTat.csv: danh sach lenh tat.
 - Thu muc Maps: map da granite cho SDMAP / SDANHDA; file .pat: van da cho SDVANDA.
 - Chay TYLE (SDSET) dau tien cho ban ve moi de dat ty le, layer, dimstyle.
+- TroLyOpLat.html: tro ly hoi dap OFFLINE (mo bang trinh duyet, khong can mang): hoi cach dung lenh, cai dat, kich hoat, xu ly su co.
+- SDOpLat-HuongDanKhach.html: huong dan nhanh cac lenh co ban.
 
 LUU Y VE TIEU CHUAN VA TRACH NHIEM
 - Cac so lieu, tieu chuan (TCVN, ISPSC, quy dinh xay dung nuoc ngoai...) va goi y trong plugin chi de THAM KHAO.
