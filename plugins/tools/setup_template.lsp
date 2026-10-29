@@ -7,7 +7,7 @@
 ;;;  Khong can quyen quan tri. Go cai dat: xoa thu muc SDOpLat.bundle va go SDMENUXOA.
 ;;; ==========================================================================
 (vl-load-com)
-(setq *SDSU:VER* "@@VER@@" *SDSU:OK* 0 *SDSU:BAD* nil *SDSU:ERR1* nil)
+(setq *SDSU:VER* "@@VER@@" *SDSU:OK* 0 *SDSU:BAD* nil *SDSU:ERR1* nil *SDSU:SH* nil)
 
 (defun sdsu:mkdirs (path / parts cur)
   ;; tao tung cap thu muc (vl-mkdir chi tao 1 cap)
@@ -36,64 +36,58 @@
 
 ;; Moi file: (sdsu:f ten kich-thuoc) mo luong ghi, nhieu (sdsu:c "doan base64 ngan"), (sdsu:e) dong va kiem tra kich thuoc.
 ;; Doan ngan (400 ky tu, nho hon chuoi dai nhat da biet nap duoc trong plugin: 430) vi AutoLISP gioi han do dai chuoi trong file; moi doan tu giai ma roi ghi noi tiep.
-(defun sdsu:mkobj (ids / o r)
-  ;; thu lan luot cac ProgID; MSXML 6.0 KHONG ho tro giai ma base64 (dataType) nen dung 3.0 / ban khong so
-  (foreach id ids
-    (if (not o)
-      (progn (setq r (vl-catch-all-apply 'vlax-create-object (list id)))
-             (if (and r (not (vl-catch-all-error-p r))) (setq o r)))))
-  o)
+(defun sdsu:sh ()
+  (if (not *SDSU:SH*) (setq *SDSU:SH* (vl-catch-all-apply 'vlax-create-object (list "WScript.Shell"))))
+  (if (vl-catch-all-error-p *SDSU:SH*) (setq *SDSU:SH* nil))
+  *SDSU:SH*)
 
+;; AutoLISP write-char doi byte (LF->CRLF, mat byte 0) nen KHONG dung duoc cho file nhi phan.
+;; Cach lam: ghi base64 (chi ky tu ASCII) ra file tam .b64 bang write-line, roi nho Windows giai ma bang certutil -decode.
 (defun sdsu:f (rel size / r)
   (setq *SDSU:REL* rel *SDSU:SIZE* size *SDSU:FAIL* nil *SDSU:PATH* (strcat (sdsu:dir) "\\" rel)
-        *SDSU:XML* nil *SDSU:EL* nil *SDSU:FH* nil *SDSU:STEP* "bat dau")
+        *SDSU:TMP* (strcat (sdsu:dir) "\\" "sdoplat_tmp.b64") *SDSU:FH* nil *SDSU:STEP* "bat dau")
   (if (not *SDSU:ABORT*)
     (progn
       (setq *SDSU:STEP* "tao thu muc")
       (sdsu:mkdirs (vl-filename-directory *SDSU:PATH*))
-      (setq *SDSU:STEP* "tao MSXML")
-      (setq *SDSU:XML* (sdsu:mkobj '("MSXML2.DOMDocument.3.0" "MSXML2.DOMDocument" "Msxml2.DOMDocument.4.0")))
-      (if (not *SDSU:XML*)
-        (sdsu:fail "khong tao duoc MSXML (MSXML2.DOMDocument) tren may nay")
-        (progn
-          (setq r (vl-catch-all-apply
-                    '(lambda ()
-                       (setq *SDSU:STEP* "createElement")
-                       (setq *SDSU:EL* (vlax-invoke-method *SDSU:XML* 'createElement "b64"))
-                       (setq *SDSU:STEP* "dataType")
-                       (vlax-put-property *SDSU:EL* 'dataType "bin.base64")
-                       (setq *SDSU:STEP* "mo file ghi")
-                       (if (findfile *SDSU:PATH*) (vl-file-delete *SDSU:PATH*))
-                       (setq *SDSU:FH* (open *SDSU:PATH* "w"))
-                       (if (not *SDSU:FH*) (error "khong mo duoc file de ghi")))
-                    nil))
-          (if (vl-catch-all-error-p r)
-            (sdsu:fail (strcat "buoc [" *SDSU:STEP* "]: " (vl-catch-all-error-message r))))))))
-  (princ))
-
-(defun sdsu:c (b64 / r)
-  (if (and (not *SDSU:ABORT*) (not *SDSU:FAIL*))
-    (progn
       (setq r (vl-catch-all-apply
                 '(lambda ()
-                   (setq *SDSU:STEP* "gan text")
-                   (vlax-put-property *SDSU:EL* 'text b64)
-                   (setq *SDSU:STEP* "nodeTypedValue")
-                   (setq *SDSU:BYTES* (vlax-get-property *SDSU:EL* 'nodeTypedValue))
-                   (setq *SDSU:STEP* "ghi byte")
-                   (foreach n (vlax-safearray->list (vlax-variant-value *SDSU:BYTES*)) (write-char n *SDSU:FH*)))
+                   (setq *SDSU:STEP* "mo file tam")
+                   (if (findfile *SDSU:TMP*) (vl-file-delete *SDSU:TMP*))
+                   (if (findfile *SDSU:PATH*) (vl-file-delete *SDSU:PATH*))
+                   (setq *SDSU:FH* (open *SDSU:TMP* "w"))
+                   (if (not *SDSU:FH*) (error "khong mo duoc file tam de ghi")))
                 nil))
-      (if (vl-catch-all-error-p r) (sdsu:fail (strcat "buoc [" *SDSU:STEP* "]: " (vl-catch-all-error-message r))))))
+      (if (vl-catch-all-error-p r)
+        (sdsu:fail (strcat "buoc [" *SDSU:STEP* "]: " (vl-catch-all-error-message r))))))
+  (princ))
+
+(defun sdsu:c (b64)
+  (if (and (not *SDSU:ABORT*) (not *SDSU:FAIL*) *SDSU:FH*) (write-line b64 *SDSU:FH*))
   (princ))
 
 (defun sdsu:e ( / r)
   (if (not *SDSU:ABORT*)
     (progn
       (if *SDSU:FH* (progn (close *SDSU:FH*) (setq *SDSU:FH* nil)))
-      (if *SDSU:XML* (vl-catch-all-apply 'vlax-release-object (list *SDSU:XML*)))
+      (if (not *SDSU:FAIL*)
+        (progn
+          (setq *SDSU:STEP* "certutil")
+          (if (sdsu:sh)
+            (progn
+              (setq r (vl-catch-all-apply 'vlax-invoke-method
+                        (list *SDSU:SH* 'Run
+                              (strcat "cmd /c \"certutil -f -decode \"" *SDSU:TMP* "\" \"" *SDSU:PATH* "\" >nul 2>&1\"")
+                              0 :vlax-true)))
+              (if (vl-catch-all-error-p r) (sdsu:fail (strcat "buoc [" *SDSU:STEP* "]: " (vl-catch-all-error-message r)))))
+            (sdsu:fail "khong tao duoc WScript.Shell (can de goi certutil)"))))
+      (if (findfile *SDSU:TMP*) (vl-file-delete *SDSU:TMP*))
       (if (and (not *SDSU:FAIL*) (findfile *SDSU:PATH*) (= (vl-file-size *SDSU:PATH*) *SDSU:SIZE*))
         (setq *SDSU:OK* (1+ *SDSU:OK*))
-        (setq *SDSU:BAD* (cons *SDSU:REL* *SDSU:BAD*)))))
+        (progn
+          (if (and (not *SDSU:FAIL*) (not *SDSU:ERR1*))
+            (sdsu:fail (strcat "kich thuoc sau giai ma sai: " *SDSU:REL* " (can " (itoa *SDSU:SIZE*) ", co " (if (findfile *SDSU:PATH*) (itoa (vl-file-size *SDSU:PATH*)) "khong co file") ")")))
+          (setq *SDSU:BAD* (cons *SDSU:REL* *SDSU:BAD*))))))
   (princ))
 
 (defun sdsu:xml ( / f p)
