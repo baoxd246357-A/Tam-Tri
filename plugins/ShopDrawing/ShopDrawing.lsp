@@ -12650,7 +12650,9 @@
           (foreach x ents
             (if (= (cdr (assoc 0 (entget x))) "LWPOLYLINE")
               (foreach g (entget x) (if (= (car g) 10) (setq vp (cons (sd:2d (cdr g)) vp))))))
-          (list pa ents (reverse vp)))))))
+          (if vp
+            (list pa ents (reverse vp))
+            (progn (foreach x ents (if (entget x) (entdel x))) nil)))))))
 
 (defun sd:rt-poly-of (e / pts) (setq pts (sd:curve-pts e)) (list e pts (abs (sd:area pts))))
 
@@ -12819,10 +12821,12 @@
   (setq e (vlax-vla-object->ename cp))
   (if (and pts (> (length pts) 2))
     (progn
+      (command "_.IMAGECLIP" e "_D")
       (command "_.IMAGECLIP" e "_N" "_P")
       (foreach q pts (command (trans (list (car q) (cadr q) 0.0) 0 1)))
       (command ""))
-    (command "_.IMAGECLIP" e "_N" "_R" (trans (list tx ty 0.0) 0 1) (trans (list (+ tx tw) (+ ty th) 0.0) 0 1)))
+    (progn (command "_.IMAGECLIP" e "_D")
+           (command "_.IMAGECLIP" e "_N" "_R" (trans (list tx ty 0.0) 0 1) (trans (list (+ tx tw) (+ ty th) 0.0) 0 1))))
   e)
 
 ;; So do cat tam da (ve tai pt): khung tam + vien da xep, so hieu vien
@@ -12981,6 +12985,7 @@
   (vla-Move cp (vlax-3d-point cs) (vlax-3d-point (list (car cw) (cadr cw) 0.0)))
   (vla-put-Layer cp "SD-GACH-ANH")
   (setq e (vlax-vla-object->ename cp))
+  (command "_.IMAGECLIP" e "_D")   ;; copy mang theo duong cat cu cua anh goc: xoa truoc, neu khong AutoCAD hoi "Delete old boundary?" va nuot sai doi so
   (command "_.IMAGECLIP" e "_N" "_P")
   (foreach q pts (command (trans (list (car q) (cadr q) 0.0) 0 1)))
   (command "")
@@ -14905,7 +14910,8 @@
               (progn
                 (sd:img-place (nth (rem (cadr pl) (length imst)) imst) pl (cdr (assoc (car pl) bases)) (nth 5 rec) (sd:inset-pts (nth 1 rec) (/ ron 2.0)))
                 (setq n (1+ n) tot (+ tot (* (nth 3 rec) (nth 4 rec)))))
-              (princ (strcat "\n[SD] Vien " (car pl) " (" (sd:num (nth 3 rec)) " x " (sd:num (nth 4 rec)) ") lon hon tam da: khong cat duoc."))))
+              (princ (strcat "\n[SD] Vien " (car pl) " (" (sd:num (nth 3 rec)) " x " (sd:num (nth 4 rec)) ") lon hon tam da: khong cat duoc."
+                             (if (and (<= (nth 4 rec) sw) (<= (nth 3 rec) sh)) " (xoay 90 do thi vua: doi Chieu van sang Toi uu / Ngang, hoac chon lai vien chinh)" "")))))
           (if front
             (progn
               (foreach e els (if (entget e) (setq sf (cond (sf) ((ssadd))) sf (ssadd e sf))))
