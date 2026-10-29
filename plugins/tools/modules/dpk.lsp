@@ -5,9 +5,10 @@
 ;;;  *error* tra bien va dong UNDO. Them tuy chon chu dim canh duong dim (sd:dimchu-*, dinh nghia trong dgd.lsp).
 ;;; ==========================================================================
 (defun c:SDDIMPOLY ( / *error* old_vars undo_on ent n i k p1 p2 pm dv ang d_offset
-                       ccw pt_dim sum_area pts a b ds r)
+                       ccw pt_dim sum_area pts a b ds r dk e0 nfail nok txt0)
   (defun *error* (msg)
     (if old_vars (foreach x old_vars (setvar (car x) (cdr x))))
+    (if dk (progn (sd:dimkieu-end dk) (setq dk nil)))
     (if undo_on (progn (command "_.UNDO" "_E") (setq undo_on nil)))
     (if (and msg (not (wcmatch (strcase msg) "*CANCEL*,*QUIT*,*EXIT*")))
       (princ (strcat "\n[SD] Loi: " msg))
@@ -15,13 +16,12 @@
     (princ)
   )
 
-  ;; hoi polyline; go C de doi tuy chon chu dim
-  (setq r (progn (initget "Chu")
-                 (entsel (strcat "\nChon Polyline kin can Dim tu dong [Chu dim canh duong dim: " (if (sd:dimchu-on) "BAT" "TAT") " - go C de doi]: "))))
-  (while (= r "Chu")
-    (sd:dimchu-toggle)
-    (initget "Chu")
-    (setq r (entsel (strcat "\nChon Polyline kin can Dim tu dong [Chu dim canh duong dim: " (if (sd:dimchu-on) "BAT" "TAT") " - go C de doi]: "))))
+  ;; hoi polyline; go C / K de doi tuy chon
+  (setq r (progn (initget "Chu Kieu") (entsel (sd:dimchu-msg "\nChon Polyline kin can Dim tu dong"))))
+  (while (member r '("Chu" "Kieu"))
+    (if (= r "Chu") (sd:dimchu-toggle) (sd:dimkieu-toggle))
+    (initget "Chu Kieu")
+    (setq r (entsel (sd:dimchu-msg "\nChon Polyline kin can Dim tu dong"))))
   (setq ent (if (listp r) (car r)))
 
   (if (and ent (wcmatch (cdr (assoc 0 (entget ent))) "*POLYLINE"))
@@ -34,6 +34,8 @@
                            (cons "CMDECHO" (getvar "CMDECHO"))))
       (command "_.UNDO" "_BE")
       (setq undo_on T)
+      (setq dk (sd:dimkieu-begin))
+      (setq txt0 (getvar "DIMTXT"))
       (sd:dimchu-apply)
       (setvar "OSMODE" 0)
       (setvar "CMDECHO" 0)
@@ -69,19 +71,31 @@
             ;; Diem giua duong cong lech khoi trung diem day cung => cung tron
             (setq ds (distance pm (mapcar '(lambda (u v) (/ (+ u v) 2.0)) p1 p2)))
             (sd:dimchu-small (distance p1 p2))
+            (setq e0 (entlast))
             (if (< ds 1e-4)
               (command "_.DIMALIGNED" "_non" (trans p1 0 1) "_non" (trans p2 0 1)
                        "_non" (trans pt_dim 0 1))
               (command "_.DIMARC" (list ent (trans pm 0 1)) "_non" (trans pt_dim 0 1))
             )
-            (setvar "DIMTXT" (cdr (assoc "DIMTXT" old_vars)))
+            (while (> (getvar "CMDACTIVE") 0) (command ""))   ;; lenh dim dang do do thi huy
+            ;; khong co dim moi (DIMARC that bai...) -> thu lai bang dim day cung; van that bai thi bao canh nao
+            (if (eq (entlast) e0)
+              (progn
+                (command "_.DIMALIGNED" "_non" (trans p1 0 1) "_non" (trans p2 0 1) "_non" (trans pt_dim 0 1))
+                (while (> (getvar "CMDACTIVE") 0) (command ""))))
+            (if (eq (entlast) e0)
+              (setq nfail (cons (1+ i) nfail))
+              (setq nok (1+ (if nok nok 0))))
+            (setvar "DIMTXT" txt0)
           )
         )
         (setq i (1+ i))
       )
-      (princ "\n[SD] Da tao Dim tu dong cho toan bo Polyline!")
+      (princ (strcat "\n[SD] Da tao Dim tu dong: " (itoa (if nok nok 0)) " / " (itoa n) " canh."))
+      (if nfail (princ (strcat "\n[SD] Canh KHONG dim duoc (so thu tu tu 1): " (vl-princ-to-string (reverse nfail)))))
 
       (foreach x old_vars (setvar (car x) (cdr x)))
+      (if dk (progn (sd:dimkieu-end dk) (setq dk nil)))
       (command "_.UNDO" "_E")
       (setq undo_on nil old_vars nil)
     )

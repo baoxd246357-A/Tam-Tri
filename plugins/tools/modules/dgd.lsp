@@ -9,15 +9,41 @@
   (vlax-ldata-put "SD" "DIMCHU" (if (sd:dimchu-on) "TAT" "BAT"))
   (princ (strcat "\n[SD] Chu dim canh duong dim (DIMATFIT 1, DIMTIX 0, DIMTMOVE 0): " (if (sd:dimchu-on) "BAT" "TAT"))))
 ;; Hoi diem, co tu khoa C de doi tuy chon; base = diem co so (nil neu khong co)
-(defun sd:dimchu-pt (msg base / r)
-  (setq msg (strcat msg " [Chu dim canh duong dim: " (if (sd:dimchu-on) "BAT" "TAT") " - go C de doi]: "))
-  (initget "Chu")
+(defun sd:dimchu-msg (msg)
+  (strcat msg " [Chu dim canh duong dim: " (if (sd:dimchu-on) "BAT" "TAT") " (C) / Kieu dim ShopDrawing: " (if (sd:dimkieu-on) "BAT" "TAT") " (K)]: "))
+(defun sd:dimchu-pt (msg0 base / r msg)
+  (setq msg (sd:dimchu-msg msg0))
+  (initget "Chu Kieu")
   (setq r (if base (getpoint base msg) (getpoint msg)))
-  (while (= r "Chu")
-    (sd:dimchu-toggle)
-    (initget "Chu")
+  (while (member r '("Chu" "Kieu"))
+    (if (= r "Chu") (sd:dimchu-toggle) (sd:dimkieu-toggle))
+    (setq msg (sd:dimchu-msg msg0))
+    (initget "Chu Kieu")
     (setq r (if base (getpoint base msg) (getpoint msg))))
   r)
+
+;;; Tuy chon "kieu dim ShopDrawing" (mac dinh BAT): dim bang dimstyle SD-1-<ty le> tren layer SD-KICHTHUOC (tick kien truc, chu 2.5, lam tron 0 so le)
+;;; giong cac dim khac cua ShopDrawing; TAT: dung kieu dim hien hanh. Chi co tac dung khi co ham sd:use-dimstyle (ShopDrawing / SDOpLat).
+(defun sd:dimkieu-on () (/= (vlax-ldata-get "SD" "DIMKIEU") "TAT"))
+(defun sd:dimkieu-toggle ()
+  (vlax-ldata-put "SD" "DIMKIEU" (if (sd:dimkieu-on) "TAT" "BAT"))
+  (princ (strcat "\n[SD] Kieu dim ShopDrawing (dimstyle SD-1-ty le, layer SD-KICHTHUOC): " (if (sd:dimkieu-on) "BAT" "TAT"))))
+;; Chuyen sang kieu dim SD; tra ve (dimstyle-cu layer-cu) de tra lai bang sd:dimkieu-end (nil neu khong dung)
+(defun sd:dimkieu-begin ( / old)
+  (if (and (sd:dimkieu-on) (boundp 'sd:use-dimstyle) (numberp *SD:SCALE*) (> *SD:SCALE* 0))
+    (progn
+      (if (boundp 'sd:ensure) (sd:ensure))
+      (setq old (list (getvar "DIMSTYLE") (getvar "CLAYER")))
+      (sd:use-dimstyle *SD:SCALE*)
+      (if (tblsearch "LAYER" "SD-KICHTHUOC") (setvar "CLAYER" "SD-KICHTHUOC"))
+      old)))
+(defun sd:dimkieu-end (old)
+  (if old
+    (progn
+      (if (tblsearch "LAYER" (cadr old)) (setvar "CLAYER" (cadr old)))
+      (if (and (tblsearch "DIMSTYLE" (car old)) (/= (strcase (getvar "DIMSTYLE")) (strcase (car old))))
+        (command "_.-DIMSTYLE" "_R" (car old))))))
+
 
 ;; Dim doan ngan (chu khong du cho, nhay ra ngoai): thu nho chu 0.6 lan de khong de len doan ke ben (chi khi tuy chon BAT).
 ;; Goi truoc moi lenh dim, sau do tra DIMTXT ve gia tri cu.
@@ -31,7 +57,7 @@
   (if (sd:dimchu-on)
     (progn (setvar "DIMATFIT" 1) (setvar "DIMTIX" 0) (setvar "DIMTMOVE" 0))))
 
-(defun c:SDDIMGD ( / *error* old_os old_echo old_fit old_tix old_tmove old_txt undo_on tmp lineobj p1 p2 p3
+(defun c:SDDIMGD ( / *error* old_os old_echo old_fit old_tix old_tmove old_txt txt0 dk undo_on tmp lineobj p1 p2 p3
                      ss i ent r pts uniq p sorted k s ang1 side dirang sp p4)
   (defun *error* (msg)
     (if tmp (progn (entdel tmp) (setq tmp nil)))
@@ -40,6 +66,7 @@
     (if old_fit (setvar "DIMATFIT" old_fit))
     (if old_tix (setvar "DIMTIX" old_tix))
     (if old_tmove (setvar "DIMTMOVE" old_tmove))
+    (if dk (progn (sd:dimkieu-end dk) (setq dk nil)))
     (if old_os (setvar "OSMODE" old_os))
     (if old_echo (setvar "CMDECHO" old_echo))
     (if (and msg (not (wcmatch (strcase msg) "*CANCEL*,*QUIT*,*EXIT*")))
@@ -64,6 +91,8 @@
       (setq undo_on T)
       (setvar "OSMODE" 0)
       ;; Dim ron: chu nam canh duong dim, khong ep vao giua 2 duong dong (tra lai khi xong / loi)
+      (setq dk (sd:dimkieu-begin))   ;; kieu dim ShopDrawing (neu BAT)
+      (setq txt0 (getvar "DIMTXT"))  ;; chieu cao chu cua kieu dim dang dung (sau khi chuyen kieu)
       (sd:dimchu-apply)       ;; DIMATFIT 1 / DIMTIX 0 / DIMTMOVE 0 neu tuy chon chu dim dang BAT
 
       ;; Line tam (WCS) de lay giao diem
@@ -110,7 +139,7 @@
           (while (< k (1- (length sorted)))
             (sd:dimchu-small (distance (nth k sorted) (nth (1+ k) sorted)))
             (command "_.DIMALIGNED" (nth k sorted) (nth (1+ k) sorted) p3)
-            (setvar "DIMTXT" old_txt)
+            (setvar "DIMTXT" txt0)
             (setq s (strcat s (rtos (distance (nth k sorted) (nth (1+ k) sorted)) 2 2) "  "))
             (setq k (1+ k))
           )
@@ -136,6 +165,7 @@
       (setvar "DIMATFIT" old_fit)
       (setvar "DIMTIX" old_tix)
       (setvar "DIMTMOVE" old_tmove)
+      (if dk (progn (sd:dimkieu-end dk) (setq dk nil)))
       (setvar "OSMODE" old_os)
       (setvar "CMDECHO" old_echo)
       (princ "\n[SD] Da hoan thanh!")
