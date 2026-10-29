@@ -26,9 +26,9 @@ total = 0
 for rel, full in files:
     data = open(full, 'rb').read(); total += len(data)
     b64 = base64.b64encode(data).decode('ascii')
-    chunks = [b64[i:i + 3000] for i in range(0, len(b64), 3000)] or ['']
+    chunks = [b64[i:i + 400] for i in range(0, len(b64), 400)]
     esc = rel.replace('\\', '\\\\')
-    blocks.append('(sdsu:put "%s" %d (list\n%s))' % (esc, len(data), '\n'.join('  "%s"' % c for c in chunks)))
+    blocks.append('(sdsu:f "%s" %d)\n%s\n(sdsu:e)' % (esc, len(data), '\n'.join('(sdsu:c "%s")' % c for c in chunks)) if chunks else '(sdsu:f "%s" %d)\n(sdsu:e)' % (esc, len(data)))
 tpl = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'setup_template.lsp'), encoding='utf-8').read()
 out = tpl.replace('@@VER@@', VER).replace('@@MAIN@@', MAIN).replace('@@FILES@@', '\n'.join(blocks))
 assert out.isascii()

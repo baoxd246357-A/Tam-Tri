@@ -32,8 +32,8 @@ $('go').onclick=async()=>{const out=$('out'),ver=$('ver').value.trim()||'1.0.0',
  const skip=list.filter(x=>x.rel.toLowerCase().endsWith('.lsp'));const use=list.filter(x=>!x.rel.toLowerCase().endsWith('.lsp'));
  use.sort((a,b)=>(a.rel===main?0:1)-(b.rel===main?0:1)||(a.rel<b.rel?-1:a.rel>b.rel?1:0));
  const blocks=[];let total=0;
- for(let i=0;i<use.length;i++){out.textContent=`Đang xử lý ${i+1}/${use.length}: ${use[i].rel}`;const buf=await use[i].f.arrayBuffer();total+=buf.byteLength;const s=b64(buf);const ch=[];for(let k=0;k<s.length;k+=3000)ch.push(s.slice(k,k+3000));if(!ch.length)ch.push('');
-  blocks.push(`(sdsu:put "${use[i].rel.replace(/\\/g,'\\\\')}" ${buf.byteLength} (list\n${ch.map(c=>'  "'+c+'"').join('\n')}))`)}
+ for(let i=0;i<use.length;i++){out.textContent=`Đang xử lý ${i+1}/${use.length}: ${use[i].rel}`;const buf=await use[i].f.arrayBuffer();total+=buf.byteLength;const s=b64(buf);const ch=[];for(let k=0;k<s.length;k+=400)ch.push(s.slice(k,k+400));
+  const esc=use[i].rel.replace(/\\/g,'\\\\');blocks.push(`(sdsu:f "${esc}" ${buf.byteLength})`+(ch.length?'\n'+ch.map(c=>`(sdsu:c "${c}")`).join('\n'):'')+'\n(sdsu:e)')}
  const text=TPL.split('@@VER@@').join(ver).split('@@MAIN@@').join(main).replace('@@FILES@@',()=>blocks.join('\n')).replace(/\r?\n/g,'\r\n');
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'}));a.download='SDOpLat-Setup.lsp';a.click();
  out.className='box ok';out.innerHTML=`Xong: đóng gói ${use.length} file (${(total/1048576).toFixed(1)} MB) → SDOpLat-Setup.lsp (${(text.length/1048576).toFixed(1)} MB).`+(skip.length?`<br><span class="warn">Đã bỏ qua ${skip.length} file .lsp (nguồn) để không lộ mã: ${skip.map(x=>x.rel).join(', ')}</span>`:'')}

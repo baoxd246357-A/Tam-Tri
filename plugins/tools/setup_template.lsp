@@ -7,7 +7,7 @@
 ;;;  Khong can quyen quan tri. Go cai dat: xoa thu muc SDOpLat.bundle va go SDMENUXOA.
 ;;; ==========================================================================
 (vl-load-com)
-(setq *SDSU:VER* "@@VER@@" *SDSU:OK* 0 *SDSU:BAD* nil)
+(setq *SDSU:VER* "@@VER@@" *SDSU:OK* 0 *SDSU:BAD* nil *SDSU:ERR1* nil)
 
 (defun sdsu:mkdirs (path / parts cur)
   ;; tao tung cap thu muc (vl-mkdir chi tao 1 cap)
@@ -29,34 +29,55 @@
 (defun sdsu:dir () (strcat (sdsu:root) "\\Contents"))
 
 ;; Giai ma base64 -> file nhi phan (MSXML + ADODB.Stream, co san tren Windows)
-(defun sdsu:put1 (rel size chunks / path xml el st bytes err b64)
-  (setq path (strcat (sdsu:dir) "\\" rel)
-        err (vl-catch-all-apply
-              '(lambda ()
-                 (sdsu:mkdirs (vl-filename-directory path))
-                 (setq xml (vlax-create-object "MSXML2.DOMDocument.6.0"))
-                 (setq el (vlax-invoke-method xml 'createElement "b64"))
-                 (vlax-put-property el 'dataType "bin.base64")
-                 (setq b64 "")
-                 (foreach c chunks (setq b64 (strcat b64 c)))
-                 (vlax-put-property el 'text b64)
-                 (setq bytes (vlax-get-property el 'nodeTypedValue))
-                 (setq st (vlax-create-object "ADODB.Stream"))
-                 (vlax-put-property st 'Type 1)
-                 (vlax-invoke-method st 'Open)
-                 (vlax-invoke-method st 'Write bytes)
-                 (vlax-invoke-method st 'SaveToFile path 2)
-                 (vlax-invoke-method st 'Close))
-              nil))
-  (if st (vl-catch-all-apply 'vlax-release-object (list st)))
-  (if xml (vl-catch-all-apply 'vlax-release-object (list xml)))
-  (if (and (not (vl-catch-all-error-p err)) (findfile path) (= (vl-file-size path) size))
-    (setq *SDSU:OK* (1+ *SDSU:OK*))
-    (setq *SDSU:BAD* (cons rel *SDSU:BAD*)))
+(defun sdsu:fail (msg)
+  (setq *SDSU:FAIL* t)
+  (if (not *SDSU:ERR1*) (progn (setq *SDSU:ERR1* t) (princ (strcat "\n[SETUP] Loi ghi file: " msg))))
   (princ))
 
-(defun sdsu:put (rel size chunks)
-  (if (not *SDSU:ABORT*) (sdsu:put1 rel size chunks))
+;; Moi file: (sdsu:f ten kich-thuoc) mo luong ghi, nhieu (sdsu:c "doan base64 ngan"), (sdsu:e) dong va kiem tra kich thuoc.
+;; Doan ngan (400 ky tu, nho hon chuoi dai nhat da biet nap duoc trong plugin: 430) vi AutoLISP gioi han do dai chuoi trong file; moi doan tu giai ma roi ghi noi tiep.
+(defun sdsu:f (rel size / r)
+  (setq *SDSU:REL* rel *SDSU:SIZE* size *SDSU:FAIL* nil *SDSU:PATH* (strcat (sdsu:dir) "\\" rel)
+        *SDSU:XML* nil *SDSU:EL* nil *SDSU:ST* nil)
+  (if (not *SDSU:ABORT*)
+    (progn
+      (setq r (vl-catch-all-apply
+                '(lambda ()
+                   (sdsu:mkdirs (vl-filename-directory *SDSU:PATH*))
+                   (setq *SDSU:XML* (vlax-create-object "MSXML2.DOMDocument.6.0"))
+                   (setq *SDSU:EL* (vlax-invoke-method *SDSU:XML* 'createElement "b64"))
+                   (vlax-put-property *SDSU:EL* 'dataType "bin.base64")
+                   (setq *SDSU:ST* (vlax-create-object "ADODB.Stream"))
+                   (vlax-put-property *SDSU:ST* 'Type 1)
+                   (vlax-invoke-method *SDSU:ST* 'Open))
+                nil))
+      (if (vl-catch-all-error-p r) (sdsu:fail (vl-catch-all-error-message r)))))
+  (princ))
+
+(defun sdsu:c (b64 / r)
+  (if (and (not *SDSU:ABORT*) (not *SDSU:FAIL*))
+    (progn
+      (setq r (vl-catch-all-apply
+                '(lambda ()
+                   (vlax-put-property *SDSU:EL* 'text b64)
+                   (vlax-invoke-method *SDSU:ST* 'Write (vlax-get-property *SDSU:EL* 'nodeTypedValue)))
+                nil))
+      (if (vl-catch-all-error-p r) (sdsu:fail (vl-catch-all-error-message r)))))
+  (princ))
+
+(defun sdsu:e ( / r)
+  (if (not *SDSU:ABORT*)
+    (progn
+      (if (and *SDSU:ST* (not *SDSU:FAIL*))
+        (progn
+          (setq r (vl-catch-all-apply '(lambda () (vlax-invoke-method *SDSU:ST* 'SaveToFile *SDSU:PATH* 2)) nil))
+          (if (vl-catch-all-error-p r) (sdsu:fail (vl-catch-all-error-message r)))))
+      (if *SDSU:ST* (progn (vl-catch-all-apply '(lambda () (vlax-invoke-method *SDSU:ST* 'Close)) nil)
+                           (vl-catch-all-apply 'vlax-release-object (list *SDSU:ST*))))
+      (if *SDSU:XML* (vl-catch-all-apply 'vlax-release-object (list *SDSU:XML*)))
+      (if (and (not *SDSU:FAIL*) (findfile *SDSU:PATH*) (= (vl-file-size *SDSU:PATH*) *SDSU:SIZE*))
+        (setq *SDSU:OK* (1+ *SDSU:OK*))
+        (setq *SDSU:BAD* (cons *SDSU:REL* *SDSU:BAD*)))))
   (princ))
 
 (defun sdsu:xml ( / f p)
