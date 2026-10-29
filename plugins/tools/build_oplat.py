@@ -162,7 +162,10 @@ if LICENSED:
     body = body.replace(anchor, mod.replace('\r\n', '\n').replace('\n', '\r\n') + anchor)
 
 # ---------------------------------------------------------------- doi ten san pham
-body = body.replace('(setq *SD:VER* "2.58.0")', '(setq *SD:VER* "%s")' % PRODUCT_VER)
+body = body.replace('(setq *SD:VER* "2.58.0")', '''(if (and (boundp (quote *SD:VER*)) *SD:VER* (/= *SD:VER* "%s"))
+  (princ (strcat "\\n[SD] CANH BAO: dang co ban ShopDrawing cu v" *SD:VER* " trong phien nay; Op Lat Tools v%s se ghi de cac lenh trung ten."
+                 "\\n     Neu mo lai AutoCAD van thay lenh cu: go ban cu khoi Support File Search Path, Startup Suite, acaddoc.lsp va menu SHOPDRAWING.")))
+(setq *SD:VER* "%s")''' % (PRODUCT_VER, PRODUCT_VER, PRODUCT_VER))
 body = body.replace('ShopDrawing Tools v', PRODUCT + ' v').replace('SDKIEMTRA', 'SDKTLAT')
 body = body.replace('SHOPDRAWINGRIBBON', 'SDOPLATRIBBON').replace('SHOPDRAWING', 'SDOPLAT').replace('ShopDrawing', 'SDOpLat')
 header = (";;; ==========================================================================\r\n"

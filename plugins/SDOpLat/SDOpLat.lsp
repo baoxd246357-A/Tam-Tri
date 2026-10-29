@@ -4,6 +4,9 @@
 ;;;  File sinh tu dong tu ShopDrawing 2.58.0 boi tools/build_oplat.py - khong sua tay.
 ;;; ==========================================================================
 (vl-load-com)
+(if (and (boundp (quote *SD:VER*)) *SD:VER* (/= *SD:VER* "1.0.0"))
+  (princ (strcat "\n[SD] CANH BAO: dang co ban SDOpLat cu v" *SD:VER* " trong phien nay; Op Lat Tools v1.0.0 se ghi de cac lenh trung ten."
+                 "\n     Neu mo lai AutoCAD van thay lenh cu: go ban cu khoi Support File Search Path, Startup Suite, acaddoc.lsp va menu SDOPLAT.")))
 (setq *SD:VER* "1.0.0")
 
 ;;; --------------------------------------------------------------------------
