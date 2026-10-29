@@ -18,3 +18,4 @@ Chưa chạy thử trên AutoCAD thật; mới kiểm tra tĩnh (ngoặc cân, k
 - Sửa SDRAITAM: mảnh cắt suy biến không còn gây "divide by zero".
 - Sửa cắt ảnh tấm đá (IMAGECLIP): xóa đường cắt cũ của ảnh trước khi tạo đường mới, tránh bị hỏi "Delete old boundary?" nuốt sai đối số.
 - SDGACH: ô bật/tắt ghi mã lên viên cắt / viên lẻ.
+- Quy tắc dim rón áp cho cả dim của ShopDrawing (`sd:dim`, `sd:dimal`: SDDIMVIEN, SDGIACONG...): chữ cạnh đường dim theo cùng tùy chọn chữ dim, dim xong trả lại biến.

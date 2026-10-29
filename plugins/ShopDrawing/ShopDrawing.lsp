@@ -1267,14 +1267,16 @@
                  (cons 11 pt) (cons 40 h) (cons 1 str) (cons 72 h72) (cons 73 v73))))
 
 ;; Kich thuoc thang: dir "H" ngang / "V" dung; pd = vi tri duong kich thuoc
-(defun sd:dim (p1 p2 dir pd / os cl)
+(defun sd:dim (p1 p2 dir pd / os cl df dx dm)
   (if (> (abs (if (= dir "V") (- (cadr p2) (cadr p1)) (- (car p2) (car p1)))) 1e-6)
     (progn
-      (setq os (getvar "OSMODE") cl (getvar "CLAYER"))
+      (setq os (getvar "OSMODE") cl (getvar "CLAYER") df (getvar "DIMATFIT") dx (getvar "DIMTIX") dm (getvar "DIMTMOVE"))
       (setvar "OSMODE" 0)
       (setvar "CLAYER" "SD-KICHTHUOC")
+      (sd:dimchu-apply)   ;; quy tac dim ron: chu canh duong dim (tuy chon chu dim, goc/DGD)
       (command "_.DIMLINEAR" (trans p1 0 1) (trans p2 0 1)
                (if (= dir "V") "_V" "_H") (trans pd 0 1))
+      (setvar "DIMATFIT" df) (setvar "DIMTIX" dx) (setvar "DIMTMOVE" dm)
       (setvar "CLAYER" cl)
       (setvar "OSMODE" os))))
 
@@ -6603,11 +6605,13 @@
 ;;; --------------------------------------------------------------------------
 ;;;  SDGIACONG - Ban ve gia cong tung ma vien cat (gui xuong)
 ;;; --------------------------------------------------------------------------
-(defun sd:dimal (p1 p2 pd / os cl)
-  (setq os (getvar "OSMODE") cl (getvar "CLAYER"))
+(defun sd:dimal (p1 p2 pd / os cl df dx dm)
+  (setq os (getvar "OSMODE") cl (getvar "CLAYER") df (getvar "DIMATFIT") dx (getvar "DIMTIX") dm (getvar "DIMTMOVE"))
   (setvar "OSMODE" 0)
   (setvar "CLAYER" "SD-KICHTHUOC")
+  (sd:dimchu-apply)   ;; quy tac dim ron: chu canh duong dim (tuy chon chu dim, goc/DGD)
   (command "_.DIMALIGNED" (trans p1 0 1) (trans p2 0 1) (trans pd 0 1))
+  (setvar "DIMATFIT" df) (setvar "DIMTIX" dx) (setvar "DIMTMOVE" dm)
   (setvar "CLAYER" cl)
   (setvar "OSMODE" os))
 
