@@ -139,7 +139,7 @@
 
 (defun sdsu:begin ( / d)
   (princ "\n[SETUP] Op Lat Tools v@@VER@@: dang giai ma va cai dat (khoang vai chuc giay)...")
-  ;; ban ShopDrawing cu dang nap trong phien nay (co the che bản moi sau khi mo lai AutoCAD)
+  ;; ban ShopDrawing cu dang nap trong phien nay (co the che ban moi sau khi mo lai AutoCAD)
   (setq *SDSU:OLDVER* (if (and (boundp '*SD:VER*) *SD:VER* (/= *SD:VER* "@@VER@@")) *SD:VER* nil))
   (if *SDSU:OLDVER*
     (princ (strcat "\n[SETUP] CANH BAO: dang nap ban ShopDrawing cu v" *SDSU:OLDVER* ". Sau khi cai xong, go bo ban cu khoi Support Path / Startup Suite / acaddoc.lsp / menu SHOPDRAWING, neu khong AutoCAD co the tiep tuc nap ban cu.")))
