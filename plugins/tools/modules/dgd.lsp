@@ -2,11 +2,14 @@
 ;;;  SDDIMGD (lenh tat DGD) - Dim giao diem: ve 1 duong cat, lenh tu dong dim tung doan giua cac giao diem + dim tong
 ;;;  Tich hop tu DimGiaoDiem v2 theo yeu cau khach hang (UCS xoay van dung, tra lai bien he thong khi loi / Esc).
 ;;; ==========================================================================
-(defun c:SDDIMGD ( / *error* old_os old_echo undo_on tmp lineobj p1 p2 p3
+(defun c:SDDIMGD ( / *error* old_os old_echo old_fit old_tix old_tmove undo_on tmp lineobj p1 p2 p3
                      ss i ent r pts uniq p sorted k s ang1 side dirang sp p4)
   (defun *error* (msg)
     (if tmp (progn (entdel tmp) (setq tmp nil)))
     (if undo_on (progn (command "_.UNDO" "_E") (setq undo_on nil)))
+    (if old_fit (setvar "DIMATFIT" old_fit))
+    (if old_tix (setvar "DIMTIX" old_tix))
+    (if old_tmove (setvar "DIMTMOVE" old_tmove))
     (if old_os (setvar "OSMODE" old_os))
     (if old_echo (setvar "CMDECHO" old_echo))
     (if (and msg (not (wcmatch (strcase msg) "*CANCEL*,*QUIT*,*EXIT*")))
@@ -16,7 +19,10 @@
   )
 
   (setq old_os (getvar "OSMODE")
-        old_echo (getvar "CMDECHO"))
+        old_echo (getvar "CMDECHO")
+        old_fit (getvar "DIMATFIT")
+        old_tix (getvar "DIMTIX")
+        old_tmove (getvar "DIMTMOVE"))
 
   (if (and (setq p1 (getpoint "\nChon diem bat dau cua duong cat: "))
            (setq p2 (getpoint p1 "\nChon diem ket thuc cua duong cat: "))
@@ -26,6 +32,10 @@
       (command "_.UNDO" "_BE")
       (setq undo_on T)
       (setvar "OSMODE" 0)
+      ;; Dim ron: chu nam canh duong dim, khong ep vao giua 2 duong dong (tra lai khi xong / loi)
+      (setvar "DIMATFIT" 1)   ;; Fit options: Text
+      (setvar "DIMTIX" 0)     ;; khong ep chu vao giua 2 duong dong
+      (setvar "DIMTMOVE" 0)   ;; Text placement: Beside the dimension line
 
       ;; Line tam (WCS) de lay giao diem
       (entmake (list '(0 . "LINE") (cons 10 (trans p1 1 0)) (cons 11 (trans p2 1 0))))
@@ -91,6 +101,9 @@
 
       (command "_.UNDO" "_E")
       (setq undo_on nil)
+      (setvar "DIMATFIT" old_fit)
+      (setvar "DIMTIX" old_tix)
+      (setvar "DIMTMOVE" old_tmove)
       (setvar "OSMODE" old_os)
       (setvar "CMDECHO" old_echo)
       (princ "\n[SD] Da hoan thanh!")
