@@ -4625,7 +4625,30 @@
     (setq loops (cons pts loops)))
   loops)
 
-;; Region -> polyline (neu bien thang) hoac giu region (neu co cung). Tra ve list ename.
+(defun sd:tan (a) (/ (sin a) (cos a)))
+;; Noi doan thang + cung thanh vong kin: segs = ((p1 p2 bulge) ...); tra ve ds vong, moi vong ((diem bulge-tu-diem-den-diem-ke) ...)
+(defun sd:chain-b (segs / loops lp cur found)
+  (while segs
+    (setq lp (list (list (car (car segs)) (caddr (car segs)))) cur (cadr (car segs)) segs (cdr segs) found T)
+    (while (and found segs)
+      (setq found nil)
+      (foreach s segs
+        (if (not found)
+          (cond ((equal (car s) cur 1e-4)
+                 (setq lp (cons (list (car s) (caddr s)) lp) cur (cadr s) segs (vl-remove s segs) found T))
+                ((equal (cadr s) cur 1e-4)
+                 (setq lp (cons (list (cadr s) (- (caddr s))) lp) cur (car s) segs (vl-remove s segs) found T))))))
+    (setq loops (cons (reverse lp) loops)))
+  loops)
+
+;; LWPOLYLINE kin co bulge (cung tron): lp = ((diem bulge) ...)
+(defun sd:plinebulge (lp lay)
+  (if (>= (length lp) 3)
+    (entmake (append (list '(0 . "LWPOLYLINE") '(100 . "AcDbEntity") (cons 8 lay)
+                           '(100 . "AcDbPolyline") (cons 90 (length lp)) '(70 . 1))
+                     (apply 'append (mapcar '(lambda (v) (list (list 10 (car (car v)) (cadr (car v))) (cons 42 (cadr v)))) lp))))))
+
+;; Region -> polyline (bien thang, hoac co cung: polyline co bulge). Tra ve list ename.
 (defun sd:region->ents (rg lay / ex objs res)
   (setq ex (vl-catch-all-apply 'vla-Explode (list rg)))
   (if (vl-catch-all-error-p ex)
@@ -4638,6 +4661,21 @@
                                                           (sd:2d (vlax-get o 'EndPoint))))
                                        objs))
            (sd:pline lp t lay)
+           (setq res (cons (entlast) res)))
+         (foreach o objs (vla-Delete o))
+         (vla-Delete rg)
+         res)
+        ;; bien co cung tron: doan thang + cung -> polyline co bulge (truoc day giu nguyen region nen manh cung bi mat / chia 0)
+        ((vl-every '(lambda (o) (member (vla-get-ObjectName o) '("AcDbLine" "AcDbArc"))) objs)
+         (foreach lp (sd:chain-b
+                       (mapcar '(lambda (o)
+                                  (if (= (vla-get-ObjectName o) "AcDbLine")
+                                    (list (sd:2d (vlax-get o 'StartPoint)) (sd:2d (vlax-get o 'EndPoint)) 0.0)
+                                    (list (sd:2d (vlax-get o 'StartPoint)) (sd:2d (vlax-get o 'EndPoint))
+                                          (* (if (< (caddr (vlax-get o 'Normal)) 0.0) -1.0 1.0)
+                                             (sd:tan (/ (rem (+ (- (vla-get-EndAngle o) (vla-get-StartAngle o)) (* 4.0 pi)) (* 2.0 pi)) 4.0))))))
+                               objs))
+           (sd:plinebulge lp lay)
            (setq res (cons (entlast) res)))
          (foreach o objs (vla-Delete o))
          (vla-Delete rg)
@@ -12653,9 +12691,9 @@
           (setq ents (sd:region->ents cp lay))
           (foreach x ents
             (if (= (cdr (assoc 0 (entget x))) "LWPOLYLINE")
-              (foreach g (entget x) (if (= (car g) 10) (setq vp (cons (sd:2d (cdr g)) vp))))))
+              (setq vp (append vp (sd:curve-pts x)))))   ;; lay mau ca cung tron de bbox / trong tam dung
           (if vp
-            (list pa ents (reverse vp))
+            (list pa ents vp)
             (progn (foreach x ents (if (entget x) (entdel x))) nil)))))))
 
 (defun sd:rt-poly-of (e / pts) (setq pts (sd:curve-pts e)) (list e pts (abs (sd:area pts))))
