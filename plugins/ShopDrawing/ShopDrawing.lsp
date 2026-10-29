@@ -12,7 +12,7 @@
 ;;; ==========================================================================
 
 (vl-load-com)
-(setq *SD:VER* "2.58.0")
+(setq *SD:VER* "2.59.0")
 
 ;;; --------------------------------------------------------------------------
 ;;;  Thiet lap mac dinh (luu kem trong ban ve bang LDATA)
@@ -17282,6 +17282,8 @@
     ("Tien ich" "SDIN" "In hang loat theo khung ten (block / layer), hang / cot, ra may in hoac PDF" "PLT" "INH")
     ("Tien ich" "SDPURGE" "Don rac ban ve sau: DGN, RegApps, purge lap, scale list" "PRG" "DPU")
     ("Tien ich" "SDHANDINH" "Han dinh: gop dinh polyline lech nhau o cung diem giao cat, chen dinh nut chu T" "WLD" "HDI")
+    ("Tien ich" "SDDIMGD" "Dim giao diem: ve 1 duong cat, tu dong dim tung doan giua cac giao diem + dim tong (co tuy chon chu dim canh duong dim)" "DGD" "DGD")
+    ("Tien ich" "SDDIMPOLY" "Dim polyline kin (co cung tron): tu dong dim tung canh, chu ra ngoai cho goc hep (co tuy chon chu dim)" "DPK" "DPK")
     ("Tien ich" "SDSOSANH" "So sanh 2 ban ve DWG: to mau them / xoa / dich chuyen" "CMP" "SSD")
     ("Tien ich" "SDLAYOUT" "Quan ly Layout: mo, sap xep, them, chep, doi ten (hang loat), xoa" "LO" "QLL")
     ("Tien ich" "SDTAOLAYOUT" "Tao Layout hang loat tu khung ten + danh so to vao khung ten" "LAY" "TLO")
@@ -18352,6 +18354,231 @@
       (progn (vl-catch-all-apply 'vla-Unload (list g))
              (princ (strcat "\n[SD] Da go " grp ".")))
       (princ (strcat "\n[SD] " grp " chua duoc nap.")))))
+
+;;; --------------------------------------------------------------------------
+;;;  SDDIMGD (DGD) va SDDIMPOLY (DPK) - tich hop tu DimGiaoDiem_v2.lsp / DimPolyline_v2.lsp (ban goc: ShopDrawing/goc/)
+;;;  Ma o duoi giong tools/modules/dgd.lsp + dpk.lsp (goi SDOpLat dung chung).
+;;; --------------------------------------------------------------------------
+;;; ==========================================================================
+;;;  SDDIMGD (lenh tat DGD) - Dim giao diem: ve 1 duong cat, lenh tu dong dim tung doan giua cac giao diem + dim tong
+;;;  Tich hop tu DimGiaoDiem v2 theo yeu cau khach hang (UCS xoay van dung, tra lai bien he thong khi loi / Esc).
+;;; ==========================================================================
+;;; ---- Tuy chon "chu dim canh duong dim" dung chung cho DGD va DPK (luu trong ban ve, mac dinh BAT) ----
+;;; BAT: ep DIMATFIT=1 (Text), DIMTIX=0, DIMTMOVE=0 (Beside the dimension line) khi dim, xong tra lai; TAT: giu nguyen kieu dim cua ban.
+(defun sd:dimchu-on () (/= (vlax-ldata-get "SD" "DIMCHU") "TAT"))
+(defun sd:dimchu-toggle ()
+  (vlax-ldata-put "SD" "DIMCHU" (if (sd:dimchu-on) "TAT" "BAT"))
+  (princ (strcat "\n[SD] Chu dim canh duong dim (DIMATFIT 1, DIMTIX 0, DIMTMOVE 0): " (if (sd:dimchu-on) "BAT" "TAT"))))
+;; Hoi diem, co tu khoa C de doi tuy chon; base = diem co so (nil neu khong co)
+(defun sd:dimchu-pt (msg base / r)
+  (setq msg (strcat msg " [Chu dim canh duong dim: " (if (sd:dimchu-on) "BAT" "TAT") " - go C de doi]: "))
+  (initget "Chu")
+  (setq r (if base (getpoint base msg) (getpoint msg)))
+  (while (= r "Chu")
+    (sd:dimchu-toggle)
+    (initget "Chu")
+    (setq r (if base (getpoint base msg) (getpoint msg))))
+  r)
+(defun sd:dimchu-apply ()
+  (if (sd:dimchu-on)
+    (progn (setvar "DIMATFIT" 1) (setvar "DIMTIX" 0) (setvar "DIMTMOVE" 0))))
+
+(defun c:SDDIMGD ( / *error* old_os old_echo old_fit old_tix old_tmove undo_on tmp lineobj p1 p2 p3
+                     ss i ent r pts uniq p sorted k s ang1 side dirang sp p4)
+  (defun *error* (msg)
+    (if tmp (progn (entdel tmp) (setq tmp nil)))
+    (if undo_on (progn (command "_.UNDO" "_E") (setq undo_on nil)))
+    (if old_fit (setvar "DIMATFIT" old_fit))
+    (if old_tix (setvar "DIMTIX" old_tix))
+    (if old_tmove (setvar "DIMTMOVE" old_tmove))
+    (if old_os (setvar "OSMODE" old_os))
+    (if old_echo (setvar "CMDECHO" old_echo))
+    (if (and msg (not (wcmatch (strcase msg) "*CANCEL*,*QUIT*,*EXIT*")))
+      (princ (strcat "\n[SD] Loi: " msg))
+    )
+    (princ)
+  )
+
+  (setq old_os (getvar "OSMODE")
+        old_echo (getvar "CMDECHO")
+        old_fit (getvar "DIMATFIT")
+        old_tix (getvar "DIMTIX")
+        old_tmove (getvar "DIMTMOVE"))
+
+  (if (and (setq p1 (sd:dimchu-pt "\nChon diem bat dau cua duong cat" nil))
+           (setq p2 (getpoint p1 "\nChon diem ket thuc cua duong cat: "))
+           (setq p3 (getpoint p2 "\nChon vi tri dat duong Dim chi tiet: ")))
+    (progn
+      (setvar "CMDECHO" 0)
+      (command "_.UNDO" "_BE")
+      (setq undo_on T)
+      (setvar "OSMODE" 0)
+      ;; Dim ron: chu nam canh duong dim, khong ep vao giua 2 duong dong (tra lai khi xong / loi)
+      (sd:dimchu-apply)       ;; DIMATFIT 1 / DIMTIX 0 / DIMTMOVE 0 neu tuy chon chu dim dang BAT
+
+      ;; Line tam (WCS) de lay giao diem
+      (entmake (list '(0 . "LINE") (cons 10 (trans p1 1 0)) (cons 11 (trans p2 1 0))))
+      (setq tmp (entlast))
+      (setq lineobj (vlax-ename->vla-object tmp))
+
+      ;; Cac doi tuong cat qua duong cat (fence nhan diem UCS)
+      (if (setq ss (ssget "_F" (list p1 p2)))
+        (repeat (setq i (sslength ss))
+          (setq ent (ssname ss (setq i (1- i))))
+          (if (/= ent tmp)
+            (progn
+              (setq r (vl-catch-all-apply 'vlax-invoke
+                        (list (vlax-ename->vla-object ent) 'IntersectWith lineobj 0)))
+              (if (and r (not (vl-catch-all-error-p r)))
+                (while (>= (length r) 3)
+                  (setq pts (cons (trans (list (car r) (cadr r) (caddr r)) 0 1) pts)
+                        r (cdddr r))
+                )
+              )
+            )
+          )
+        )
+      )
+
+      (entdel tmp)
+      (setq tmp nil)
+
+      ;; Loc diem trung (sai so 0.1)
+      (foreach p pts
+        (if (not (vl-some '(lambda (x) (< (distance p x) 0.1)) uniq))
+          (setq uniq (cons p uniq))
+        )
+      )
+      ;; Sap xep doc duong cat
+      (setq sorted (vl-sort uniq '(lambda (a b) (< (distance p1 a) (distance p1 b)))))
+
+      (if (< (length sorted) 2)
+        (princ "\n[SD] Duong cat chi di qua duoi 2 diem, khong du de tao Dim!")
+        (progn
+          ;; 1. Dim chi tiet
+          (setq k 0 s "")
+          (while (< k (1- (length sorted)))
+            (command "_.DIMALIGNED" (nth k sorted) (nth (1+ k) sorted) p3)
+            (setq s (strcat s (rtos (distance (nth k sorted) (nth (1+ k) sorted)) 2 2) "  "))
+            (setq k (1+ k))
+          )
+          ;; 2. Dim tong, day ra phia xa duong cat hon dim chi tiet
+          (setq ang1 (angle p1 p2)
+                side (- (* (- (car p2) (car p1)) (- (cadr p3) (cadr p1)))
+                        (* (- (cadr p2) (cadr p1)) (- (car p3) (car p1))))
+                dirang (if (< side 0) (- ang1 (/ pi 2)) (+ ang1 (/ pi 2)))
+                sp (* 3.5 (getvar "DIMTXT")
+                      (if (> (getvar "DIMSCALE") 0) (getvar "DIMSCALE") 1.0))
+                p4 (polar p3 dirang sp))
+          (command "_.DIMALIGNED" (car sorted) (last sorted) p4)
+
+          (princ (strcat "\n[SD] So doan: " (itoa (1- (length sorted)))
+                         " | Tong: " (rtos (distance (car sorted) (last sorted)) 2 2)))
+          (princ (strcat "\n[SD] Cac doan: " s))
+        )
+      )
+
+      (command "_.UNDO" "_E")
+      (setq undo_on nil)
+      (setvar "DIMATFIT" old_fit)
+      (setvar "DIMTIX" old_tix)
+      (setvar "DIMTMOVE" old_tmove)
+      (setvar "OSMODE" old_os)
+      (setvar "CMDECHO" old_echo)
+      (princ "\n[SD] Da hoan thanh!")
+    )
+  )
+  (princ)
+)
+
+;;; ==========================================================================
+;;;  SDDIMPOLY (lenh tat DPK) - Dim tu dong cho polyline kin (co chua cung tron)
+;;;  Tich hop tu "LISP DIM TU DONG POLYLINE KIN" v2 theo yeu cau khach hang (ban goc luu o ShopDrawing/goc/DimPolyline_v2.lsp):
+;;;  huong ngoai tinh theo dien tich co dau lay mau ca cung, nhan cung bang hinh hoc (chay ca POLYLINE 2D/3D), dung khi UCS xoay,
+;;;  *error* tra bien va dong UNDO. Them tuy chon chu dim canh duong dim (sd:dimchu-*, dinh nghia trong dgd.lsp).
+;;; ==========================================================================
+(defun c:SDDIMPOLY ( / *error* old_vars undo_on ent n i k p1 p2 pm dv ang d_offset
+                       ccw pt_dim sum_area pts a b ds r)
+  (defun *error* (msg)
+    (if old_vars (foreach x old_vars (setvar (car x) (cdr x))))
+    (if undo_on (progn (command "_.UNDO" "_E") (setq undo_on nil)))
+    (if (and msg (not (wcmatch (strcase msg) "*CANCEL*,*QUIT*,*EXIT*")))
+      (princ (strcat "\n[SD] Loi: " msg))
+    )
+    (princ)
+  )
+
+  ;; hoi polyline; go C de doi tuy chon chu dim
+  (setq r (progn (initget "Chu")
+                 (entsel (strcat "\nChon Polyline kin can Dim tu dong [Chu dim canh duong dim: " (if (sd:dimchu-on) "BAT" "TAT") " - go C de doi]: "))))
+  (while (= r "Chu")
+    (sd:dimchu-toggle)
+    (initget "Chu")
+    (setq r (entsel (strcat "\nChon Polyline kin can Dim tu dong [Chu dim canh duong dim: " (if (sd:dimchu-on) "BAT" "TAT") " - go C de doi]: "))))
+  (setq ent (if (listp r) (car r)))
+
+  (if (and ent (wcmatch (cdr (assoc 0 (entget ent))) "*POLYLINE"))
+    (progn
+      (setq old_vars (list (cons "DIMATFIT" (getvar "DIMATFIT"))
+                           (cons "DIMTIX" (getvar "DIMTIX"))
+                           (cons "DIMTMOVE" (getvar "DIMTMOVE"))
+                           (cons "OSMODE" (getvar "OSMODE"))
+                           (cons "CMDECHO" (getvar "CMDECHO"))))
+      (command "_.UNDO" "_BE")
+      (setq undo_on T)
+      (sd:dimchu-apply)
+      (setvar "OSMODE" 0)
+      (setvar "CMDECHO" 0)
+
+      ;; Khoang cach dat Dim = 3.5 lan chieu cao chu
+      (setq d_offset (* 3.5 (getvar "DIMTXT")
+                        (if (> (getvar "DIMSCALE") 0) (getvar "DIMSCALE") 1.0)))
+
+      ;; Chieu ve: dien tich co dau tren cac diem mau (ca diem tren cung)
+      (setq n (fix (+ 0.5 (vlax-curve-getEndParam ent))) i 0 pts nil)
+      (while (< i n)
+        (foreach k '(0.0 0.25 0.5 0.75)
+          (setq pts (cons (vlax-curve-getPointAtParam ent (+ i k)) pts)))
+        (setq i (1+ i))
+      )
+      (setq pts (reverse pts) sum_area 0.0 a (last pts))
+      (foreach b pts
+        (setq sum_area (+ sum_area (* (- (car b) (car a)) (+ (cadr b) (cadr a)))))
+        (setq a b)
+      )
+      (setq ccw (< sum_area 0)) ;; T neu nguoc chieu kim dong ho
+
+      (setq i 0)
+      (while (< i n)
+        (setq p1 (vlax-curve-getPointAtParam ent i)
+              p2 (vlax-curve-getPointAtParam ent (1+ i))
+              pm (vlax-curve-getPointAtParam ent (+ i 0.5))
+              dv (vlax-curve-getFirstDeriv ent (+ i 0.5))
+              ang (angle '(0.0 0.0 0.0) dv)
+              pt_dim (polar pm (if ccw (- ang (/ pi 2)) (+ ang (/ pi 2))) d_offset))
+        (if (> (distance p1 p2) 1e-6)
+          (progn
+            ;; Diem giua duong cong lech khoi trung diem day cung => cung tron
+            (setq ds (distance pm (mapcar '(lambda (u v) (/ (+ u v) 2.0)) p1 p2)))
+            (if (< ds 1e-4)
+              (command "_.DIMALIGNED" "_non" (trans p1 0 1) "_non" (trans p2 0 1)
+                       "_non" (trans pt_dim 0 1))
+              (command "_.DIMARC" (list ent (trans pm 0 1)) "_non" (trans pt_dim 0 1))
+            )
+          )
+        )
+        (setq i (1+ i))
+      )
+      (princ "\n[SD] Da tao Dim tu dong cho toan bo Polyline!")
+
+      (foreach x old_vars (setvar (car x) (cdr x)))
+      (command "_.UNDO" "_E")
+      (setq undo_on nil old_vars nil)
+    )
+    (princ "\n[SD] Doi tuong duoc chon khong phai la Polyline!")
+  )
+  (princ)
+)
 
 ;; Thep thong minh: gan reactor cho ban ve vua mo
 (vl-catch-all-apply 'sd:tm-init nil)

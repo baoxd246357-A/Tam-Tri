@@ -86,7 +86,7 @@ def patch(text):
             keep = []
             for ln in body.split('\n'):
                 m = re.match(r'\s*\("[^"]+" "(SD[A-Z0-9]+)"', ln)
-                if m and m.group(1) in CMDSET:
+                if m and m.group(1) in CMDSET and m.group(1) not in MODCMDS:
                     keep.append(ln.rstrip('\r').rstrip(')').rstrip() + ')')
             keep.append(DGD_ROW)
             keep.append(DPK_ROW)

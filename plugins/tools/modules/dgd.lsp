@@ -2,6 +2,26 @@
 ;;;  SDDIMGD (lenh tat DGD) - Dim giao diem: ve 1 duong cat, lenh tu dong dim tung doan giua cac giao diem + dim tong
 ;;;  Tich hop tu DimGiaoDiem v2 theo yeu cau khach hang (UCS xoay van dung, tra lai bien he thong khi loi / Esc).
 ;;; ==========================================================================
+;;; ---- Tuy chon "chu dim canh duong dim" dung chung cho DGD va DPK (luu trong ban ve, mac dinh BAT) ----
+;;; BAT: ep DIMATFIT=1 (Text), DIMTIX=0, DIMTMOVE=0 (Beside the dimension line) khi dim, xong tra lai; TAT: giu nguyen kieu dim cua ban.
+(defun sd:dimchu-on () (/= (vlax-ldata-get "SD" "DIMCHU") "TAT"))
+(defun sd:dimchu-toggle ()
+  (vlax-ldata-put "SD" "DIMCHU" (if (sd:dimchu-on) "TAT" "BAT"))
+  (princ (strcat "\n[SD] Chu dim canh duong dim (DIMATFIT 1, DIMTIX 0, DIMTMOVE 0): " (if (sd:dimchu-on) "BAT" "TAT"))))
+;; Hoi diem, co tu khoa C de doi tuy chon; base = diem co so (nil neu khong co)
+(defun sd:dimchu-pt (msg base / r)
+  (setq msg (strcat msg " [Chu dim canh duong dim: " (if (sd:dimchu-on) "BAT" "TAT") " - go C de doi]: "))
+  (initget "Chu")
+  (setq r (if base (getpoint base msg) (getpoint msg)))
+  (while (= r "Chu")
+    (sd:dimchu-toggle)
+    (initget "Chu")
+    (setq r (if base (getpoint base msg) (getpoint msg))))
+  r)
+(defun sd:dimchu-apply ()
+  (if (sd:dimchu-on)
+    (progn (setvar "DIMATFIT" 1) (setvar "DIMTIX" 0) (setvar "DIMTMOVE" 0))))
+
 (defun c:SDDIMGD ( / *error* old_os old_echo old_fit old_tix old_tmove undo_on tmp lineobj p1 p2 p3
                      ss i ent r pts uniq p sorted k s ang1 side dirang sp p4)
   (defun *error* (msg)
@@ -24,7 +44,7 @@
         old_tix (getvar "DIMTIX")
         old_tmove (getvar "DIMTMOVE"))
 
-  (if (and (setq p1 (getpoint "\nChon diem bat dau cua duong cat: "))
+  (if (and (setq p1 (sd:dimchu-pt "\nChon diem bat dau cua duong cat" nil))
            (setq p2 (getpoint p1 "\nChon diem ket thuc cua duong cat: "))
            (setq p3 (getpoint p2 "\nChon vi tri dat duong Dim chi tiet: ")))
     (progn
@@ -33,9 +53,7 @@
       (setq undo_on T)
       (setvar "OSMODE" 0)
       ;; Dim ron: chu nam canh duong dim, khong ep vao giua 2 duong dong (tra lai khi xong / loi)
-      (setvar "DIMATFIT" 1)   ;; Fit options: Text
-      (setvar "DIMTIX" 0)     ;; khong ep chu vao giua 2 duong dong
-      (setvar "DIMTMOVE" 0)   ;; Text placement: Beside the dimension line
+      (sd:dimchu-apply)       ;; DIMATFIT 1 / DIMTIX 0 / DIMTMOVE 0 neu tuy chon chu dim dang BAT
 
       ;; Line tam (WCS) de lay giao diem
       (entmake (list '(0 . "LINE") (cons 10 (trans p1 1 0)) (cons 11 (trans p2 1 0))))
