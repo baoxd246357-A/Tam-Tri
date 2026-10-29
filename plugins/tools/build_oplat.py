@@ -30,12 +30,13 @@ rows_all = re.findall(r'^\s*\("([^"]+)" "(SD[A-Z0-9]+)" "([^"]*)" "([A-Z0-9]+)" 
 TILING = [r[1] for r in rows_all if r[0] == 'Op lat da granite / gach' and r[1] != 'SDLENH']
 EXTRA = ['SDSET', 'SDHANDINH', 'SDHELP', 'SDPANEL', 'SDMENU', 'SDMENUXOA', 'SDTUNAP', 'SDDLG']
 CMDS = TILING + [e for e in EXTRA if e not in TILING]
-MODCMDS = ['SDDIMGD']                     # lenh tich hop tu module ngoai (tools/modules/*.lsp), khong co trong ShopDrawing.lsp
+MODCMDS = ['SDDIMGD', 'SDDIMPOLY']                     # lenh tich hop tu module ngoai (tools/modules/*.lsp), khong co trong ShopDrawing.lsp
 CMDSET = set(CMDS) | set(MODCMDS)
 DGD_ROW = '    ("Thiet lap va ban ve" "SDDIMGD" "Dim giao diem: ve 1 duong cat, tu dong dim tung doan giua cac giao diem + dim tong" "DGD" "DGD")'
+DPK_ROW = '    ("Thiet lap va ban ve" "SDDIMPOLY" "Dim polyline kin (co cung tron): tu dong dim tung canh, chu ra ngoai cho goc hep" "DPK" "DPK")'
 BASIC = ['SDSET', 'SDGACH', 'SDRAITAM', 'SDDOCDA', 'SDANHDA', 'SDVANDA', 'SDGACHTK', 'SDKTLAT', 'SDQUYTRINH']
 BASIC_MENU = '--menu=basic' in sys.argv   # menu / toolbar chi hien 9 lenh co ban; cac lenh con lai van chay, mo bang SDPANEL
-MENUSET = (set(BASIC) | {'SDDIMGD', 'SDKICHHOAT', 'SDPANEL', 'SDHELP', 'SDMENUXOA'}) if BASIC_MENU else CMDSET
+MENUSET = (set(BASIC) | {'SDDIMGD', 'SDDIMPOLY', 'SDKICHHOAT', 'SDPANEL', 'SDHELP', 'SDMENUXOA'}) if BASIC_MENU else CMDSET
 
 # ---------------------------------------------------------------- tach nguon thanh cac form cap cao nhat
 def strip(s):
@@ -88,6 +89,7 @@ def patch(text):
                 if m and m.group(1) in CMDSET:
                     keep.append(ln.rstrip('\r').rstrip(')').rstrip() + ')')
             keep.append(DGD_ROW)
+            keep.append(DPK_ROW)
             if LICENSED:
                 keep.append('    ("Tien ich" "SDKICHHOAT" "Kich hoat ban quyen tren may nay bang Ma kich hoat" "KH" "KHB")')
             seg = head + NL.join(keep).lstrip() + '))' + NL
@@ -138,7 +140,7 @@ body = ''.join(parts) + tail
 # ---------------------------------------------------------------- module ngoai (DGD)
 _anchor = '(princ (strcat "\\n[SD] ShopDrawing Tools v"'
 assert body.count(_anchor) == 1
-_mod = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules', 'dgd.lsp'), encoding='utf-8').read()
+_mod = ''.join(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules', m), encoding='utf-8').read() + '\n' for m in ('dgd.lsp', 'dpk.lsp'))
 assert _mod.isascii()
 body = body.replace(_anchor, _mod.replace('\r\n', '\n').replace('\n', '\r\n') + '\r\n' + _anchor)
 
@@ -191,7 +193,8 @@ pop, rest = rest.split('***TOOLBARS', 1)
 tbs, hlp = rest.split('***HELPSTRINGS', 1)
 # POP1
 DGD_POP = 'ID_SD_SDDIMGD [Dim giao diem: ve duong cat, tu dong dim tung doan + dim tong (SDDIMGD / DGD)]^C^CSDDIMGD'
-pop = re.sub(r'(ID_SD_SDSET \[[^\n]*\n)', lambda m: m.group(1) + DGD_POP + '\n', pop, count=1)
+DPK_POP = 'ID_SD_SDDIMPOLY [Dim polyline kin (co cung tron): tu dong dim tung canh (SDDIMPOLY / DPK)]^C^CSDDIMPOLY'
+pop = re.sub(r'(ID_SD_SDSET \[[^\n]*\n)', lambda m: m.group(1) + DGD_POP + '\n' + DPK_POP + '\n', pop, count=1)
 pl = [l for l in pop.split('\n')]
 res_pop = []; grp = None; items = []; extra_tail = []
 def flush():
@@ -230,7 +233,8 @@ for b in blocks:
     if lines[0].strip() and btn: tbl.append('\n'.join(lines[:2] + btn) + '\n')
 tbt = '\n'.join(tbl)
 DGD_TB = 'ID_SD_TB_SDDIMGD [_Button("Dim giao diem: tu dong dim tung doan + dim tong (DGD)", "SD_SDDIMVIEN_16.bmp", "SD_SDDIMVIEN_32.bmp")]^C^CSDDIMGD'
-tbt = re.sub(r'(ID_SD_TB_SDSET \[[^\n]*\n)', lambda m: m.group(1) + DGD_TB + '\n', tbt, count=1)
+DPK_TB = 'ID_SD_TB_SDDIMPOLY [_Button("Dim polyline kin: tu dong dim tung canh (DPK)", "SD_SDDIMVIEN_16.bmp", "SD_SDDIMVIEN_32.bmp")]^C^CSDDIMPOLY'
+tbt = re.sub(r'(ID_SD_TB_SDSET \[[^\n]*\n)', lambda m: m.group(1) + DGD_TB + '\n' + DPK_TB + '\n', tbt, count=1)
 if 'SDHANDINH' not in tbt and not BASIC_MENU:
     hdb = 'ID_SD_TB_SDHANDINH [_Button("Han dinh polyline: gop dinh lech, chen dinh nut chu T (HDI)", "SD_SDPURGE_16.bmp", "SD_SDPURGE_32.bmp")]^C^CSDHANDINH'
     tbt = tbt.replace('ID_SD_TB_SDPANEL [', hdb + '\nID_SD_TB_SDPANEL [', 1)
@@ -242,6 +246,8 @@ for l in hlp.split('\n'):
     elif not m and l.strip(): hl.append(l)
 hl.append('ID_SD_SDDIMGD [SDDIMGD (lenh tat DGD): Dim giao diem]')
 hl.append('ID_SD_TB_SDDIMGD [SDDIMGD (lenh tat DGD): Dim giao diem]')
+hl.append('ID_SD_SDDIMPOLY [SDDIMPOLY (lenh tat DPK): Dim polyline kin]')
+hl.append('ID_SD_TB_SDDIMPOLY [SDDIMPOLY (lenh tat DPK): Dim polyline kin]')
 if LICENSED:
     hl.append('ID_SD_SDKICHHOAT [SDKICHHOAT (lenh tat KHB): Kich hoat ban quyen]')
 if not BASIC_MENU:
@@ -277,6 +283,7 @@ open(f'{OUT}/HuongDanQuyTrinhDa.md', 'w', encoding='utf-8', newline='').write(md
 raw = open(f'{SRC}/LenhTat.csv', 'rb').read().decode('utf-8-sig').split('\r\n')
 keepcsv = [raw[0]] + [l for l in raw[1:] if l and l.split(';')[2] in CMDSET]
 keepcsv.append('Thiết lập và bản vẽ;DGD;SDDIMGD;Dim giao điểm;Vẽ một đường cắt, tự động dim từng đoạn giữa các giao điểm và dim tổng')
+keepcsv.append('Thiết lập và bản vẽ;DPK;SDDIMPOLY;Dim polyline kín;Tự động dim từng cạnh của polyline kín (kể cả cung tròn), ép chữ ra ngoài cho góc hẹp')
 if LICENSED:
     keepcsv.append('Tiện ích;KHB;SDKICHHOAT;Kích hoạt bản quyền;Hiện Mã máy và nhập Mã kích hoạt do nhà cung cấp cấp')
 open(f'{OUT}/LenhTat.csv', 'wb').write(('﻿' + '\r\n'.join(keepcsv) + '\r\n').encode('utf-8'))
@@ -291,9 +298,10 @@ h = re.sub(r'<div class="cmd"[^>]*>.*?</div>\n?', cmd_block, h, flags=re.S)
 h = re.sub(r'<tr><td class="a">[^<]*</td><td class="c">(SD[A-Z0-9]+)</td>.*?</tr>\s*', lambda m: m.group(0) if m.group(1) in CMDSET else '', h, flags=re.S)
 h = re.sub(r'<div class="box"><h3[^>]*>[^<]*</h3><table>\s*</table></div>\s*', '', h)
 _dgd = '<div class="cmd" style="--grp:#3465a4"><h4><span class="k">DGD</span> &nbsp;<code>SDDIMGD</code></h4><p>Dim giao điểm: vẽ một đường cắt qua các đối tượng, lệnh tự tìm các giao điểm và dim từng đoạn giữa các giao điểm liên tiếp, cộng thêm một dim tổng. Tích hợp từ DimGiaoDiem v2.</p><ol><li>Chọn điểm bắt đầu và điểm kết thúc của đường cắt.</li><li>Chọn vị trí đặt đường dim chi tiết.</li></ol><p><b>Kết quả:</b> Dim từng đoạn giữa các giao điểm (theo kiểu dim hiện hành) và một dim tổng, đẩy ra phía xa đường cắt hơn dim chi tiết. Dòng lệnh in số đoạn, tổng và độ dài từng đoạn (2 số lẻ) để đối chiếu làm tròn. Đúng cả khi UCS xoay; Esc hoặc lỗi giữa chừng trả lại OSMODE và gỡ đường cắt tạm; U hoàn tác cả lệnh.</p><p class="note"><b>Lưu ý:</b> Cần đường cắt qua ít nhất 2 giao điểm. Dùng dimstyle hiện hành (chạy SDSET để có dimstyle SD-1-&lt;tỷ lệ&gt;). Chưa thử trên AutoCAD thật trong gói này.</p></div>\n'
+_dpk = '<div class="cmd" style="--grp:#3465a4"><h4><span class="k">DPK</span> &nbsp;<code>SDDIMPOLY</code></h4><p>Dim tự động cho polyline kín (kể cả cung tròn): dim từng cạnh thẳng bằng DIMALIGNED và từng cung bằng DIMARC, đặt phía ngoài polyline, ép chữ ra ngoài cho các góc hẹp. Tích hợp từ lệnh DPK theo yêu cầu khách hàng.</p><ol><li>Chọn polyline kín cần dim.</li></ol><p><b>Kết quả:</b> Dim từng cạnh và từng cung của polyline, cách polyline 3,5 lần chiều cao chữ hiện hành. Lệnh tạm đặt DIMATFIT = 1, DIMTIX = 0, DIMTMOVE = 0 và trả lại sau khi xong; U hoàn tác cả lệnh.</p><p class="note"><b>Lưu ý:</b> Dùng dimstyle hiện hành. Hướng ra ngoài được xác định theo chiều vẽ của polyline (LWPOLYLINE). Chưa thử trên AutoCAD thật trong gói này.</p></div>\n'
 _i = h.index('<h2>Hướng dẫn chi tiết từng lệnh</h2>')
 _j = h.index('</h3>', _i) + len('</h3>')
-h = h[:_j] + '\n' + _dgd + h[_j:] if '<code>SDDIMGD</code>' not in h else h
+h = h[:_j] + '\n' + _dgd + _dpk + h[_j:] if '<code>SDDIMGD</code>' not in h else h
 if LICENSED:
     blk = '<div class="cmd" style="--grp:#5a5a5a"><h4><span class="k">KHB</span> &nbsp;<code>SDKICHHOAT</code></h4><p>Kích hoạt bản quyền trên máy này. Lệnh hiện <b>Mã máy</b>; gửi mã này cho nhà cung cấp để nhận <b>Mã kích hoạt</b>, rồi nhập vào.</p><ol><li>Gõ SDKICHHOAT, ghi lại Mã máy (dạng XXXX-XXXX-XXXX).</li><li>Gửi Mã máy cho nhà cung cấp, nhận Mã kích hoạt (dạng XXXXX-XXXXX-XXXXX).</li><li>Gõ lại SDKICHHOAT và nhập mã.</li></ol><p class="note"><b>Lưu ý:</b> Mã chỉ dùng được trên đúng máy đã gửi Mã máy. Cài lại Windows hoặc đổi máy thì Mã máy đổi, cần xin mã mới theo chính sách của nhà cung cấp.</p></div>\n'
     h = h.replace('<h3><span class="dot"', blk + '<h3><span class="dot"', 1) if False else h

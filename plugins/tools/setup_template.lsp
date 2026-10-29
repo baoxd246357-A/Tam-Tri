@@ -44,6 +44,18 @@
              (if (and r (not (vl-catch-all-error-p r))) (setq o r)))))
   o)
 
+(defun sdsu:open (st / ok e args r)
+  ;; ADODB.Stream.Open co 5 tham so tuy chon; mot so ban AutoCAD bao "too few actual parameters" neu khong truyen du
+  ;; -> thu lan luot: khong doi so, roi 1, 2, 3, 5 bien the rong
+  (setq e (vlax-make-variant))
+  (foreach args (list nil (list e) (list e e) (list e e e) (list e e e e e))
+    (if (not ok)
+      (progn
+        (setq r (vl-catch-all-apply 'vlax-invoke-method (append (list st 'Open) args)))
+        (if (not (vl-catch-all-error-p r)) (setq ok t)))))
+  (if (not ok) (vlax-invoke-method st 'Open (vlax-make-variant) (vlax-make-variant) (vlax-make-variant) (vlax-make-variant) (vlax-make-variant)))
+  ok)
+
 (defun sdsu:f (rel size / r)
   (setq *SDSU:REL* rel *SDSU:SIZE* size *SDSU:FAIL* nil *SDSU:PATH* (strcat (sdsu:dir) "\\" rel)
         *SDSU:XML* nil *SDSU:EL* nil *SDSU:ST* nil *SDSU:STEP* "bat dau")
@@ -67,7 +79,7 @@
                        (setq *SDSU:STEP* "Stream.Type")
                        (vlax-put-property *SDSU:ST* 'Type 1)
                        (setq *SDSU:STEP* "Stream.Open")
-                       (vlax-invoke-method *SDSU:ST* 'Open))
+                       (sdsu:open *SDSU:ST*))
                     nil))
           (if (vl-catch-all-error-p r)
             (sdsu:fail (strcat "buoc [" *SDSU:STEP* "]: " (vl-catch-all-error-message r))))))))

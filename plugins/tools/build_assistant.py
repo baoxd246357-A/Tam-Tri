@@ -150,6 +150,14 @@ Nếu gõ tên lệnh mà AutoCAD báo `Unknown command`, kiểm tra plugin đã
 - Gói có ảnh mẫu trong thư mục `Maps` (tên file có đuôi `_DàixRộng` thì `SDMAP` tự dùng khổ đó).''', 'HuongDanQuyTrinhDa.md · Lưu ý'),
  F('khong-thay-van', 'Không thấy vân đá (SDVANDA)', ['không thấy vân', 'không tìm thấy file pat', 'pat', 'hatch vân lỗi', 'sdvanda lỗi'],
    'Báo lỗi khi AutoCAD không tìm thấy file `.pat` (Platinus, DaSocDua, ViaLactea, DaVanGoXam, DaVanGoCo). Chạy lại `SDMENU` để thư mục cài đặt được thêm vào Support File Search Path, hoặc kiểm tra các file `.pat` nằm cùng thư mục với `SDOpLat.lsp`.'),
+ F('ghi-vien-le', 'Ghi hoặc không ghi mã viên cắt (viên lẻ)', ['ghi mã viên lẻ', 'tắt mã viên cắt', 'bản vẽ rối chữ', 'nhãn viên cắt', 'không ghi viên lẻ', 'ẩn mã G1-C'],
+   'Trong hộp thoại `SDGACH` có ô **"Ghi ma len vien cat / vien le (G1-C1...)"**. Bỏ tích ô này để bản vẽ không ghi mã lên các viên cắt (mã vẫn lưu trong dữ liệu viên nên `SDGACHTK`, `SDDATHO`, `SDGIACONG` vẫn dùng bình thường). Ô **"Ghi ma len vien nguyen"** điều khiển nhãn trên viên nguyên.', 'HuongDanLenh.html · SDGACH'),
+ F('ban-cu', 'Hộp thoại thiếu ô hoặc lệnh không tồn tại (đang nạp bản cũ)', ['lệnh không tồn tại sdraitam', 'sdgach thiếu ô cắt ảnh', 'hộp thoại thiếu', 'unknown command sdraitam', 'sdddimgd unknown command', 'bản cũ', 'phiên bản'],
+   '''Nếu một lệnh báo `Unknown command` (ví dụ `SDRAITAM`, `SDDIMGD`) hoặc hộp thoại `SDGACH` không có ô "Cat anh tam da that vao cac vien", thường là AutoCAD đang nạp **một bản cũ** của bộ lệnh (từ lần cài trước) thay vì bản mới.
+
+1. Gõ `!*SD:VER*` rồi Enter: bản mới hiện `"1.0.0"` hoặc cao hơn.
+2. Xóa bản cũ khỏi `OPTIONS > Files > Support File Search Path` và khỏi `Startup Suite`; kiểm tra `acaddoc.lsp` không còn dòng nạp bản cũ (`SDTUNAP` ghi dòng này).
+3. Đóng AutoCAD, mở lại, cài bản mới.''', 'Hướng dẫn nhanh'),
  F('hoan-tac', 'Hoàn tác một lệnh', ['hoàn tác', 'undo', 'làm lại', 'xóa kết quả lệnh', 'bấm nhầm'],
    'Mỗi lệnh gom vào một lần Undo: gõ `U` để hoàn tác cả lệnh. Bấm Esc giữa chừng thì lệnh dừng; với `SDDIMGD` (DGD) lệnh tự trả lại cài đặt hệ thống.'),
  F('bao-loi', 'Báo lỗi cho nhà cung cấp', ['báo lỗi', 'gửi lỗi', 'lệnh bị lỗi', 'error', 'hỗ trợ', 'liên hệ'],
@@ -177,6 +185,7 @@ KW = {  # tu khoa dung-khi (do nguoi soan dat), giup tim dung lenh khi nguoi dun
  'SDGACHTK': 'thong ke dat hang so luong vien bang thong ke du tru hao hut hao phi',
  'SDKTLAT': 'kiem tra vien hep vien nho ron khong deu thieu ma vat lieu khe gian no',
  'SDQUYTRINH': 'quy trinh thu tu cac buoc buoc tiep theo khong nho lien hoan hop thoai goi y',
+ 'SDDIMPOLY': 'dim polyline kin dim canh cung tron dpk dim tung canh chu ra ngoai goc hep',
  'SDDIMGD': 'dim giao diem duong cat dim tung doan dim tong kich thuoc',
  'SDDATHO': 'cat vien tu da tho so do cat hieu suat hao hut hao phi slab kho tam',
  'SDLOT': 'nhieu phong chay lo hang loat nhieu khu vuc',

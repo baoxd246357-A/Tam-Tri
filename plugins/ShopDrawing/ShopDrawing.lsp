@@ -77,6 +77,7 @@
 
 ;; Bat dau / ket thuc lenh: luu bien he thong, undo mark, bat loi
 (defun sd:begin ()
+  (setq *SD:NOLBLC* nil)
   (setq *SD:OLDERR* *error*
         *SD:VARS*   (mapcar '(lambda (v) (cons v (getvar v)))
                             '("CMDECHO" "OSMODE" "CLAYER")))
@@ -4877,7 +4878,7 @@
                    (sd:anchors (nth 7 p) (nth 8 p) (nth 6 p) (nth 1 p) (nth 2 p) sc) 0)
             nanc (+ nanc anct))
       (sd:tag-piece p tc mat name wn hn thk anct)
-      (sd:text (sd:2d (nth 5 p)) tc (sd:tile-th (nth 1 p) (nth 2 p) sc) "MC" "SD-CHU")))
+      (if (not *SD:NOLBLC*) (sd:text (sd:2d (nth 5 p)) tc (sd:tile-th (nth 1 p) (nth 2 p) sc) "MC" "SD-CHU"))))
   (list cnt nanc))
 
 (defun sd:rect-typ (w h ar full)
@@ -4948,6 +4949,7 @@
                              (list "blen" "Chieu dai 1 vien vien (mm)" 'real (cond (*SD:BLEN*) (600.0)))
                              (list "anc" "Ve pat neo (op kho)" 'tog nil)
                              (list "lblf" "Ghi ma len vien nguyen" 'tog nil)
+                             (list "lblc" "Ghi ma len vien cat / vien le (G1-C1...)" 'tog t)
                              (list "anh" "Cat anh tam da that vao cac vien (khai bao nhu SDANHDA)" 'tog nil)
                              (list "chieu" "Chieu van tren vien (cat anh tam da)" 'kw (cond (*SD:ICHIEU*) ("Toiuu"))
                                    '(("Toiuu" . "Tu xoay 90 do de it hao") ("Doc" . "Van theo canh dai vien") ("Ngang" . "Van vuong goc canh dai") ("Chinh" . "Van theo huong vien chinh (chon 1 vien, moi vien deu 1 huong)")))
@@ -4959,6 +4961,7 @@
             gap (sd:v "gap") pat (sd:v "pat") *SD:GPAT* pat al (sd:v "al")
             bord (sd:v "bord") hbord (and holes-e (sd:v "hbord"))
             bmat (sd:v "bmat") bw (sd:v "bw") blen (sd:v "blen") anc (sd:v "anc") lblf (sd:v "lblf")
+            *SD:NOLBLC* (not (sd:v "lblc"))
             *SD:BCODE* bmat *SD:BW* bw *SD:BLEN* blen
             ang (* pi (/ (sd:v "ang") 180.0)))
       (if (and (member pat '("Xuongca" "Chevron")) (equal W H 0.5))
@@ -5048,6 +5051,7 @@
               (sd:text (sd:centroid cs) mat (sd:tile-th tw th sc) "MC" "SD-CHU")))))
       (setq rc (sd:code-pieces pieces mat name W H thk anc sc))
       (if bpieces (setq rb (sd:code-pieces bpieces bmat (strcat "Vien " name) blen bw thk anc sc)))
+      (setq *SD:NOLBLC* nil)
       (princ (strcat "\n[SD] " mat ": dien tich lat " (sd:rtos (/ (vla-get-Area R) 1e6) 2) " m2; "
                      (itoa nf) " vien nguyen; " (itoa (length pieces)) " vien cat (" (itoa (car rc)) " ma)"
                      (if bpieces (strcat "; vien " bmat ": " (itoa (length bpieces)) " vien ("
