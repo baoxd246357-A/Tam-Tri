@@ -36,22 +36,41 @@
 
 ;; Moi file: (sdsu:f ten kich-thuoc) mo luong ghi, nhieu (sdsu:c "doan base64 ngan"), (sdsu:e) dong va kiem tra kich thuoc.
 ;; Doan ngan (400 ky tu, nho hon chuoi dai nhat da biet nap duoc trong plugin: 430) vi AutoLISP gioi han do dai chuoi trong file; moi doan tu giai ma roi ghi noi tiep.
+(defun sdsu:mkobj (ids / o r)
+  ;; thu lan luot cac ProgID; MSXML 6.0 KHONG ho tro giai ma base64 (dataType) nen dung 3.0 / ban khong so
+  (foreach id ids
+    (if (not o)
+      (progn (setq r (vl-catch-all-apply 'vlax-create-object (list id)))
+             (if (and r (not (vl-catch-all-error-p r))) (setq o r)))))
+  o)
+
 (defun sdsu:f (rel size / r)
   (setq *SDSU:REL* rel *SDSU:SIZE* size *SDSU:FAIL* nil *SDSU:PATH* (strcat (sdsu:dir) "\\" rel)
-        *SDSU:XML* nil *SDSU:EL* nil *SDSU:ST* nil)
+        *SDSU:XML* nil *SDSU:EL* nil *SDSU:ST* nil *SDSU:STEP* "bat dau")
   (if (not *SDSU:ABORT*)
     (progn
-      (setq r (vl-catch-all-apply
-                '(lambda ()
-                   (sdsu:mkdirs (vl-filename-directory *SDSU:PATH*))
-                   (setq *SDSU:XML* (vlax-create-object "MSXML2.DOMDocument.6.0"))
-                   (setq *SDSU:EL* (vlax-invoke-method *SDSU:XML* 'createElement "b64"))
-                   (vlax-put-property *SDSU:EL* 'dataType "bin.base64")
-                   (setq *SDSU:ST* (vlax-create-object "ADODB.Stream"))
-                   (vlax-put-property *SDSU:ST* 'Type 1)
-                   (vlax-invoke-method *SDSU:ST* 'Open))
-                nil))
-      (if (vl-catch-all-error-p r) (sdsu:fail (vl-catch-all-error-message r)))))
+      (setq *SDSU:STEP* "tao thu muc")
+      (sdsu:mkdirs (vl-filename-directory *SDSU:PATH*))
+      (setq *SDSU:STEP* "tao MSXML")
+      (setq *SDSU:XML* (sdsu:mkobj '("MSXML2.DOMDocument.3.0" "MSXML2.DOMDocument" "Msxml2.DOMDocument.4.0")))
+      (if (not *SDSU:XML*)
+        (sdsu:fail "khong tao duoc MSXML (MSXML2.DOMDocument) tren may nay")
+        (progn
+          (setq r (vl-catch-all-apply
+                    '(lambda ()
+                       (setq *SDSU:STEP* "createElement")
+                       (setq *SDSU:EL* (vlax-invoke-method *SDSU:XML* 'createElement "b64"))
+                       (setq *SDSU:STEP* "dataType")
+                       (vlax-put-property *SDSU:EL* 'dataType "bin.base64")
+                       (setq *SDSU:STEP* "tao ADODB.Stream")
+                       (setq *SDSU:ST* (vlax-create-object "ADODB.Stream"))
+                       (setq *SDSU:STEP* "Stream.Type")
+                       (vlax-put-property *SDSU:ST* 'Type 1)
+                       (setq *SDSU:STEP* "Stream.Open")
+                       (vlax-invoke-method *SDSU:ST* 'Open))
+                    nil))
+          (if (vl-catch-all-error-p r)
+            (sdsu:fail (strcat "buoc [" *SDSU:STEP* "]: " (vl-catch-all-error-message r))))))))
   (princ))
 
 (defun sdsu:c (b64 / r)
@@ -59,10 +78,14 @@
     (progn
       (setq r (vl-catch-all-apply
                 '(lambda ()
+                   (setq *SDSU:STEP* "gan text")
                    (vlax-put-property *SDSU:EL* 'text b64)
-                   (vlax-invoke-method *SDSU:ST* 'Write (vlax-get-property *SDSU:EL* 'nodeTypedValue)))
+                   (setq *SDSU:STEP* "nodeTypedValue")
+                   (setq *SDSU:BYTES* (vlax-get-property *SDSU:EL* 'nodeTypedValue))
+                   (setq *SDSU:STEP* "Stream.Write")
+                   (vlax-invoke-method *SDSU:ST* 'Write *SDSU:BYTES*))
                 nil))
-      (if (vl-catch-all-error-p r) (sdsu:fail (vl-catch-all-error-message r)))))
+      (if (vl-catch-all-error-p r) (sdsu:fail (strcat "buoc [" *SDSU:STEP* "]: " (vl-catch-all-error-message r))))))
   (princ))
 
 (defun sdsu:e ( / r)
@@ -70,8 +93,9 @@
     (progn
       (if (and *SDSU:ST* (not *SDSU:FAIL*))
         (progn
+          (setq *SDSU:STEP* "SaveToFile")
           (setq r (vl-catch-all-apply '(lambda () (vlax-invoke-method *SDSU:ST* 'SaveToFile *SDSU:PATH* 2)) nil))
-          (if (vl-catch-all-error-p r) (sdsu:fail (vl-catch-all-error-message r)))))
+          (if (vl-catch-all-error-p r) (sdsu:fail (strcat "buoc [" *SDSU:STEP* "]: " (vl-catch-all-error-message r))))))
       (if *SDSU:ST* (progn (vl-catch-all-apply '(lambda () (vlax-invoke-method *SDSU:ST* 'Close)) nil)
                            (vl-catch-all-apply 'vlax-release-object (list *SDSU:ST*))))
       (if *SDSU:XML* (vl-catch-all-apply 'vlax-release-object (list *SDSU:XML*)))
