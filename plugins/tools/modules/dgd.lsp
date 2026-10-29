@@ -18,15 +18,25 @@
     (initget "Chu")
     (setq r (if base (getpoint base msg) (getpoint msg))))
   r)
+
+;; Dim doan ngan (chu khong du cho, nhay ra ngoai): thu nho chu 0.6 lan de khong de len doan ke ben (chi khi tuy chon BAT).
+;; Goi truoc moi lenh dim, sau do tra DIMTXT ve gia tri cu.
+(defun sd:dimchu-small (len / h n)
+  (if (sd:dimchu-on)
+    (progn
+      (setq h (* (getvar "DIMTXT") (if (> (getvar "DIMSCALE") 0) (getvar "DIMSCALE") 1.0))
+            n (strlen (rtos len 2 (getvar "DIMDEC"))))
+      (if (< len (* (+ n 1) 0.7 h)) (setvar "DIMTXT" (* 0.6 (getvar "DIMTXT")))))))
 (defun sd:dimchu-apply ()
   (if (sd:dimchu-on)
     (progn (setvar "DIMATFIT" 1) (setvar "DIMTIX" 0) (setvar "DIMTMOVE" 0))))
 
-(defun c:SDDIMGD ( / *error* old_os old_echo old_fit old_tix old_tmove undo_on tmp lineobj p1 p2 p3
+(defun c:SDDIMGD ( / *error* old_os old_echo old_fit old_tix old_tmove old_txt undo_on tmp lineobj p1 p2 p3
                      ss i ent r pts uniq p sorted k s ang1 side dirang sp p4)
   (defun *error* (msg)
     (if tmp (progn (entdel tmp) (setq tmp nil)))
     (if undo_on (progn (command "_.UNDO" "_E") (setq undo_on nil)))
+    (if old_txt (setvar "DIMTXT" old_txt))
     (if old_fit (setvar "DIMATFIT" old_fit))
     (if old_tix (setvar "DIMTIX" old_tix))
     (if old_tmove (setvar "DIMTMOVE" old_tmove))
@@ -42,7 +52,8 @@
         old_echo (getvar "CMDECHO")
         old_fit (getvar "DIMATFIT")
         old_tix (getvar "DIMTIX")
-        old_tmove (getvar "DIMTMOVE"))
+        old_tmove (getvar "DIMTMOVE")
+        old_txt (getvar "DIMTXT"))
 
   (if (and (setq p1 (sd:dimchu-pt "\nChon diem bat dau cua duong cat" nil))
            (setq p2 (getpoint p1 "\nChon diem ket thuc cua duong cat: "))
@@ -97,7 +108,9 @@
           ;; 1. Dim chi tiet
           (setq k 0 s "")
           (while (< k (1- (length sorted)))
+            (sd:dimchu-small (distance (nth k sorted) (nth (1+ k) sorted)))
             (command "_.DIMALIGNED" (nth k sorted) (nth (1+ k) sorted) p3)
+            (setvar "DIMTXT" old_txt)
             (setq s (strcat s (rtos (distance (nth k sorted) (nth (1+ k) sorted)) 2 2) "  "))
             (setq k (1+ k))
           )
@@ -119,6 +132,7 @@
 
       (command "_.UNDO" "_E")
       (setq undo_on nil)
+      (setvar "DIMTXT" old_txt)
       (setvar "DIMATFIT" old_fit)
       (setvar "DIMTIX" old_tix)
       (setvar "DIMTMOVE" old_tmove)

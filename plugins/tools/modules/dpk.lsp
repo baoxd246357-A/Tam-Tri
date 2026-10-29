@@ -29,6 +29,7 @@
       (setq old_vars (list (cons "DIMATFIT" (getvar "DIMATFIT"))
                            (cons "DIMTIX" (getvar "DIMTIX"))
                            (cons "DIMTMOVE" (getvar "DIMTMOVE"))
+                           (cons "DIMTXT" (getvar "DIMTXT"))
                            (cons "OSMODE" (getvar "OSMODE"))
                            (cons "CMDECHO" (getvar "CMDECHO"))))
       (command "_.UNDO" "_BE")
@@ -67,11 +68,13 @@
           (progn
             ;; Diem giua duong cong lech khoi trung diem day cung => cung tron
             (setq ds (distance pm (mapcar '(lambda (u v) (/ (+ u v) 2.0)) p1 p2)))
+            (sd:dimchu-small (distance p1 p2))
             (if (< ds 1e-4)
               (command "_.DIMALIGNED" "_non" (trans p1 0 1) "_non" (trans p2 0 1)
                        "_non" (trans pt_dim 0 1))
               (command "_.DIMARC" (list ent (trans pm 0 1)) "_non" (trans pt_dim 0 1))
             )
+            (setvar "DIMTXT" (cdr (assoc "DIMTXT" old_vars)))
           )
         )
         (setq i (1+ i))

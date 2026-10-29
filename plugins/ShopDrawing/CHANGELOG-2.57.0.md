@@ -20,3 +20,4 @@ Chưa chạy thử trên AutoCAD thật; mới kiểm tra tĩnh (ngoặc cân, k
 - SDGACH: ô bật/tắt ghi mã lên viên cắt / viên lẻ.
 - Quy tắc dim rón áp cho cả dim của ShopDrawing (`sd:dim`, `sd:dimal`: SDDIMVIEN, SDGIACONG...): chữ cạnh đường dim theo cùng tùy chọn chữ dim, dim xong trả lại biến.
 - Sửa viên / ô bị cung tròn cắt (SDGACH, SDRAITAM, SDDOCDA...): phần giao với đường bao có cung trước đây giữ dạng REGION nên mất mảnh hoặc chia 0; nay chuyển thành polyline có bulge (cung giữ nguyên) và lấy mẫu cung khi tính khung bao / trọng tâm.
+- DGD / DPK: đoạn dim ngắn hơn chỗ chứa chữ (khe rón 2 mm, 2.8 mm...) được thu nhỏ chữ 0,6 lần (khi tùy chọn chữ dim BẬT) để chữ nhảy ra ngoài không đè lên nhau; DIMTXT được trả lại sau mỗi dim.
