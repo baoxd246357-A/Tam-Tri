@@ -58,3 +58,14 @@ Nếu `BIENDICH` báo lỗi, dùng `VLIDE` biên dịch thủ công, hoặc gử
 
 ## Bài học 2: OR / AND của AutoLISP chỉ trả T hoặc nil
 Khác nhiều ngôn ngữ khác, `(or a b)` trả `T`/`nil`, không trả giá trị của `a`; `(cond ((and x y)))` một mệnh đề cũng trả `T`. Đã gặp 2 lỗi do đây (Mã máy trả `T` thay vì chuỗi; offset lỗ/cột trong SDDIEMBD). `lisp_emu.py` giờ mô phỏng đúng cách này và có test `sd:lic-mid` trả chuỗi.
+
+## Đóng gói thành 1 file cài đặt tự động (khách kéo thả vào AutoCAD)
+`SDOpLat-Setup.lsp` chứa toàn bộ gói (đã mã hóa base64) và tự giải ra
+`%APPDATA%\Autodesk\ApplicationPlugins\SDOpLat.bundle\Contents`, sinh `PackageContents.xml` (AutoCAD tự nạp khi khởi động), nạp menu + toolbar.
+Không cần quyền quản trị. Không đưa `.lsp` nguồn vào gói (công cụ bỏ qua mọi file `.lsp`).
+
+Tạo file:
+- **Không cần Python:** mở `plugins/tools/TaoFileCaiDat.html` → chọn thư mục gói đã có `SDOpLat.fas` → tải `SDOpLat-Setup.lsp`.
+- Hoặc `python3 -I plugins/tools/build_setup.py <thu-muc-goi> SDOpLat-Setup.lsp --ver=1.0.0`. Hai cách cho file giống hệt từng byte.
+
+Lưu ý: **chưa thử trên AutoCAD thật** (cần thử trên máy sạch hoặc sau khi xóa thư mục `SDOpLat.bundle`). Phần giải mã dùng COM của Windows (MSXML2 + ADODB.Stream). Gói đã kiểm tra: 142/142 file giải ngược ra đúng từng byte, cân ngoặc, tên hàm.
