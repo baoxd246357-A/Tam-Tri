@@ -4945,7 +4945,7 @@
 (defun c:SDGACH (/ e0 sc es outer-e ssh i e holes-e mat name W H thk jt gap pat off ang al o anc lblf
                    bord bmat bw blen eo ei ef hf outer holes loops edges R tr C pa cen ents vp
                    lpts lx0 lx1 ly0 ly1 tiles lo tw th cs cls nf nanc pieces bpieces wl hl anct rc rb
-                   cva hbord fa ta)
+                   cva hbord fa ta mx my mc)
   (sd:begin)
   (setq sc (sd:sc))
   (setq es (if *SD:GBATCH* (list *SD:GOUTER*) (entsel "\nChon duong bao vung op lat (polyline kin, mat tuong / mep san): ")))
@@ -5089,6 +5089,20 @@
             (setq nf (1+ nf) nanc (+ nanc anct))
             (if lblf
               (sd:text (sd:centroid cs) mat (sd:tile-th tw th sc) "MC" "SD-CHU")))))
+      ;; ---- danh dau vien bat dau (layer SD-DIEMBD): vien nam tai goc luoi (theo "Diem bat dau dat o"), X xuyen vien + vong tron tai diem bat dau
+      (if (and (not *SD:GBATCH*) (member pat '("Thang" "Sole")))
+        (progn
+          (sd:make-layer "SD-DIEMBD" 3 "Continuous" 25)
+          (setq mx (cond ((= al "Tam") (/ W -2.0)) ((= al "Goc") 0.0) (t (/ jt 2.0)))
+                my (cond ((= al "Tam") (/ H -2.0)) ((= al "Goc") 0.0) (t (/ jt 2.0)))
+                mc (mapcar '(lambda (q) (sd:l2w o ang q))
+                           (list (list mx my) (list (+ mx W) my) (list (+ mx W) (+ my H)) (list mx (+ my H)))))
+          (sd:pline mc t "SD-DIEMBD")
+          (sd:line (append (list (car (nth 0 mc)) (cadr (nth 0 mc))) '(0.0)) (append (list (car (nth 2 mc)) (cadr (nth 2 mc))) '(0.0)) "SD-DIEMBD")
+          (sd:line (append (list (car (nth 1 mc)) (cadr (nth 1 mc))) '(0.0)) (append (list (car (nth 3 mc)) (cadr (nth 3 mc))) '(0.0)) "SD-DIEMBD")
+          (entmake (list '(0 . "CIRCLE") '(8 . "SD-DIEMBD") (cons 10 (list (car o) (cadr o) 0.0)) (cons 40 (* 3.0 sc))))
+          (sd:text (sd:centroid mc) "BAT DAU" (* 2.5 sc) "MC" "SD-DIEMBD")
+          (princ "\n[SD] Da danh dau vien bat dau (layer SD-DIEMBD, mau xanh la); tat/xoa layer nay khi khong can.")))
       (setq rc (sd:code-pieces pieces mat name W H thk anc sc))
       (if bpieces (setq rb (sd:code-pieces bpieces bmat (strcat "Vien " name) blen bw thk anc sc)))
       (setq *SD:NOLBLC* nil)
