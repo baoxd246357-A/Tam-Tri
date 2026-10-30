@@ -112,6 +112,9 @@ forms, _, tail = patch(src)
 fl = []
 for f in forms:
     f['toks'] = set(x.lower() for x in re.findall(r"[^\s()'\"`]+", strip(f['seg'])))
+    # ham goi trong chuoi (action_tile "(sd:dlg-ok)") cung phai duoc giu
+    for lit in re.findall(r'"((?:[^"\\]|\\.)*)"', re.sub(r';[^\n]*', '', f['seg'])):
+        f['toks'] |= set(x.lower() for x in re.findall(r"[^\s()'\"`\\]+", lit))
 defs = {f['name'].lower(): k for k, f in enumerate(forms) if f['kind'] == 'defun'}
 setqs = collections.defaultdict(list)
 for k, f in enumerate(forms):
