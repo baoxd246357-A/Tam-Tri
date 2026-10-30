@@ -45,14 +45,23 @@
         (command "_.-DIMSTYLE" "_R" (car old))))))
 
 
-;; Dim doan ngan (chu khong du cho, nhay ra ngoai): thu nho chu 0.6 lan de khong de len doan ke ben (chi khi tuy chon BAT).
-;; Goi truoc moi lenh dim, sau do tra DIMTXT ve gia tri cu.
-(defun sd:dimchu-small (len / h n)
+;; Dim doan ngan (chu khong du cho, nhay ra ngoai): thu nho chu cho vua doan (0.75 / 0.6 / 0.45 lan), khong de chu de len doan ke ben (chi khi tuy chon BAT).
+;; Goi truoc moi lenh dim, sau do tra DIMTXT ve gia tri cu. Tra ve he so da dung (de in chan doan).
+(defun sd:dimchu-small (len / sc h n fs f r)
+  (setq r 1.0)
   (if (sd:dimchu-on)
     (progn
-      (setq h (* (getvar "DIMTXT") (if (> (getvar "DIMSCALE") 0) (getvar "DIMSCALE") 1.0))
-            n (strlen (rtos len 2 (getvar "DIMDEC"))))
-      (if (< len (* (+ n 1) 0.7 h)) (setvar "DIMTXT" (* 0.6 (getvar "DIMTXT")))))))
+      (setq sc (if (> (getvar "DIMSCALE") 0) (getvar "DIMSCALE") 1.0)
+            h (* (getvar "DIMTXT") sc)
+            n (strlen (rtos len 2 (getvar "DIMDEC")))
+            fs '(1.0 0.75 0.6 0.45) r nil)
+      ;; chu rong khoang 0.8 * cao moi ky tu, cong 2 khoang DIMGAP hai ben
+      (while (and fs (not r))
+        (setq f (car fs) fs (cdr fs))
+        (if (>= len (+ (* n 0.8 h f) (* 2.0 (getvar "DIMGAP") sc))) (setq r f)))
+      (if (not r) (setq r 0.45))
+      (if (< r 1.0) (setvar "DIMTXT" (* r (getvar "DIMTXT"))))))
+  r)
 (defun sd:dimchu-apply ()
   (if (sd:dimchu-on)
     (progn (setvar "DIMATFIT" 1) (setvar "DIMTIX" 0) (setvar "DIMTMOVE" 0))))
@@ -94,6 +103,8 @@
       (setq dk (sd:dimkieu-begin))   ;; kieu dim ShopDrawing (neu BAT)
       (setq txt0 (getvar "DIMTXT"))  ;; chieu cao chu cua kieu dim dang dung (sau khi chuyen kieu)
       (sd:dimchu-apply)       ;; DIMATFIT 1 / DIMTIX 0 / DIMTMOVE 0 neu tuy chon chu dim dang BAT
+      (princ (strcat "\n[SD] Dim: kieu " (getvar "DIMSTYLE") ", DIMTXT " (rtos (getvar "DIMTXT") 2 2) ", DIMSCALE " (rtos (getvar "DIMSCALE") 2 2)
+                     ", DIMATFIT " (itoa (getvar "DIMATFIT")) ", DIMTMOVE " (itoa (getvar "DIMTMOVE")) ", layer " (getvar "CLAYER")))
 
       ;; Line tam (WCS) de lay giao diem
       (entmake (list '(0 . "LINE") (cons 10 (trans p1 1 0)) (cons 11 (trans p2 1 0))))
