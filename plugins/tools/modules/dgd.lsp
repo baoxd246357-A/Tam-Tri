@@ -48,7 +48,7 @@
 ;; Dim doan ngan (chu khong du cho, nhay ra ngoai): thu nho chu cho vua doan (0.75 / 0.6 / 0.45 lan), khong de chu de len doan ke ben (chi khi tuy chon BAT).
 ;; Goi truoc moi lenh dim, sau do tra DIMTXT ve gia tri cu. Tra ve he so da dung (de in chan doan).
 (defun sd:dimchu-small (len / sc h n fs f r)
-  (setq r 1.0)
+  (setq r 1.0 *SD:DIMOUT* nil)   ;; *SD:DIMOUT* = T neu chu van khong vua doan du da thu nho het co (can dat chu canh doan)
   (if (sd:dimchu-on)
     (progn
       (setq sc (if (> (getvar "DIMSCALE") 0) (getvar "DIMSCALE") 1.0)
@@ -59,15 +59,23 @@
       (while (and fs (not r))
         (setq f (car fs) fs (cdr fs))
         (if (>= len (+ (* n 0.8 h f) (* 2.0 (getvar "DIMGAP") sc))) (setq r f)))
-      (if (not r) (setq r 0.45))
+      (if (not r) (setq r 0.45 *SD:DIMOUT* T))
       (if (< r 1.0) (setvar "DIMTXT" (* r (getvar "DIMTXT"))))))
   r)
+;; Dat lai vi tri chu cua dim vua tao (entlast) den diem pt (toa do UCS); bo qua neu khong phai dim.
+(defun sd:dimchu-move (pt / e)
+  (setq e (entlast))
+  (if (and e (= (cdr (assoc 0 (entget e))) "DIMENSION"))
+    (progn
+      (vl-catch-all-apply '(lambda () (command "_.DIMTEDIT" e pt)))
+      (while (> (getvar "CMDACTIVE") 0) (command ""))))
+  (princ))
 (defun sd:dimchu-apply ()
   (if (sd:dimchu-on)
     (progn (setvar "DIMATFIT" 1) (setvar "DIMTIX" 0) (setvar "DIMTMOVE" 0))))
 
 (defun c:SDDIMGD ( / *error* old_os old_echo old_fit old_tix old_tmove old_txt txt0 dk undo_on tmp lineobj p1 p2 p3
-                     ss i ent r pts uniq p sorted k s ang1 side dirang sp p4)
+                     ss i ent r pts uniq p sorted k s ang1 side dirang sp p4 dp pa pb hh)
   (defun *error* (msg)
     (if tmp (progn (entdel tmp) (setq tmp nil)))
     (if undo_on (progn (command "_.UNDO" "_E") (setq undo_on nil)))
@@ -145,21 +153,29 @@
       (if (< (length sorted) 2)
         (princ "\n[SD] Duong cat chi di qua duoi 2 diem, khong du de tao Dim!")
         (progn
+          ;; huong ve phia dat dim (dirang) va khoang cach tu duong cat den duong dim (dp)
+          (setq ang1 (angle p1 p2)
+                side (- (* (- (car p2) (car p1)) (- (cadr p3) (cadr p1)))
+                        (* (- (cadr p2) (cadr p1)) (- (car p3) (car p1))))
+                dirang (if (< side 0) (- ang1 (/ pi 2)) (+ ang1 (/ pi 2)))
+                dp (/ (abs side) (max 1e-9 (distance p1 p2))))
           ;; 1. Dim chi tiet
           (setq k 0 s "")
           (while (< k (1- (length sorted)))
-            (sd:dimchu-small (distance (nth k sorted) (nth (1+ k) sorted)))
-            (command "_.DIMALIGNED" (nth k sorted) (nth (1+ k) sorted) p3)
+            (setq pa (nth k sorted) pb (nth (1+ k) sorted))
+            (sd:dimchu-small (distance pa pb))
+            (setq hh (* (getvar "DIMTXT") (if (> (getvar "DIMSCALE") 0) (getvar "DIMSCALE") 1.0)))
+            (command "_.DIMALIGNED" pa pb p3)
+            ;; doan qua ngan, chu nho van khong vua: dat chu canh duong dim, so le 2 muc de khong de nhau
+            (if *SD:DIMOUT*
+              (sd:dimchu-move (polar (polar pa (angle pa pb) (/ (distance pa pb) 2.0)) dirang
+                                     (+ dp (* hh (if (= (rem k 2) 0) 1.3 2.4))))))
             (setvar "DIMTXT" txt0)
             (setq s (strcat s (rtos (distance (nth k sorted) (nth (1+ k) sorted)) 2 2) "  "))
             (setq k (1+ k))
           )
           ;; 2. Dim tong, day ra phia xa duong cat hon dim chi tiet
-          (setq ang1 (angle p1 p2)
-                side (- (* (- (car p2) (car p1)) (- (cadr p3) (cadr p1)))
-                        (* (- (cadr p2) (cadr p1)) (- (car p3) (car p1))))
-                dirang (if (< side 0) (- ang1 (/ pi 2)) (+ ang1 (/ pi 2)))
-                sp (* 3.5 (getvar "DIMTXT")
+          (setq sp (* 3.5 (getvar "DIMTXT")
                       (if (> (getvar "DIMSCALE") 0) (getvar "DIMSCALE") 1.0))
                 p4 (polar p3 dirang sp))
           (command "_.DIMALIGNED" (car sorted) (last sorted) p4)
