@@ -1,0 +1,58 @@
+﻿Nhóm;Lệnh tắt;Lệnh;Chức năng;Mô tả
+Thiết lập và bản vẽ;TYLE;SDSET;Tỷ lệ, layer, dimstyle;Đặt tỷ lệ bản vẽ chính và tỷ lệ chi tiết
+Ốp lát đá granite / gạch;CHV;SDGACH;Chia viên ốp lát;Chia viên ốp lát đá granite / gạch trong vùng bao, cắt viên theo biên, đánh mã viên cắt
+Ốp lát đá granite / gạch;LCT;SDCHANTUONG;Len chân tường;Chia len chân tường, trừ ô cửa, vẽ triển khai mặt đứng
+Ốp lát đá granite / gạch;RTA;SDRAITAM;Rải panel / đá lát theo kho (tiling);Rải panel / đá lát theo thuật toán tiling
+Ốp lát đá granite / gạch;VDA;SDVANDA;Hatch vân đá (.pat);Phủ hatch vân đá (file
+Ốp lát đá granite / gạch;QTR;SDQUYTRINH;Quy trình đá lát (hộp thoại liên hoàn);Hộp thoại DCL thông minh cho quy trình đá lát
+Ốp lát đá granite / gạch;DOD;SDDOCDA;Đọc mặt bằng ốp lát → ô kín + bảng viên đá;Đọc mặt bằng ốp lát đá để tự lập danh sách các viên (ô Bỏ qua các layer loại hẳn các nét mũi bậc, thang
+Ốp lát đá granite / gạch;MOA;SDMOANH;Mở biên ảnh đá: tự dịch ảnh khi biên vượt ngoài ảnh;Khi chỉnh biên một viên (kéo to polyline viên) mà biên vượt ra ngoài ảnh tấm đá của viên đó, nhưng tấm đá còn đủ khổ, lệnh tự dịch ảnh tối thiểu (chừa lề an toàn) rồi cắt lại ảnh theo biên mới
+Ốp lát đá granite / gạch;DRN;SDRON;Đổi ron giữa các viên: hatch và ảnh tự theo;Đổi bề rộng ron (mạch) giữa các viên mà không phải sửa tay
+Ốp lát đá granite / gạch;LTV;SDVAN;Kiểm tra vân đá liên tục giữa các viên kề nhau;Kiểm tra vân đá có liên tục giữa các viên kề nhau không, dựa trên vị trí mỗi viên được cắt trên tấm đá thô (SDANHDA ghi lại tấm số mấy, vị trí và hướng xoay)
+Ốp lát đá granite / gạch;KLT;SDKTLAT;Kiểm tra bản vẽ lát: viên hẹp / nhỏ, ron không đều;Kiểm tra nhanh bản vẽ lát đá / gạch
+Ốp lát đá granite / gạch;DBT;SDDIEMBD;So sánh điểm bắt đầu rải lưới viên;So sánh các điểm bắt đầu rải lưới viên trong một vùng lát (có thể có lỗ / cột)
+Ốp lát đá granite / gạch;KCG;SDKHEGIAN;Khe co giãn: sát tường và phân vùng;Vẽ khe co giãn cho vùng lát
+Ốp lát đá granite / gạch;PTN;SDTHOATNUOC;Phễu thu nước và dốc sàn;Đặt phễu thu nước và kiểm tra dốc sàn
+Ốp lát đá granite / gạch;TDO;SDTUDONG;Bật / tắt tự động cắt lại ảnh khi sửa biên viên;Bật chế độ tự động
+Ốp lát đá granite / gạch;NPH;SDLOT;Chạy một lần cho nhiều phòng: rải viên, điểm bắt đầu tốt nhất, thống kê;Chạy một lần cho nhiều phòng hoặc khu vực
+Ốp lát đá granite / gạch;IRN;SDRONIN;Cho ron / đường viền hiện ra khi in;Cho đường ron hiện ra khi in trên đá hoặc ảnh tối
+Ốp lát đá granite / gạch;VLI;SDVATLIEU;Vật liệu đã dùng: nhớ thông số, chọn lại nhanh;Nhớ thông số lần trước theo từng mã vật liệu (tên, kích thước viên, dày, ron, khe sát tường, kiểu lát)
+Ốp lát đá granite / gạch;GOV;SDXOAVIEN;Gỡ bỏ viên trong vùng chọn: xóa polyline, ảnh, hatch;Gỡ bỏ các viên trong một vùng để lộ chi tiết nằm dưới (ví dụ mặt cắt mũi bậc)
+Ốp lát đá granite / gạch;ADA;SDANHDA;Cắt ảnh đá vào viên (IMAGECLIP);Cắt ảnh chụp tấm đá thô bằng IMAGECLIP cho hàng loạt viên ốp lát đã có trên bản vẽ (polyline kín, kể cả viên đặt xéo 45°)
+Ốp lát đá granite / gạch;TKD;SDTKDA;Thống kê viên đá cắt (quét polyline);Quét các polyline viên đá cắt và xuất bảng thống kê
+Ốp lát đá granite / gạch;DTK;SDDOCDATK;Thống kê viên đá sau SDDOCDA, đặt tấm;Thống kê viên đá sau SDDOCDA kiểu SDGACHTK
+Ốp lát đá granite / gạch;ATK;SDANHDATK;Thống kê tấm đá sau SDANHDA, đặt tấm;Thống kê tấm đá sau SDANHDA kiểu SDGACHTK
+Ốp lát đá granite / gạch;TKV;SDGACHTK;Thống kê viên, đặt hàng;Bảng thống kê viên ốp lát và dự trù số viên đặt hàng (khi mua viên thành phẩm)
+Ốp lát đá granite / gạch;KHO;SDKHODA;Kho đá thô;Quản lý kho đá thô gồm nhiều cỡ tấm
+Ốp lát đá granite / gạch;DTH;SDDATHO;Cắt viên từ đá thô;Tính số tấm đá thô và vẽ sơ đồ cắt viên
+Ốp lát đá granite / gạch;TDA;SDTHANGDA;Cầu thang đá: mặt / cổ / mũi bậc, khe LED, len, ra đá ABF;Lập bộ viên đá cho cầu thang
+Ốp lát đá granite / gạch;GCV;SDGIACONG;Bản vẽ gia công viên;Bản vẽ gia công từng mã viên gửi xưởng
+Ốp lát đá granite / gạch;CTL;SDLOP;Cấu tạo lớp ốp / lát;Chi tiết cấu tạo lớp ốp / lát
+Tiện ích;BLN;SDPANEL;Bảng lệnh (hộp thoại);Bảng lệnh dạng hộp thoại
+Tiện ích;HDL;SDHELP;Danh sách lệnh;In danh sách lệnh và lệnh tắt ra dòng lệnh
+Ốp lát đá granite / gạch;KCD;SDBLOCKDA;Block chi tiết đá: mũi bậc mẫu, quét hình tạo block;Tạo block chi tiết đá để dùng lại
+Ốp lát đá granite / gạch;BTK;SDTRINH;Bản trình khách: bảng chú thích vật liệu, chế độ trình khách;Chuẩn bị bản in trình khách (khổ A1, tỷ lệ 1
+Ốp lát đá granite / gạch;KIN;SDKHUNGIN;Khung in tự dựng A1 / A3: khung tên, hướng Bắc, thước tỷ lệ;Dựng khung in cho bản trình khách
+Ốp lát đá granite / gạch;KSH;SDKHAOSAT;Dựng phòng từ số đo khảo sát (hạng A / B / C / X / D);Dựng phòng từ số đo khảo sát hiện trạng (file CSV cùng định dạng với tool khao-sat-hien-trang / máy đo laser Bosch
+Ốp lát đá granite / gạch;CHB;SDCHIABAC;Chia bậc thang từ cao độ, bảng cao độ từng bậc;Chia bậc thang từ cao độ
+Ốp lát đá granite / gạch;SMV;SDMAVIEN;Mã viên theo hình dạng, ổn định khi sửa bản vẽ;Đánh mã viên theo hình dạng
+Ốp lát đá granite / gạch;KTO;SDKIEMTONG;Lượt kiểm tổng trước khi phát hành;Lượt kiểm tổng trước khi phát hành
+Ốp lát đá granite / gạch;SLD;SDHOSO;Hồ sơ số liệu dự án;Hồ sơ số liệu dự án
+Ốp lát đá granite / gạch;DVI;SDDIMVIEN;Dim tự động theo hàng viên;Dim tự động theo hàng viên đã rải
+Ốp lát đá granite / gạch;OPTU;SDOPTUONG;Ốp tường trùng ron sàn;Ốp tường trùng ron sàn
+Ốp lát đá granite / gạch;RLE;SDTRUNGRON;Kiểm tra lưới ron xuyên các phòng;Kiểm tra lưới ron có liên tục xuyên các phòng không (ron phòng này thẳng hàng với ron phòng kia qua cửa, kể cả khi hai phòng rải riêng hoặc có giật cấp)
+Ốp lát đá granite / gạch;CDB;SDBACCAODO;Chừa dư tại chỗ đổi cao độ;Gán số mm dư cho các chỗ đổi cao độ (ngưỡng WC, mép hồ, chân thành hồ) để SDCATDU tự chừa dư
+Ốp lát đá granite / gạch;LKD;SDLIENCAODO;Chuỗi cao độ sàn chính, WC, sân hồ, đáy hồ;Chuỗi cao độ nối sàn chính, sàn WC, sân hồ, mực nước và đáy hồ
+Ốp lát đá granite / gạch;HOB;SDHOBOI;Hồ bơi: độ dốc đáy, đồng mức, mặt cắt dọc;Shop drawing hồ bơi theo độ dốc đáy
+Ốp lát đá granite / gạch;TVM;SDMAP;Thư viện map đá có sẵn;Thư viện map (ảnh vân) đá granite có sẵn
+Ốp lát đá granite / gạch;DCV;SDDICHVAN;Dịch vân đá từng bước dưới biên viên;Dịch vân đá từng bước
+Ốp lát đá granite / gạch;CTD;SDCATDU;Cắt dư sát tường: cạnh nào cắt dài ra;Chỉ ra viên cắt nào, cạnh nào phải cắt dài ra để ra công trường bẻ lại cho khít
+Ốp lát đá granite / gạch;DTD;SDDUTOAN;Dự toán tiền đá theo đơn giá m²;Dự toán tiền đá theo đơn giá m²
+Ốp lát đá granite / gạch;PHA;SDPHUONGAN;Phương án lát A / B trên một tờ, bảng ngắn, hao hụt;Đặt hai phương án lát (A và B, hai bố cục viên khác nhau của cùng khu vực, đã dựng bằng SDGACH / SDDOCDA và để cạnh nhau trong Model) lên một tờ trình khách
+Tiện ích;AUL;SDTUNAP;Tự nạp ShopDrawing mỗi khi mở AutoCAD;Làm cho ShopDrawing tự nạp mỗi khi mở AutoCAD hoặc bản vẽ mới, không phải APPLOAD lại (lỗi lệnh 'mất' sau khi mở lại AutoCAD là do chỉ APPLOAD một lần, APPLOAD không nhớ sang phiên sau)
+Tiện ích;CMN;SDMENU;Cài menu + toolbar + Ribbon;Cài menu + 6 toolbar + tab Ribbon ShopDrawing, thêm Support Path và Trusted Locations, tự nạp LISP mỗi bản vẽ
+Tiện ích;HTN;SDDLG;Bật / tắt hộp thoại;Bật / tắt hộp thoại nhập liệu của các lệnh
+Tiện ích;;SDMENUXOA;Gỡ menu;Gỡ menu, toolbar và Ribbon ShopDrawing khỏi AutoCAD
+Tiện ích;HDI;SDHANDINH;Hàn đỉnh polyline;Gộp đỉnh lệch nhau và chèn đỉnh nút chữ T cho polyline sinh từ cùng điểm giao cắt
+Thiết lập và bản vẽ;DGD;SDDIMGD;Dim giao điểm;Vẽ một đường cắt, tự động dim từng đoạn giữa các giao điểm và dim tổng
+Thiết lập và bản vẽ;DPK;SDDIMPOLY;Dim polyline kín;Tự động dim từng cạnh của polyline kín (kể cả cung tròn), ép chữ ra ngoài cho góc hẹp

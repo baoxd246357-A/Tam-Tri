@@ -4,3 +4,5 @@ data/
 .env
 .venv/
 .pytest_cache/
+licenses.csv
+*.key

@@ -1,0 +1,37 @@
+﻿OP LAT TOOLS v1.0.0 - PLUGIN AUTOLISP OP LAT DA / GACH CHO AUTOCAD
+================================================================
+
+CAI DAT
+1. Giai nen ca thu muc vao mot cho co dinh, vi du D:\SDOpLat (khong de trong Downloads hay thu muc tam).
+2. Mo AutoCAD, go APPLOAD, chon SDOpLat.lsp, bam Load.
+3. Go SDMENU (lan dau chon file SDOpLat.mnu trong thu muc tren). Lenh tu them thu muc vao
+   Support File Search Path va nap menu + toolbar. Tu do plugin tu nap cho moi ban ve.
+   Khong muon cai menu: sau APPLOAD go SDTUNAP mot lan de plugin tu nap moi khi mo AutoCAD.
+4. Nang cap: giai nen ban moi vao thu muc MOI, dong han AutoCAD, mo lai, APPLOAD roi SDMENU.
+5. Go: lenh SDMENUXOA.
+
+CACH NHANH (khong cai menu)
+- APPLOAD > SDOpLat.lsp > Load, roi go SDPANEL de mo bang lenh.
+
+BAT DAU
+- SDPANEL: bang lenh.  SDHELP: danh sach lenh.  SDQUYTRINH (QT): quy trinh da lat lien hoan.
+- HuongDanLenh.html: huong dan tung lenh (mo bang trinh duyet).  HuongDanQuyTrinhDa.md: quy trinh da lat.
+- LenhTat.csv: danh sach lenh tat.
+- Thu muc Maps: map da granite cho SDMAP / SDANHDA; file .pat: van da cho SDVANDA.
+- Chay TYLE (SDSET) dau tien cho ban ve moi de dat ty le, layer, dimstyle.
+- TroLyOpLat.html: tro ly hoi dap OFFLINE (mo bang trinh duyet, khong can mang): hoi cach dung lenh, cai dat, kich hoat, xu ly su co.
+- SDOpLat-HuongDanKhach.html: huong dan nhanh cac lenh co ban.
+
+LUU Y VE TIEU CHUAN VA TRACH NHIEM
+- Cac so lieu, tieu chuan (TCVN, ISPSC, quy dinh xay dung nuoc ngoai...) va goi y trong plugin chi de THAM KHAO.
+  Nguoi dung tu kiem tra, doi chieu ho so thiet ke / tieu chuan ap dung va chiu trach nhiem ve ban ve, khoi luong, dat hang, thi cong.
+
+LUU Y
+- He dieu hanh: Windows (plugin dung COM / Visual LISP nen khong dung cho Mac). Phan mem CAD: AutoCAD ban day du; AutoCAD LT chua duoc kiem tra
+  (LT khong ho tro COM / Visual LISP day du nen nhieu lenh co the khong chay).
+  Co the chay tren cac phan mem CAD tuong tu ho tro AutoLISP / Visual LISP (vi du ZWCAD, GstarCAD, BricsCAD) nhung chua duoc kiem tra.
+- Cac lenh xuat bang sang Excel can Microsoft Excel (hoac phan mem bang tinh tuong tu co ho tro COM - chua kiem tra). Khong co Excel thi cac lenh co xuat file CSV van co the mo bang phan mem khac.
+- Chua kiem tra tren moi phien ban AutoCAD.
+- SDMENU / SDTUNAP them thu muc cai dat vao Support File Search Path va Trusted Locations (TRUSTEDPATHS) va co the ghi khoi tu nap vao acaddoc.lsp cua nguoi dung; go bang SDMENUXOA va chay lai SDTUNAP.
+- Moi lenh gom vao mot lan Undo: go U de hoan tac ca lenh.
+- Bao loi kem phien ban AutoCAD, ten lenh va cac dong lenh hien ra.

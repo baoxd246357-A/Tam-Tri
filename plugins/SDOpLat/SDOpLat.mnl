@@ -1,0 +1,7 @@
+;;; SDOpLat.mnl - AutoCAD nap file nay cung menu SHOPDRAWING
+;;; -> tu nap SDOpLat.lsp (cung thu muc, da nam trong Support Path) cho moi ban ve
+(if (not c:SDHELP)
+  (if (findfile "SDOpLat.lsp")
+    (load (findfile "SDOpLat.lsp"))
+    (princ "\n[SD] Khong tim thay SDOpLat.lsp - them thu muc dist vao Support Path (lenh SDMENU tu lam).")))
+(princ)

@@ -1,0 +1,41 @@
+﻿SHOPDRAWING TOOLS - PLUGIN AUTOLISP CHO AUTOCAD
+================================================
+
+CÀI ĐẶT (khuyên dùng: menu + toolbar + Ribbon, tự nạp cho mọi bản vẽ)
+1. Giải nén cả thư mục ShopDrawing vào một chỗ cố định, ví dụ D:\ShopDrawing
+   (không để trong Downloads hay thư mục tạm).
+2. Mở AutoCAD, gõ APPLOAD, chọn ShopDrawing.lsp, bấm Load.
+3. Gõ SDMENU (lần đầu chọn file ShopDrawing.mnu trong thư mục trên).
+   Lệnh tự thêm thư mục vào Support File Search Path + Trusted Locations,
+   nạp menu ShopDrawing, 7 toolbar và tab Ribbon ShopDrawing.
+   Từ đó plugin tự nạp cho mọi bản vẽ.
+3b. Không muốn cài menu: sau APPLOAD gõ SDTUNAP một lần để plugin tự nạp mỗi khi mở AutoCAD
+   (APPLOAD thường chỉ nạp cho phiên hiện tại, mở lại AutoCAD là mất lệnh).
+3c. Nâng cấp lên bản mới: giải nén vào thư mục MỚI (VD D:\ShopDrawing-v2.43.1), đóng hẳn AutoCAD rồi mở lại,
+   APPLOAD ShopDrawing.lsp trong thư mục mới, gõ SDMENU. Các thư mục bản cũ từng cài vẫn còn trong
+   Support File Search Path: lệnh SDMENU (từ bản 2.43.1) chỉ nạp file .mnu đúng phiên bản đang chạy;
+   không thấy thì báo danh sách file tìm được và hỏi chọn file. Nên xóa thư mục bản cũ khỏi
+   OPTIONS > Files > Support File Search Path để khỏi nhầm.
+3d. Không thấy mục ShopDrawing trên thanh menu (dù toolbar SD đã hiện): bản 2.43.2 tự thêm vào thanh menu khi chạy SDMENU.
+   Nếu vẫn không thấy: gõ CUI > Workspaces > chọn workspace đang dùng > Customize Workspace > tích ShopDrawing > Apply.
+4. Không thấy tab Ribbon: nhấp phải vùng Ribbon > Show Tabs > tích ShopDrawing.
+5. Gỡ: lệnh SDMENUXOA (hoặc CUIUNLOAD SHOPDRAWING và SHOPDRAWINGRIBBON).
+
+CÁCH NHANH (chỉ LISP, chạy được cả ZWCAD / GstarCAD / BricsCAD)
+- APPLOAD > ShopDrawing.lsp > Load, rồi gõ SDPANEL để mở bảng lệnh.
+
+BẮT ĐẦU
+- SDHELP: danh sách lệnh.  SDPANEL: bảng lệnh dạng hộp thoại.
+- HuongDanLenh.html: hướng dẫn từng lệnh (mở bằng trình duyệt).
+- LenhTat.csv: danh sách lệnh tắt.
+- Thử nhanh khai triển BTCT: SDMONGTHEP, SDCOTTHEP, SDDAMDUNG, SDSANTHEP,
+  SDTHANGTHEP, rồi SDKL để xuất khối lượng sang Excel.
+- Thư mục Maps: 17 map đá granite (tên file có đuôi _DàixRộng thì SDMAP tự dùng khổ đó) cho lệnh SDMAP (chèn ảnh tấm đá để SDANHDA cắt vào viên).
+  Muốn thêm map của bạn: chép file .jpg / .png (tên không dấu) vào thư mục Maps.
+
+LƯU Ý
+- Bản phát hành chạy thử. Logic đã kiểm tra bằng mô phỏng, chưa kiểm tra trên
+  mọi phiên bản AutoCAD - báo lỗi kèm phiên bản AutoCAD và lệnh gặp lỗi.
+- Mã định mức trong sheet DinhMuc chỉ là gợi ý: đối chiếu định mức áp dụng và
+  sửa trong file <tên bản vẽ>_MaDinhMuc.csv.
+- Kiểm tra lại chiều dài neo, nối thép theo hồ sơ thiết kế.
